@@ -7,12 +7,12 @@ description = "The helpful and always listening, UQCSbot."
 
 intents = discord.Intents.default()
 
-DISCORD_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
-
 # Here for future getting info about members stuff that requires that specific permission.
 # This requires the privileged members intent. 
 # Info here: https://discord.com/developers/docs/topics/gateway#privileged-intents
 intents.members = True 
+
+DISCORD_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
 
 bot = commands.Bot(command_prefix="!", description=description, intents=intents)
 
