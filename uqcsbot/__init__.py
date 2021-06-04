@@ -16,18 +16,8 @@ DISCORD_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
 
 bot = commands.Bot(command_prefix="!", description=description, intents=intents)
 
-@bot.event
-async def on_ready():
-    print("Bot online and logged in")
-    print(f"Name: {bot.user.name}")
-    print(f"ID: {bot.user.id}")
-
-@bot.command()
-async def echo(ctx, *, text=""):
-    """ Echos back the text that you send. """
-    if text == "":
-        await ctx.send("ECHO!")
-    else:
-        await ctx.send(text)
+cogs = ["basic", "voteythumbs", "jobs_bullitin"]
+for cog in cogs:
+    bot.load_extension(cog)
 
 bot.run(DISCORD_TOKEN)
