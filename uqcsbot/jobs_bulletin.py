@@ -1,8 +1,8 @@
 from discord.ext import commands
 import discord
 
-class JobsBullitin(commands.Cog):
-    CHANNEL_NAME = "jobs-bullitin"
+class JobsBulletin(commands.Cog):
+    CHANNEL_NAME = "jobs-bulletin"
     FAIR_WORK_INFO = "https://www.fairwork.gov.au/pay/unpaid-work/work-experience-and-internships"
     EAIT_UNPAID_JOBS = "https://www.eait.uq.edu.au/engineering-professional-practice-unpaid-placements"
     EAIT_FACULTY = "https://www.eait.uq.edu.au/"
@@ -11,18 +11,18 @@ class JobsBullitin(commands.Cog):
     WELCOME_MESSAGES = [    # Welcome messages sent to new members
         "#jobs-bulletin is a little different to your average"
         + " UQCS :slack: channel and has a few extra rules:",
-        "*Rules for Everyone* \n"
+        "**Rules for Everyone** \n"
         "1. The _only_ posts allowed in this channel are job advertisements.\n"
         "2. All discussion about the posted jobs must take place in the #jobs-discussion "
         + " channel or by direct message with the person posting the advertisement."
-        + " Please be respectful when interacting with companies and sponsors.",
-        "*Additional Rules for Employers Posting Jobs/Internship Opportunities:*\n"
+        + " Please be respectful when interacting with companies and sponsors.\n",
+        "**Additional Rules for Employers Posting Jobs/Internship Opportunities:**\n"
         "3. We take the rights of our members and associates seriously. If you are posting an unpaid"
-        + " position, please be up front about the lack of remuneration and *mindful of*"
-        + f" [*your obligations*]({FAIR_WORK_INFO}) under the"
-        + " _Fair Work Act (2009). \n"
-        "_> tldr: if an intern (whether called that or not) adds value to"
-        + " (or 'does productive work' for) your business, they must be remunerated with a fair wage._"
+        + " position, please be up front about the lack of remuneration and **mindful of**"
+        + f" [**your obligations**]({FAIR_WORK_INFO}) under the"
+        + " _Fair Work Act (2009)._ \n"
+        "_ tldr: if an intern (whether called that or not) adds value to"
+        + " (or 'does productive work' for) your business, they must be remunerated with a fair wage._\n"
         + " If you ignore these warnings, please expect to face criticism from the community"
         + " (we will protect our members from being exploited)."
         + f" Additionally, all [unpaid placements]({EAIT_UNPAID_JOBS}) for students in the"
@@ -40,7 +40,8 @@ class JobsBullitin(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, msg):
         """ Echos back the text that you send. """
-        if not self.bot.user or msg.author.id == self.bot.user.id or msg.channel.name != self.CHANNEL_NAME:
+        if not self.bot.user or not isinstance(msg.channel, discord.TextChannel) or \
+                msg.author.id == self.bot.user.id or msg.channel.name != self.CHANNEL_NAME:
             return
 
         channel_message = (f"{msg.author.name} has posted a new job in #jobs-bulletin! :tada: \n"
@@ -49,12 +50,12 @@ class JobsBullitin(commands.Cog):
         await msg.channel.send(channel_message)
         
         user_message = discord.Embed()
-        user_message.title = "#jobs-bullitin reminder"
+        user_message.title = "#jobs-bulletin reminder"
         user_message.description = (f"Hey {msg.author.name}, you've just posted in #jobs-bulletin! \n"
                 f"Just a quick reminder of the conditions"
-                + f" surrounding the use of this channel:\n" +
+                + f" surrounding the use of this channel:\n\n" +
                 f"\n".join(self.WELCOME_MESSAGES[1:] + [""]) + "\n" +
-                f"*Broken one of these rules?*\n"
+                f"**Broken one of these rules?**\n"
                 f"It's not too late! Please go back ASAP and"
                 + f" edit your message in #jobs-bulletin so it complies (or ask a committee"
                 + f" member to delete it). Thanks!")
@@ -62,5 +63,5 @@ class JobsBullitin(commands.Cog):
             
 
 def setup(bot: commands.Bot):
-    bot.add_cog(JobsBullitin(bot))
+    bot.add_cog(JobsBulletin(bot))
 
