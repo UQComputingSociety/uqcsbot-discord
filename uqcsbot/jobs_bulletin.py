@@ -39,7 +39,7 @@ class JobsBulletin(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, msg):
-        """ Echos back the text that you send. """
+        """ Detects if a message is sent in #jobs_bulletin and sends notification to channel and author. """
         if not self.bot.user or not isinstance(msg.channel, discord.TextChannel) or \
                 msg.author.id == self.bot.user.id or msg.channel.name != self.CHANNEL_NAME:
             return

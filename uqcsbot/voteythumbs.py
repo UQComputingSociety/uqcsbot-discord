@@ -6,7 +6,7 @@ class VoteyThumbs(commands.Cog):
 
     @commands.command()
     async def voteythumbs(self, ctx: commands.Context):
-        """ Echos back the text that you send. """
+        """ Starts a 👍 👎 vote. """
         # await ctx.send(text)
         await ctx.message.add_reaction("👍")
         await ctx.message.add_reaction("👎")
