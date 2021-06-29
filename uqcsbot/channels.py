@@ -5,8 +5,6 @@ class Channels(commands.Cog):
     # TODO: Move this to a database instead
     JOINABLE_CHANNELS = {
         "adulting": 836249085383671848,
-        # different id for testing server
-        # "adulting": 851113475127640114, 
         "blockchain": 836243744441237544,
         "covid": 836246942958092318,
         "food": 836244105947906048  
@@ -52,6 +50,21 @@ class Channels(commands.Cog):
         leave_message = await channel.send(f"{ctx.author.name} left {channel.mention}")
         await leave_message.add_reaction("👋")
         await ctx.send(f"You've left {channel.mention}")
+
+    @commands.command()
+    async def channellist(self, ctx: commands.Context):
+        """ Lists the channels that you can join. """
+        header_message = "Here are the joinable channels"
+        channel_list = "\n#".join([""] + list(self.JOINABLE_CHANNELS.keys()))
+        footer_messge = "To join or leave one of these channels, use the !joinchannel and !leavechannel commands."
+
+        message = discord.Embed()
+        message.title = "Joinable Channels"
+        message.description = channel_list
+        message.set_footer(text=footer_messge)
+
+        await ctx.send(embed=message)
+
 
 def setup(bot: commands.Bot):
     bot.add_cog(Channels(bot))
