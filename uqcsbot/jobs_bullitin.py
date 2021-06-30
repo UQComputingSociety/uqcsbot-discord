@@ -1,5 +1,6 @@
 from discord.ext import commands
 import discord
+import logging
 
 class JobsBullitin(commands.Cog):
     CHANNEL_NAME = "jobs-bullitin"
@@ -41,6 +42,7 @@ class JobsBullitin(commands.Cog):
     async def on_message(self, msg):
         """ Echos back the text that you send. """
         if not self.bot.user or msg.author.id == self.bot.user.id or msg.channel.name != self.CHANNEL_NAME:
+            logging.debug("Not performing jobs-bulletin on_message")
             return
 
         channel_message = (f"{msg.author.name} has posted a new job in #jobs-bulletin! :tada: \n"
@@ -49,7 +51,7 @@ class JobsBullitin(commands.Cog):
         await msg.channel.send(channel_message)
         
         user_message = discord.Embed()
-        user_message.title = "#jobs-bullitin reminder"
+        user_message.title = "#jobs-bulletin reminder"
         user_message.description = (f"Hey {msg.author.name}, you've just posted in #jobs-bulletin! \n"
                 f"Just a quick reminder of the conditions"
                 + f" surrounding the use of this channel:\n" +
