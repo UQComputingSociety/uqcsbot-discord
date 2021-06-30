@@ -219,6 +219,7 @@ class Events(commands.Cog):
         return events
 
     @commands.command()
+    @loading_status
     # TODO: @loading_status
     async def events(self, ctx: commands.Context, *args):
         """
