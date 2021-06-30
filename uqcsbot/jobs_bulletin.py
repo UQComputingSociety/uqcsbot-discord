@@ -40,15 +40,9 @@ class JobsBulletin(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, msg):
-<<<<<<< HEAD:uqcsbot/jobs_bullitin.py
-        """ Echos back the text that you send. """
-        if not self.bot.user or msg.author.id == self.bot.user.id or msg.channel.name != self.CHANNEL_NAME:
-            logging.debug("Not performing jobs-bulletin on_message")
-=======
         """ Detects if a message is sent in #jobs_bulletin and sends notification to channel and author. """
         if not self.bot.user or not isinstance(msg.channel, discord.TextChannel) or \
                 msg.author.id == self.bot.user.id or msg.channel.name != self.CHANNEL_NAME:
->>>>>>> a0f8f75d5e279e1048e3c6f25970bd96aa3b959b:uqcsbot/jobs_bulletin.py
             return
 
         channel_message = (f"{msg.author.name} has posted a new job in #jobs-bulletin! :tada: \n"

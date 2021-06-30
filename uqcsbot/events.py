@@ -47,6 +47,8 @@ class EventFilter(object):
             elif 'weeks' in args:
                 i = args.index('weeks') + 1
                 return cls(weeks=int(args[i]))
+            else:
+                return cls()
 
     def filter_events(self, events: List['Event'], start_time: datetime):
         if self._weeks is not None:
@@ -218,10 +220,10 @@ class Events(commands.Cog):
     # TODO: @loading_status
     async def events(self, ctx: commands.Context, *args):
         """
-        `!events [full|all|weeks <NUM_WEEKS>] [uqcs|itee]`
+        !events [full|all|weeks <NUM_WEEKS>] [uqcs|itee]
         - Lists all the UQCS and/or  ITEE events that are
         scheduled to occur within the given filter.
-        If unspecified, will return the next 2 weeks of events.
+        If unspecified or invalid, will return the next 2 weeks of events.
         """
 
         current_time = self._get_current_time()
