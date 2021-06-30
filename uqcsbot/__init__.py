@@ -19,7 +19,7 @@ DISCORD_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
 
 bot = commands.Bot(command_prefix="!", description=description, intents=intents)
 
-cogs = ["basic", "voteythumbs", "jobs_bullitin", "events"]
+cogs = ["basic", "voteythumbs", "jobs_bulletin", "events"]
 for cog in cogs:
     bot.load_extension(cog)
 
