@@ -26,8 +26,9 @@ MONTH_NUMBER = {month.lower(): index for index, month in enumerate(month_abbr)}
 MAX_RECURRING_EVENTS = 3
 BRISBANE_TZ = timezone('Australia/Brisbane')
 
-# TODO: - existing functionality
+# TODO: Y existing functionality
 #       - ability to notify channel every monday
+#       - react to messages with loading emoji
 
 class EventFilter(object):
     def __init__(self, full=False, weeks=None, cap=None, month=None, is_valid=True):
@@ -48,7 +49,8 @@ class EventFilter(object):
                 i = args.index('weeks') + 1
                 return cls(weeks=int(args[i]))
             else:
-                return cls()
+                # No valid input
+                return cls(weeks=2)
 
     def filter_events(self, events: List['Event'], start_time: datetime):
         if self._weeks is not None:
