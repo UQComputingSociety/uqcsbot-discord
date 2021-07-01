@@ -230,8 +230,6 @@ class Events(commands.Cog):
         """
 
         current_time = self._get_current_time()
-        print(args)
-
         source_get = {"uqcs": False, "itee": False, "external": False}
         for k in source_get:
             if k in args:
