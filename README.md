@@ -14,6 +14,12 @@ Access to the UQCSbot testing tokens and server is provided through the #bot-tes
 
 ** TODO: Information about environment variables here, and getting the bot running locally **
 
+** TODO: Docker info maybe? **
+
+### Environment Variables
+
+`DISCORD_BOT_TOKEN` for the Discord provided bot token.
+
 ## Testing
 
 ** TODO: Information around how to test locally before submitting a PR **
