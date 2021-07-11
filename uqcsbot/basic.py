@@ -7,10 +7,7 @@ class Basic(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Bot online and logged in")
-        print(f"Name: {self.bot.user.name}")
-        print(f"ID: {self.bot.user.id}")
-        
+        # TODO: This can be removed once the presence has a better home.
         await self.bot.change_presence(activity=discord.Streaming(name="UQCS Live Stream", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=43s", platform="YouTube"))
 
     @commands.command()
@@ -23,4 +20,3 @@ class Basic(commands.Cog):
 
 def setup(bot: commands.Bot):
     bot.add_cog(Basic(bot))
-
