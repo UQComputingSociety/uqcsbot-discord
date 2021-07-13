@@ -1,5 +1,4 @@
 import logging
-from uqcsbot import bot
 import requests
 import re
 from datetime import datetime
