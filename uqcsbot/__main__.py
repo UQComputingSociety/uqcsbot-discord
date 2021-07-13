@@ -1,14 +1,15 @@
 import os
+import logging
 
 import discord
 from discord.ext import commands
-import logging
+from uqcsbot.bot import UQCSBot
 
 description = "The helpful and always listening, UQCSbot."
 
 def main():
 
-    logging.basicConfig()
+    logging.basicConfig(level=logging.INFO)
 
     intents = discord.Intents.default()
 
@@ -19,9 +20,9 @@ def main():
 
     DISCORD_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
 
-    bot = commands.Bot(command_prefix="!", description=description, intents=intents)
+    bot = UQCSBot(command_prefix="!", description=description, intents=intents)
 
-    cogs = ["basic", "voteythumbs", "jobs_bulletin", "events", "latex"]
+    cogs = ["basic", "events", "jobs_bulletin", "latex", "voteythumbs", "working_on"]
     for cog in cogs:
         bot.load_extension(f"uqcsbot.{cog}")
 
