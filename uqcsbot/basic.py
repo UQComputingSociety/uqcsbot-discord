@@ -1,5 +1,20 @@
 from discord.ext import commands
 import discord
+from typing import List
+
+UQCS_REPO_URL = "https://github.com/UQComputingSociety/"
+
+REPOS = {
+    "coc": ("code-of-conduct", "The UQCS Code of Conduct to be followed by all community members"),
+    "constitution": ("constitution", "All the business details"),
+    "design": ("design", "All UQCS design assets"),
+    "events": ("events", "A repository for events and talk materials"),
+    "inviter": ("slack-invite-automation", "Web application to invite users to our slack team"),
+    "minutes": ("minutes", "Minutes from UQCS committee meetings and general meetings"),
+    "signup": ("signup", "The UQCS membership signup system"),
+    "uqcsbot": ("uqcsbot", "Our friendly little Slack bot"),
+    "website": ("website", "The UQ Computing Society website"),
+}
 
 class Basic(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -17,6 +32,45 @@ class Basic(commands.Cog):
             await ctx.send("ECHO!")
         else:
             await ctx.send(text)
+
+    @commands.command()
+    async def conduct(self, ctx: commands.Context):
+        await ctx.send("UQCS Code of Conduct")
+        await ctx.send("https://github.com/UQComputingSociety/code-of-conduct")
+
+    def format_repo_message(self, repos: List[str]) -> str:
+        """
+        Takes a list of repo names and matches them to REPOS keys, constructing a message from the
+        relevant repo information.
+        :param repos: list of strings of repo names
+        :return: a single string with a formatted message containing repo info for the given names
+        """
+        repo_strings = []
+        for potential_repo in repos:
+            if potential_repo not in REPOS.keys():
+                repo_strings.append(f"> Unrecognised repo \"{potential_repo}\"\n")
+            else:
+                repo_strings.append(f"> {UQCS_REPO_URL + REPOS[potential_repo][0]}"
+                                    f": {REPOS[potential_repo][1]}\n")
+        return "".join(repo_strings)
+
+    @commands.command()
+    async def repo(self, ctx: commands.Context, *args):
+        # All repos
+        if len(args) == 1 and args[0] in ["--list", "-l", "list", "full", "all"]:
+            await ctx.send("_Useful :uqcs: Github repositories_:\n"
+                + self.format_repo_message(list(REPOS.keys())))
+
+        # List of specific repos
+        elif len(args) > 0:
+            await ctx.send("_Requested UQCS Github repositories_:\n"
+                                    + self.format_repo_message(list(args)))
+
+        # Default option: just uqcsbot link
+        else:
+            await ctx.send("_Have you considered contributing to the bot?_\n" +
+                                    self.format_repo_message(["uqcsbot"]) +
+                                    "\n _For more repositories, try_ `!repo list`")
 
 def setup(bot: commands.Bot):
     bot.add_cog(Basic(bot))
