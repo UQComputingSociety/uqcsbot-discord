@@ -12,7 +12,7 @@ REPOS = {
     "inviter": ("slack-invite-automation", "Web application to invite users to our slack team"),
     "minutes": ("minutes", "Minutes from UQCS committee meetings and general meetings"),
     "signup": ("signup", "The UQCS membership signup system"),
-    "uqcsbot": ("uqcsbot", "Our friendly little Slack bot"),
+    "uqcsbot-discord": ("uqcsbot", "Our friendly little Discord bot"),
     "website": ("website", "The UQ Computing Society website"),
 }
 
