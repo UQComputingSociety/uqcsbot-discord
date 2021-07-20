@@ -67,7 +67,7 @@ class Channels(commands.Cog):
         await ctx.send(f"You've left {channel.mention}")
 
     @commands.command()
-    async def channellist(self, ctx: commands.Context):
+    async def listchannels(self, ctx: commands.Context):
         """ Lists the channels that you can join. """
         db_session = self.bot.create_db_session()
         channels_query = db_session.query(Channel).filter(Channel.joinable == True).order_by(Channel.name)
