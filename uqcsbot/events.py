@@ -3,6 +3,7 @@ import discord
 import re
 import requests
 import logging
+from uqcsbot.bot import UQCSBot
 
 from typing import List
 from datetime import date, datetime, timedelta
@@ -15,20 +16,19 @@ from dateutil.rrule import rrulestr
 from uqcsbot.utils.command_utils import loading_status
 from uqcsbot.utils.seminar_utils import (get_seminars, HttpException, InvalidFormatException)
 
-UQCS_CALENDAR_URL = "https://calendar.google.com/calendar/ical/7djv171v2mdr4dmufq612j6uj4%40group.calendar.google.com/public/basic.ics"
-
-#"https://calendar.google.com/calendar/ical/" \
-#                    "q3n3pce86072n9knt3pt65fhio%40group.calendar.google.com/public/basic.ics"
+UQCS_CALENDAR_URL = "https://calendar.google.com/calendar/ical/" \
+                    "q3n3pce86072n9knt3pt65fhio%40group.calendar.google.com/public/basic.ics"
 EXTERNAL_CALENDAR_URL = "https://calendar.google.com/calendar/ical/" \
                         "72abf01afvsl3bjd9oq2g1avgg%40group.calendar.google.com/public/basic.ics"
+# Testing calendar: "https://calendar.google.com/calendar/ical/7djv171v2mdr4dmufq612j6uj4%40group.calendar.google.com/public/basic.ics"
+
 MONTH_NUMBER = {month.lower(): index for index, month in enumerate(month_abbr)}
 
 MAX_RECURRING_EVENTS = 3
 BRISBANE_TZ = timezone('Australia/Brisbane')
 
-# TODO: Y existing functionality
-#       - ability to notify channel every monday
-#       - react to messages with loading emoji
+# For testing server: EVENTS_CHANNEL = 867246372670668810
+EVENTS_CHANNEL = 813378207696945172
 
 class EventFilter(object):
     def __init__(self, full=False, weeks=None, cap=None, month=None, is_valid=True):
@@ -169,8 +169,12 @@ class Events(commands.Cog):
     """
         Display events 
     """
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: UQCSBot):
         self.bot = bot
+        self.bot.schedule_task(self.scheduled_message, trigger='cron', hour=9, day_of_week="mon", timezone='Australia/Brisbane')
+
+    async def scheduled_message(self):
+        await self.send_events(self.bot.get_channel(EVENTS_CHANNEL))
 
     @classmethod
     def _get_current_time(cls):
@@ -218,17 +222,7 @@ class Events(commands.Cog):
 
         return events
 
-    @commands.command()
-    @loading_status
-    # TODO: @loading_status
-    async def events(self, ctx: commands.Context, *args):
-        """
-        !events [full|all|weeks <NUM_WEEKS>] [uqcs|itee]
-        - Lists all the UQCS and/or  ITEE events that are
-        scheduled to occur within the given filter.
-        If unspecified or invalid, will return the next 2 weeks of events.
-        """
-
+    async def send_events(self, channel: discord.abc.Messageable, *args):
         current_time = self._get_current_time()
         source_get = {"uqcs": False, "itee": False, "external": False}
         for k in source_get:
@@ -268,10 +262,10 @@ class Events(commands.Cog):
                            f"For a full list of events, visit: " \
                            f"https://uqcs.org/events " \
                            f"and https://itee.uq.edu.au/event/3891/phd-confirmation-seminars"
-            await ctx.send(message_text)
+            await channel.send(message_text)
         else:
             message_text = f"{event_filter.get_header()}"
-            await ctx.send(message_text)
+            await channel.send(message_text)
 
             for event in events:
                 colour = discord.Colour.from_rgb(82, 151, 209) if event.source == "UQCS" else \
@@ -281,7 +275,20 @@ class Events(commands.Cog):
                 embed.colour = colour
                 embed.title = f"{event.get_title()}"
                 embed.description = f"{event.get_time_loc()}"
-                await ctx.send(embed=embed)
+                await channel.send(embed=embed)
+
+    @commands.command()
+    @loading_status
+    # TODO: @loading_status
+    async def events(self, ctx: commands.Context, *args):
+        """
+        !events [full|all|weeks <NUM_WEEKS>] [uqcs|itee]
+        - Lists all the UQCS and/or  ITEE events that are
+        scheduled to occur within the given filter.
+        If unspecified or invalid, will return the next 2 weeks of events.
+        """
+        await self.send_events(ctx.channel, *args)
+
                 
 
     @classmethod

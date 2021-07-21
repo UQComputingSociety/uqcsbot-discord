@@ -1,5 +1,4 @@
 import logging
-import discord
 from discord.ext import commands
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
