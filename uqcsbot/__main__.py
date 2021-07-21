@@ -4,12 +4,15 @@ import logging
 import discord
 from discord.ext import commands
 from uqcsbot.bot import UQCSBot
+from uqcsbot.models import Base
+
+from sqlalchemy import create_engine
 
 description = "The helpful and always listening, UQCSbot."
 
 def main():
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig()
 
     intents = discord.Intents.default()
 
@@ -20,11 +23,18 @@ def main():
 
     DISCORD_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
 
+    # TODO: Handle if postgres URI is not defined.
+    DATABASE_URI = os.environ.get("POSTGRES_URI_BOT")
+
     bot = UQCSBot(command_prefix="!", description=description, intents=intents)
 
-    cogs = ["basic", "events", "jobs_bulletin", "latex", "voteythumbs", "working_on"]
+    cogs = ["basic", "channels", "events", "jobs_bulletin", "latex", "voteythumbs", "working_on"]
     for cog in cogs:
         bot.load_extension(f"uqcsbot.{cog}")
+
+    db_engine = create_engine(DATABASE_URI, echo=True)
+    Base.metadata.create_all(db_engine)
+    bot.set_db_engine(db_engine)
 
     bot.run(DISCORD_TOKEN)
 
