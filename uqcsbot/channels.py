@@ -48,7 +48,7 @@ class Channels(commands.Cog):
             return
 
         await channel.set_permissions(member, read_messages=True, reason="UQCSbot added.")
-        join_message = await channel.send(f"{member.nick} joined {channel.mention}")
+        join_message = await channel.send(f"{member.display_name} joined {channel.mention}")
         await join_message.add_reaction("👋")
         await ctx.send(f"You've joined {channel.mention}")
 
