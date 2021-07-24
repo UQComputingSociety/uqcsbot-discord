@@ -8,6 +8,9 @@ from uqcsbot.bot import UQCSBot
 from uqcsbot.models import Channel
 
 JOINED_PERMISSIONS = discord.Permissions(read_messages=True)
+SERVER_ID = 813324385179271168
+# Testing Server
+# SERVER_ID = 836589565237264415
 
 class Channels(commands.Cog):
 
@@ -32,39 +35,52 @@ class Channels(commands.Cog):
             return
 
         channel = self.bot.get_channel(channel_query.id)
+        guild = self.bot.get_guild(SERVER_ID)
+        member = guild.get_member(ctx.author.id)
 
         if channel == None:
             await ctx.send("Unable to join that channel.")
             return 
 
         # Don't let a user join the channel again if they are already in it.
-        if channel.permissions_for(ctx.author).is_superset(JOINED_PERMISSIONS):
+        if channel.permissions_for(member).is_superset(JOINED_PERMISSIONS):
             await ctx.send("You're already a member of that channel.")
             return
 
-        await channel.set_permissions(ctx.author, read_messages=True, reason="UQCSbot added.")
-        join_message = await channel.send(f"{ctx.author.name} joined {channel.mention}")
+        await channel.set_permissions(member, read_messages=True, reason="UQCSbot added.")
+        join_message = await channel.send(f"{ctx.author.nick} joined {channel.mention}")
         await join_message.add_reaction("👋")
         await ctx.send(f"You've joined {channel.mention}")
 
     @commands.command()
-    async def leavechannel(self, ctx: commands.Context, channel: str):
+    async def leavechannel(self, ctx: commands.Context, channel=""):
         """ Leaves the channel that you specify. """
+
+        # If a channel is not specified, attempt to leave the current channel.
+        if (channel == ""):
+            channel = ctx.channel.name
+            dm_notify = True
+
         channel_query = self._channel_query(channel)
 
         if channel_query == None:
-            await ctx.send("Unable to join that channel.")
+            await ctx.send("Unable to leave that channel.")
             return
 
         channel = self.bot.get_channel(channel_query.id)
+        guild = self.bot.get_guild(SERVER_ID)
+        member = guild.get_member(ctx.author.id)
 
         # You can't leave a channel that doesn't exist or you're not in.
-        if channel == None or channel.permissions_for(ctx.author).is_strict_subset(JOINED_PERMISSIONS): 
+        if channel == None or channel.permissions_for(member).is_strict_subset(JOINED_PERMISSIONS): 
             await ctx.send("Unable to leave that channel.")
             return 
 
-        await channel.set_permissions(ctx.author, overwrite=None, reason="UQCSbot removed.")
-        await ctx.send(f"You've left {channel.mention}")
+        await channel.set_permissions(member, read_messages=False, reason="UQCSbot removed.")
+        if dm_notify:
+            await ctx.author.send(f"You've left {channel.mention}")
+        else:
+            await ctx.send(f"You've left {channel.mention}")
 
     @commands.command()
     async def listchannels(self, ctx: commands.Context):
