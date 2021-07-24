@@ -49,6 +49,7 @@ class Channels(commands.Cog):
 
     @commands.command()
     async def joinchannels(self, ctx: commands.Context, channels: str):
+        """ Joins the list of channels that you specify. """
         for channel in channels.split(" "):
             await joinchannel(self, ctx, channel)
 
