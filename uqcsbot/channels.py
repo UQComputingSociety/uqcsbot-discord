@@ -8,9 +8,9 @@ from uqcsbot.bot import UQCSBot
 from uqcsbot.models import Channel
 
 JOINED_PERMISSIONS = discord.Permissions(read_messages=True)
-SERVER_ID = 813324385179271168
+# SERVER_ID = 813324385179271168
 # Testing Server
-# SERVER_ID = 836589565237264415
+SERVER_ID = 836589565237264415
 
 class Channels(commands.Cog):
 
@@ -48,7 +48,7 @@ class Channels(commands.Cog):
             return
 
         await channel.set_permissions(member, read_messages=True, reason="UQCSbot added.")
-        join_message = await channel.send(f"{ctx.author.nick} joined {channel.mention}")
+        join_message = await channel.send(f"{member.nick} joined {channel.mention}")
         await join_message.add_reaction("👋")
         await ctx.send(f"You've joined {channel.mention}")
 

@@ -45,14 +45,14 @@ class JobsBulletin(commands.Cog):
                 msg.author.id == self.bot.user.id or msg.channel.name != self.CHANNEL_NAME:
             return
 
-        channel_message = (f"{msg.author.name} has posted a new job in #jobs-bulletin! :tada: \n"
+        channel_message = (f"{msg.author.nick} has posted a new job in #jobs-bulletin! :tada: \n"
                    f"Please ask any questions in #jobs-discussion"
                    + f" or in a private message to {msg.author.mention}")
         await msg.channel.send(channel_message)
         
         user_message = discord.Embed()
         user_message.title = "#jobs-bulletin reminder"
-        user_message.description = (f"Hey {msg.author.name}, you've just posted in #jobs-bulletin! \n"
+        user_message.description = (f"Hey {msg.author.nick}, you've just posted in #jobs-bulletin! \n"
                 f"Just a quick reminder of the conditions"
                 + f" surrounding the use of this channel:\n\n" +
                 f"\n".join(self.WELCOME_MESSAGES[1:] + [""]) + "\n" +
