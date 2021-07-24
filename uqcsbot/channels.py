@@ -53,6 +53,12 @@ class Channels(commands.Cog):
         await ctx.send(f"You've joined {channel.mention}")
 
     @commands.command()
+    async def joinchannels(self, ctx: commands.Context, channels: str):
+        """ Joins the list of channels that you specify. """
+        for channel in channels.split(" "):
+            await joinchannel(self, ctx, channel)
+
+    @commands.command()
     async def leavechannel(self, ctx: commands.Context, channel=""):
         """ Leaves the channel that you specify. """
 
