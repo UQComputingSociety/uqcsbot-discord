@@ -8,9 +8,9 @@ from uqcsbot.bot import UQCSBot
 from uqcsbot.models import Channel
 
 JOINED_PERMISSIONS = discord.Permissions(read_messages=True)
-# SERVER_ID = 813324385179271168
+SERVER_ID = 813324385179271168
 # Testing Server
-SERVER_ID = 836589565237264415
+# SERVER_ID = 836589565237264415
 
 class Channels(commands.Cog):
 
