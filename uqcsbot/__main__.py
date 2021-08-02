@@ -25,10 +25,11 @@ def main():
 
     # TODO: Handle if postgres URI is not defined.
     DATABASE_URI = os.environ.get("POSTGRES_URI_BOT")
+    print(DATABASE_URI)
 
     bot = UQCSBot(command_prefix="!", description=description, intents=intents)
 
-    cogs = ["basic", "channels", "events", "jobs_bulletin", "latex", "voteythumbs", "working_on"]
+    cogs = ["basic", "channels", "events", "jobs_bulletin", "latex", "voteythumbs", "working_on", "yelling"]
     for cog in cogs:
         bot.load_extension(f"uqcsbot.{cog}")
 
