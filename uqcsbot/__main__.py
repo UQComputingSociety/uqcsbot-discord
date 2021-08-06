@@ -29,7 +29,7 @@ def main():
 
     bot = UQCSBot(command_prefix="!", description=description, intents=intents)
 
-    cogs = ["basic", "channels", "events", "jobs_bulletin", "latex", "voteythumbs", "working_on", "yelling"]
+    cogs = ["basic", "channels", "events", "jobs_bulletin", "latex", "voteythumbs", "working_on", "yelling", "whatsdue"]
     for cog in cogs:
         bot.load_extension(f"uqcsbot.{cog}")
 
