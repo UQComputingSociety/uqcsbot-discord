@@ -55,15 +55,14 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-  
-  # deploy:
-  #   runs-on: ubuntu-latest
-  #   needs: build
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - run: ./deploy.sh
-  #       env:
-  #         DOCKER_CA: ${{secrets.DOCKER_CA}}
-  #         DOCKER_KEY: ${{secrets.DOCKER_KEY}}
-  #         DOCKER_CERT: ${{secrets.DOCKER_CERT}}
-  #         DOCKER_HOST: ${{secrets.DOCKER_HOST}}
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v2
+      - run: ./deploy.sh
+        env:
+          DOCKER_CA: ${{secrets.DOCKER_CA}}
+          DOCKER_KEY: ${{secrets.DOCKER_KEY}}
+          DOCKER_CERT: ${{secrets.DOCKER_CERT}}
+          DOCKER_HOST: ${{secrets.DOCKER_HOST}}
