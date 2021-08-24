@@ -12,7 +12,7 @@ description = "The helpful and always listening, UQCSbot."
 
 def main():
 
-    logging.basicConfig()
+    logging.basicConfig(level=logging.INFO)
 
     intents = discord.Intents.default()
 
@@ -25,7 +25,6 @@ def main():
 
     # TODO: Handle if postgres URI is not defined.
     DATABASE_URI = os.environ.get("POSTGRES_URI_BOT")
-    print(DATABASE_URI)
 
     bot = UQCSBot(command_prefix="!", description=description, intents=intents)
 

@@ -62,7 +62,9 @@ jobs:
       - uses: actions/checkout@v2
       - run: ./deploy.sh
         env:
-          DOCKER_CA: ${{secrets.DOCKER_CA}}
-          DOCKER_KEY: ${{secrets.DOCKER_KEY}}
-          DOCKER_CERT: ${{secrets.DOCKER_CERT}}
-          DOCKER_HOST: ${{secrets.DOCKER_HOST}}
+          DOCKER_CA: ${{ secrets.DOCKER_CA }}
+          DOCKER_KEY: ${{ secrets.DOCKER_KEY }}
+          DOCKER_CERT: ${{ secrets.DOCKER_CERT }}
+          DOCKER_HOST: ${{ secrets.DOCKER_HOST }}
+          BOT_TOKEN: ${{ secrets.DEPLOY_BOT_TOKEN }}
+          POSTGRES_URI: ${{ secrets.DEPLOY_POSTGRES_URI }}
