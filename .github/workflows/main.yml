@@ -24,10 +24,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Build the Docker image so we can publish it.
-      - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$(date +%s)
-
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
@@ -55,6 +51,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
   deploy:
     runs-on: ubuntu-latest
     needs: build
