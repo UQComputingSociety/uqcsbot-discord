@@ -72,5 +72,13 @@ class Basic(commands.Cog):
                                     self.format_repo_message(["uqcsbot"]) +
                                     "\n _For more repositories, try_ `!repo list`")
 
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        channel = member.guild.system_channel
+        # On user joining, a system join message will appear in the system channel
+        # Add a wave reaction to the last message of the system channel using history
+        async for msg in channel.history(limit=1):
+            await msg.add_reaction('👋')
+
 def setup(bot: commands.Bot):
     bot.add_cog(Basic(bot))
