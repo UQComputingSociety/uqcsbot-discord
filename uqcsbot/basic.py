@@ -76,9 +76,12 @@ class Basic(commands.Cog):
     async def on_member_join(self, member):
         channel = member.guild.system_channel
         # On user joining, a system join message will appear in the system channel
-        # Add a wave reaction to the last message of the system channel using history
-        async for msg in channel.history(limit=1):
-            await msg.add_reaction('👋')
+        # This should prevent the bot waving on a user message when #general is busy
+        async for msg in channel.history(limit=5):
+            # Wave only on new member system message
+            if msg.type == discord.MessageType.new_member:
+                await msg.add_reaction('👋')
+                break
 
 def setup(bot: commands.Bot):
     bot.add_cog(Basic(bot))
