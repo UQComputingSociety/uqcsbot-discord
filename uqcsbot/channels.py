@@ -97,7 +97,8 @@ class Channels(commands.Cog):
 
         header_message = "Here is a list of the joinable channels"
         channel_list = "\n".join(channel.name for channel in channels_query)
-        footer_messge = "To join or leave one of these channels, use the !joinchannel and !leavechannel commands."
+        footer_messge = ("To join or leave one of these channels, use the !joinchannel and !leavechannel commands.\n"
+                         "To join multiple channels, use the !joinchannels command.")
 
         message = discord.Embed()
         message.title = "Joinable Channels"
