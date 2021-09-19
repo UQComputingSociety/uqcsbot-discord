@@ -1,8 +1,7 @@
 from discord.ext import commands
 import discord
-import logging
 from uqcsbot.bot import UQCSBot
-from typing import List, Tuple, Optional
+from typing import Optional
 
 from uqcsbot.utils.command_utils import loading_status
 
@@ -89,6 +88,14 @@ class Gaming(commands.Cog):
                     parameters["min_players"] = min(players)
                     parameters["max_players"] = max(players)
 
+            # sets the backup min players
+            if tag == "minplayers":
+                parameters.setdefault("min_players", int(tag_value))
+
+            # sets the backup max players
+            if tag == "maxplayers":
+                parameters.setdefault("max_players", int(tag_value))
+
             # sets the name of the board game
             elif tag == "name" and tag_type == "primary":
                 parameters["name"] = tag_value
@@ -151,8 +158,8 @@ class Gaming(commands.Cog):
     def format_board_game_parameters(self, parameters: dict) -> discord.Embed:
         embed = discord.Embed(title=parameters.get("name", ":question:"))
         embed.add_field(name="Summary", inline=False,
-                        value=(f"A board game for {parameters.get('min_players', ':question:'):d}"
-                               + f" to {parameters.get('max_players', ':question:'):d} players,"
+                        value=(f"A board game for {parameters.get('min_players', ':question:')}"
+                               + f" to {parameters.get('max_players', ':question:')} players,"
                                + " with a playing time of "
                                + f" {parameters.get('min_time', ':question:'):s} minutes"
                                + ("" if parameters.get('min_time') == parameters.get('max_time')
@@ -178,10 +185,9 @@ class Gaming(commands.Cog):
 
     @commands.command()
     @loading_status
-    # TODO: @loading_status
     async def bgg(self, ctx: commands.Context, *board_game: str):
         """
-        `!bgg board_game` - Gets the details of `board_game` from Board Game Geek
+        Gets the details of the provided board game from Board Game Geek
         """
 
         identity = self.get_bgg_id(" ".join(board_game))
@@ -199,11 +205,10 @@ class Gaming(commands.Cog):
 
     @commands.command()
     @loading_status
-    # TODO: @loading_status
     async def scry(self, ctx: commands.Context, *card: str):
         """
-        `!scry [card]` - Returns the Magic: the Gathering card that matches (partially
-        or fully) the given argument (or a random card if no argument given)
+        Returns the Magic: the Gathering card that matches (partially or
+        fully) the given argument (or a random card if no argument given)
         """
 
         # random card if no argument
