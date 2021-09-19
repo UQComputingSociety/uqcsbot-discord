@@ -159,8 +159,10 @@ class Gaming(commands.Cog):
         embed = discord.Embed(title=parameters.get("name", ":question:"))
         embed.add_field(name="Summary", inline=False,
                         value=(f"A board game for {parameters.get('min_players', ':question:')}"
-                               + f" to {parameters.get('max_players', ':question:')} players,"
-                               + " with a playing time of "
+                               + (f" to {parameters.get('max_players', ':question:')}"
+                                  if parameters.get('min_players') != parameters.get('max_players')
+                                  else "")
+                               + " players, with a playing time of "
                                + f" {parameters.get('min_time', ':question:'):s} minutes"
                                + ("" if parameters.get('min_time') == parameters.get('max_time')
                                   else f" to {parameters.get('max_time', ':question:'):s} minutes")
