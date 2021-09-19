@@ -53,10 +53,10 @@ class Channels(commands.Cog):
         await ctx.send(f"You've joined {channel.mention}")
 
     @commands.command()
-    async def joinchannels(self, ctx: commands.Context, channels: str):
+    async def joinchannels(self, ctx: commands.Context, *channels: str):
         """ Joins the list of channels that you specify. """
-        for channel in channels.split(" "):
-            await joinchannel(self, ctx, channel)
+        for channel in channels:
+            await self.joinchannel(ctx, channel)
 
     @commands.command()
     async def leavechannel(self, ctx: commands.Context, channel=""):
@@ -97,7 +97,8 @@ class Channels(commands.Cog):
 
         header_message = "Here is a list of the joinable channels"
         channel_list = "\n".join(channel.name for channel in channels_query)
-        footer_messge = "To join or leave one of these channels, use the !joinchannel and !leavechannel commands."
+        footer_messge = ("To join or leave one of these channels, use the !joinchannel and !leavechannel commands.\n"
+                         "To join multiple channels, use the !joinchannels command.")
 
         message = discord.Embed()
         message.title = "Joinable Channels"
