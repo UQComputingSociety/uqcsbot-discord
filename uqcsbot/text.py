@@ -10,8 +10,7 @@ class Text(commands.Cog):
     @commands.command()
     async def binify(self, ctx: commands.Context, *message: str):
         """
-        `!binify (binary | ascii)` - Converts a binary string to an ascii string
-        or vice versa
+        Converts a binary string to an ascii string or vice versa.
         """
         if not message:
             response = "Please include string to convert."
@@ -41,7 +40,7 @@ class Text(commands.Cog):
     @commands.command()
     async def caesar(self, ctx: commands.Context, distance: Optional[int] = 13, *message: str):
         """
-        `!caesar [N] <TEXT>` - Performs caesar shift with a shift of N on given text.
+        Performs caesar shift with a shift of N on given text.
         N defaults to 13 if not given.
         """
         result = ""
@@ -58,7 +57,7 @@ class Text(commands.Cog):
     @commands.command()
     async def httpcat(self, ctx: commands.Context, code: int):
         """
-        `!httpcat <code>` - posts a httpcat image
+        Posts an httpcat image.
         """
         if code in {100, 101, 200, 201, 202, 204, 206, 207, 300, 301, 302, 303, 304, 305, 307,
                     400, 401, 402, 403, 404, 405, 406, 408, 409, 410, 411, 412, 413, 414, 415,
@@ -77,14 +76,14 @@ class Text(commands.Cog):
     @commands.command()
     async def mock(self, ctx: commands.Context, *text: str):
         """
-        `!mock <text>` - mOckS ThE pRovIdEd teXT
+        mOckS ThE pRovIdEd teXT.
         """
         await ctx.send("".join(choice((c.upper(), c.lower())) for c in " ".join(text)))
 
     @commands.command()
     async def zalgo(self, ctx: commands.Context, *text: str):
         """
-        `!zalgo TEXT` - Adds Zalgo characters to the given text.
+        Ȃd͍̋͗̃d͒̈́s̒͢ ̅̂̚͏̞̩ͅZͩ̆a̦̐ͭ́l̠̫̈́̐g̡͗ͯo̝̱̽ ̮̰͊c̢̞ͬh̩ͤ̑a̡̫̟͐̽̌r̪̭͇̓a̘͕̣c͓̐́t̠̂̈̓e̳̣̣͂̉r͓͗s͉̞͝ t̙͓̊ͨoͭ ̋̽͊t̛̖̮̊͋hͤ̂͏̯̺͚e̷͖̩̙̿ ͇̩̕ğ̵̟̘̼i̢͙̜v̲ͫ͘e͐͐͆̕n͟ ̭͋͢ͅt͐͆̀e̝̱͑͛x̝̲t͇͕
         """
         horror = ('\u0315', '\u0358', '\u0328', '\u034f', '\u035f', '\u0337', '\u031b',
                   '\u0321', '\u0334', '\u035c', '\u0360', '\u0361', '\u0340', '\u0322',
