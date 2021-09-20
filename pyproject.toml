@@ -15,6 +15,7 @@ requests = "^2.25"
 beautifulsoup4 = "^4.9"
 APScheduler = "^3.7.0"
 SQLAlchemy = {version = "^1.4.21", extras = ["postgresql_psycopg2binary"]}
+humanize = "^3.11.0"
 
 [tool.poetry.dev-dependencies]
 
