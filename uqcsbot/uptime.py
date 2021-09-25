@@ -9,7 +9,7 @@ from humanize import precisedelta
 from uqcsbot.bot import UQCSBot
 
 class UpTime(commands.Cog):
-    CHANNEL_ID = 859723617574453248
+    CHANNEL_ID = 836243768411160606
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
@@ -25,6 +25,9 @@ class UpTime(commands.Cog):
 
     @commands.command()
     async def uptime(self, ctx: commands.Context):
+        """
+            Defines the current uptime for UQCSBot
+        """
         t = datetime.now() - self.bot.start_time
         message = ("The bot has been online for"
                    + f" {precisedelta(t, format='%.0f'):s}"
