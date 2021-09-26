@@ -3,6 +3,7 @@ from discord.ext import commands
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime
 
 class UQCSBot(commands.Bot):
     """ An extended bot client to add extra functionality. """
@@ -10,6 +11,7 @@ class UQCSBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._scheduler = AsyncIOScheduler()
+        self.start_time = datetime.now()
 
     def schedule_task(self, func, *args, **kwargs):
         """ Schedule a function to be run at a later time. A wrapper for apscheduler add_job. """
