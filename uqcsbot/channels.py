@@ -26,37 +26,37 @@ class Channels(commands.Cog):
         return channel_query
 
     @commands.command()
-    async def joinchannel(self, ctx: commands.Context, channel: str):
-        """ Joins the channel that you specify. """
-        channel_query = self._channel_query(channel)
-
-        if channel_query == None:
-            await ctx.send("Unable to join that channel.")
-            return
-
-        channel = self.bot.get_channel(channel_query.id)
-        guild = self.bot.get_guild(SERVER_ID)
-        member = guild.get_member(ctx.author.id)
-
-        if channel == None:
-            await ctx.send("Unable to join that channel.")
-            return 
-
-        # Don't let a user join the channel again if they are already in it.
-        if channel.permissions_for(member).is_superset(JOINED_PERMISSIONS):
-            await ctx.send("You're already a member of that channel.")
-            return
-
-        await channel.set_permissions(member, read_messages=True, reason="UQCSbot added.")
-        join_message = await channel.send(f"{member.display_name} joined {channel.mention}")
-        await join_message.add_reaction("👋")
-        await ctx.send(f"You've joined {channel.mention}")
-
-    @commands.command()
-    async def joinchannels(self, ctx: commands.Context, *channels: str):
-        """ Joins the list of channels that you specify. """
+    async def joinchannel(self, ctx: commands.Context, *channels: str):
+        """ Joins the channel (or channels) that you specify. """
         for channel in channels:
-            await self.joinchannel(ctx, channel)
+            channel_query = self._channel_query(channel)
+
+            if channel_query == None:
+                await ctx.send(f"Unable to join {channel}.")
+                continue
+
+            channel = self.bot.get_channel(channel_query.id)
+            guild = self.bot.get_guild(SERVER_ID)
+            member = guild.get_member(ctx.author.id)
+
+            if channel == None:
+                await ctx.send(f"Unable to join {channel}.")
+                continue
+
+            # Don't let a user join the channel again if they are already in it.
+            if channel.permissions_for(member).is_superset(JOINED_PERMISSIONS):
+                await ctx.send(f"You're already a member of {channel}.")
+                continue
+
+            await channel.set_permissions(member, read_messages=True, reason="UQCSbot added.")
+            join_message = await channel.send(f"{member.display_name} joined {channel.mention}")
+            await join_message.add_reaction("👋")
+            await ctx.send(f"You've joined {channel.mention}.")
+
+    @commands.command(hidden=True)
+    async def joinchannels(self, ctx: commands.Context, *channels: str):
+        """ Alias for !joinchannel. """
+        return await self.joinchannel(ctx, *channels)
 
     @commands.command()
     async def leavechannel(self, ctx: commands.Context, channel=""):
@@ -78,9 +78,9 @@ class Channels(commands.Cog):
         member = guild.get_member(ctx.author.id)
 
         # You can't leave a channel that doesn't exist or you're not in.
-        if channel == None or channel.permissions_for(member).is_strict_subset(JOINED_PERMISSIONS): 
+        if channel == None or channel.permissions_for(member).is_strict_subset(JOINED_PERMISSIONS):
             await ctx.send("Unable to leave that channel.")
-            return 
+            return
 
         await channel.set_permissions(member, read_messages=False, reason="UQCSbot removed.")
         if dm_notify:
@@ -98,7 +98,7 @@ class Channels(commands.Cog):
         header_message = "Here is a list of the joinable channels"
         channel_list = "\n".join(channel.name for channel in channels_query)
         footer_messge = ("To join or leave one of these channels, use the !joinchannel and !leavechannel commands.\n"
-                         "To join multiple channels, use the !joinchannels command.")
+                         "To join multiple channels, separate them with a space.")
 
         message = discord.Embed()
         message.title = "Joinable Channels"
@@ -112,7 +112,7 @@ class Channels(commands.Cog):
     async def addjoinchannel(self, ctx: commands.Context, channel: discord.TextChannel):
         """ Sets a channel to be joinable with UQCSbot. """
         db_session = self.bot.create_db_session()
- 
+
         existing = db_session.query(Channel).filter(Channel.id == channel.id).one_or_none()
         if existing:
             existing.joinable = True
@@ -121,7 +121,7 @@ class Channels(commands.Cog):
 
         db_session.commit()
         db_session.close()
-        await ctx.send(f"{channel.mention} was added as a joinable channel.") 
+        await ctx.send(f"{channel.mention} was added as a joinable channel.")
 
     @commands.command()
     @commands.has_permissions(manage_channels=True)
