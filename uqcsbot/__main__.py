@@ -26,7 +26,8 @@ def main():
     # TODO: Handle if postgres URI is not defined.
     DATABASE_URI = os.environ.get("POSTGRES_URI_BOT")
 
-    bot = UQCSBot(command_prefix="!", description=description, intents=intents)
+    # If you need to override the allowed mentions that can be done on a per message basis, but default to off
+    bot = UQCSBot(command_prefix="!", description=description, intents=intents, allowed_mentions=discord.AllowedMentions.none())
 
     cogs = ["basic", "channels", "events", "jobs_bulletin", "latex", "voteythumbs", "working_on", "yelling", "whatsdue", "gaming", "intros", "text", "uptime"]
     for cog in cogs:
