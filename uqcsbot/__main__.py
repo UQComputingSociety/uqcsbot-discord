@@ -27,7 +27,10 @@ def main():
     DATABASE_URI = os.environ.get("POSTGRES_URI_BOT")
 
     # If you need to override the allowed mentions that can be done on a per message basis, but default to off
-    bot = UQCSBot(command_prefix="!", description=description, intents=intents, allowed_mentions=discord.AllowedMentions.none())
+    allowed_mentions = discord.AllowedMentions.none()
+    allowed_mentions.replied_user = True
+
+    bot = UQCSBot(command_prefix="!", description=description, intents=intents, allowed_mentions=allowed_mentions)
 
     cogs = ["basic", "channels", "events", "jobs_bulletin", "latex", "voteythumbs", "working_on", "yelling", "whatsdue", "gaming", "intros", "text", "uptime"]
     for cog in cogs:
