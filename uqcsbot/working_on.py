@@ -22,7 +22,7 @@ class WorkingOn(commands.Cog):
             if not chosen.bot:
                 message.append(f"Hey {chosen.mention}! Tell us about something cool you are working on!")
         
-        await self.bot.get_channel(GENERAL_CHANNEL).send("\n".join(message), allowed_mentions=discord.AllowedMentions(everyone=False, roles=False))
+        await self.bot.get_channel(GENERAL_CHANNEL).send("\n".join(message), allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=False))
 
 def setup(bot: UQCSBot):
     cog = WorkingOn(bot)
