@@ -13,7 +13,8 @@ class WorkingOn(commands.Cog):
 
     async def workingon(self):
         """ 5pm ping for 2 lucky server members to share what they have been working on. """
-        members = list(self.bot.get_all_members())
+        channel = self.bot.get_channel(GENERAL_CHANNEL)
+        members = list(channel.members)
         message = []
 
         while len(message) < 2:
@@ -22,7 +23,7 @@ class WorkingOn(commands.Cog):
             if not chosen.bot:
                 message.append(f"Hey {chosen.mention}! Tell us about something cool you are working on!")
         
-        await self.bot.get_channel(GENERAL_CHANNEL).send("\n".join(message), allowed_mentions=discord.AllowedMentions(everyone=False, roles=False))
+        await channel.send("\n".join(message), allowed_mentions=discord.AllowedMentions(everyone=False, roles=False))
 
 def setup(bot: UQCSBot):
     cog = WorkingOn(bot)
