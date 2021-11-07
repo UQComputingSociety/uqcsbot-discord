@@ -48,7 +48,7 @@ class JobsBulletin(commands.Cog):
         channel_message = (f"{msg.author.display_name} has posted a new job in #jobs-bulletin! :tada: \n"
                    f"Please ask any questions in #jobs-discussion"
                    + f" or in a private message to {msg.author.mention}")
-        await msg.channel.send(channel_message, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False))
+        await msg.channel.send(channel_message, allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=False))
         
         user_message = discord.Embed()
         user_message.title = "#jobs-bulletin reminder"
