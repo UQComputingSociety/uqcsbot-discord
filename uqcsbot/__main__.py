@@ -23,8 +23,9 @@ def main():
 
     DISCORD_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
 
-    # TODO: Handle if postgres URI is not defined.
-    DATABASE_URI = os.environ.get("POSTGRES_URI_BOT")
+    DATABASE_URI = os.environ.get("POSTGRES_URI_BOT")    
+    if DATABASE_URI == None:
+        DATABASE_URI = "sqlite://"
 
     # If you need to override the allowed mentions that can be done on a per message basis, but default to off
     allowed_mentions = discord.AllowedMentions.none()
