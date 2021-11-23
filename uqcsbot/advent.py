@@ -27,8 +27,8 @@ ADVENT_DAYS = list(range(1, 25 + 1))
 EST_TIMEZONE = timezone(timedelta(hours=-5))
 
 # Reminder channel (Usually #contests)
-# REMINDER_CHANNEL = 813411377975918622
-REMINDER_CHANNEL = 859723630433665045
+REMINDER_CHANNEL = 813411377975918622
+# REMINDER_CHANNEL = 859723630433665045
 
 class SortMode(Enum):
     """Options for sorting the leaderboard."""
