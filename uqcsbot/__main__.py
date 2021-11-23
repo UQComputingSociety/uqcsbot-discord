@@ -32,7 +32,22 @@ def main():
 
     bot = UQCSBot(command_prefix="!", description=description, intents=intents, allowed_mentions=allowed_mentions)
 
-    cogs = ["basic", "channels", "events", "jobs_bulletin", "latex", "voteythumbs", "working_on", "yelling", "whatsdue", "gaming", "intros", "text", "uptime"]
+    cogs = [
+            "advent",
+            "basic", 
+            "channels", 
+            "events", 
+            "gaming", 
+            "intros", 
+            "jobs_bulletin", 
+            "latex", 
+            "text", 
+            "uptime",
+            "voteythumbs", 
+            "working_on", 
+            "whatsdue", 
+            "yelling" 
+            ]
     for cog in cogs:
         bot.load_extension(f"uqcsbot.{cog}")
 
