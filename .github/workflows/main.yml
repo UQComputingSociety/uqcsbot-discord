@@ -70,3 +70,4 @@ jobs:
           DOCKER_HOST: ${{ secrets.DOCKER_HOST }}
           BOT_TOKEN: ${{ secrets.DEPLOY_BOT_TOKEN }}
           POSTGRES_URI: ${{ secrets.DEPLOY_POSTGRES_URI }}
+          AOC_SESSION_ID: ${{ secrets.DEPLOY_AOC_SESSION_ID }}

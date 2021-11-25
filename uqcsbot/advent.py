@@ -17,6 +17,7 @@ import logging
 # Leaderboard API URL with placeholders for year and code.
 LEADERBOARD_URL = "https://adventofcode.com/{year}/leaderboard/private/view/{code}.json"
 # Session cookie (will expire in approx 30 days).
+# See: https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables#aoc_session_id
 SESSION_ID = os.environ.get("AOC_SESSION_ID")
 # UQCS leaderboard ID.
 UQCS_LEADERBOARD = 989288
@@ -26,7 +27,7 @@ ADVENT_DAYS = list(range(1, 25 + 1))
 # Puzzles are unlocked at midnight EST.
 EST_TIMEZONE = timezone(timedelta(hours=-5))
 
-# Reminder channel (Usually #contests)
+# Reminder channel ID (Usually #contests)
 REMINDER_CHANNEL = 813411377975918622
 # REMINDER_CHANNEL = 859723630433665045
 

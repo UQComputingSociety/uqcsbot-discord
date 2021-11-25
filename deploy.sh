@@ -14,6 +14,7 @@ docker run -d \
   --label uqcsbot-discord-ci \
   -e DISCORD_BOT_TOKEN=${BOT_TOKEN} \
   -e POSTGRES_URI_BOT=${POSTGRES_URI} \
+  -e AOC_SESSION_ID=${AOC_SESSION_ID} \
   ghcr.io/uqcomputingsociety/uqcsbot-discord:latest
 for x in $OLDCONTAINERS; do
   docker rm -f ${x}
