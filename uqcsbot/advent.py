@@ -3,12 +3,14 @@ from discord.errors import InvalidArgument
 from discord.ext import commands
 from uqcsbot.bot import UQCSBot
 from uqcsbot.utils.command_utils import loading_status
+from uqcsbot.models import AOCWinner
 
 from argparse import ArgumentParser, Namespace
 from datetime import datetime, timedelta, timezone
 from requests.exceptions import RequestException
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from enum import Enum
+from random import choices
 import os
 import io
 import requests
@@ -67,7 +69,8 @@ Delta = Optional[Seconds]
 # TODO: make these types more specific with TypedDict and Literal when possible.
 
 class Member:
-    def __init__(self, name: str, local: int, stars: int, global_: int) -> None:
+    def __init__(self, id: int, name: str, local: int, stars: int, global_: int) -> None:
+        self.id = id
         self.name = name
         self.local = local
         self.stars = stars
@@ -88,7 +91,7 @@ class Member:
         Times and delta are calculated for the given year and day.
         """
 
-        member = cls(data["name"], data["local_score"], data["stars"], data["global_score"])
+        member = cls(data["id"], data["name"], data["local_score"], data["stars"], data["global_score"])
 
         for d, day_data in data["completion_day_level"].items():
             d = int(d)
@@ -360,6 +363,81 @@ class Advent(commands.Cog):
 
     async def reminder_released(self):
         await self.bot.get_channel(REMINDER_CHANNEL).send("Today's Advent of Code puzzle has been released. Good luck!")
+
+    def _get_previous_winners(self, year: int):
+        db_session = self.bot.create_db_session()
+        prev_winners = db_session.query(AOCWinner).filter(AOCWinner.year == year)
+        db_session.close()
+
+        return [winner.aoc_userid for winner in prev_winners]
+
+    def _add_winners(self, winners: List[Tuple[int, str]], year: int):
+        db_session = self.bot.create_db_session()
+
+        for userid, _ in winners:
+            winner = AOCWinner(aoc_userid=userid, year=year)
+            db_session.add(winner)
+
+        db_session.commit()
+        db_session.close()
+
+    def random_choices_without_repition(self, population, weights, k):
+        print(population)
+        print(weights)
+
+        result = []
+        for _ in range(k):
+            if sum(weights) == 0:
+                return result
+
+            result.append(choices(population, weights)[0])
+            index = population.index(result[-1])
+            population.pop(index)
+            weights.pop(index)
+
+        return result
+
+    @commands.command()
+    @loading_status
+    async def advent_winners(self, ctx: commands.Context, start: int, end: int, numberOfWinners: int, *args):
+        """
+        Prints the Advent of Code private leaderboard for UQCS. 
+        
+        !advent --help for additional help.
+        """
+        if len([role for role in ctx.author.roles if role.name == "Committee"]) == 0:
+            await ctx.send("Only committee can select the winners")
+            return
+
+        
+        try:
+            args = self.parse_arguments( args)
+        except discord.InvalidArgument as error:
+            await ctx.send(str(error))
+            return
+
+        try:
+            leaderboard = self.get_leaderboard(args.year, args.code)
+        except ValueError:
+            await ctx.send("Error fetching leaderboard data. Check the leaderboard code, year, and day.")
+            raise
+
+        try:
+            members = [Member.from_member_data(data, args.year, args.day)
+                    for data in leaderboard["members"].values()]
+        except Exception:
+            await ctx.send("Error parsing leaderboard data.")
+            raise
+
+        pre_winners = self._get_previous_winners(args.year)
+        print("winners:", pre_winners)
+
+        dist = [((member.id, member.name), sum([1 for d in range(start, end + 1) if len(member.all_times[d]) > 0])) for member in members if int(member.id) not in pre_winners]
+
+        winners = self.random_choices_without_repition([d[0] for d in dist], [d[1] for d in dist], numberOfWinners)
+        self._add_winners(winners, args.year)
+
+        await ctx.send("And the winners are:\n" + "\n".join([winner[1] for winner in winners]))
 
 def setup(bot: UQCSBot):
     cog = Advent(bot)
