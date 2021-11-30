@@ -2,6 +2,8 @@
 
 UQCSbot is our friendly chat bot used on the [UQCS Discord Server](https://discord.uqcs.org). For the UQCSbot used in our Slack team, see [UQCSbot-Slack](https://github.com/uqcomputing/uqcsbot).
 
+Our bot is open to feedback and improvements by our community and we encourage you to get involved. If you're looking to get started and learn how to participate in open source, this is a great first step.
+
 ## Setup & Running Locally
 
 UQCSbot uses [Poetry](https://python-poetry.org/) for dependency management. Once you have Poetry setup on your machine, you can setup and install the required dependencies by running:
@@ -11,8 +13,8 @@ poetry install
 ```
 
 There are two options to running the bot locally:
+- For most people, following the simple setup will allow you to work with the bot using an in-memory database for testing.
 - If you are familiar with Docker, or wanting to develop within a production like environment, use the Docker setup instructions. 
-- Otherwise, following the simple setup will allow you to work with the bot using an in-memory database for testing.
 
 ### Getting a testing bot token
 
@@ -49,6 +51,8 @@ To shut down the Docker environment, run:
 ```
 docker-compose down
 ```
+
+Make sure you shut down your Docker environment after you're finished as you may accidentally keep the bot running in the background.
 
 ### Environment Variables
 
