@@ -371,24 +371,21 @@ class Advent(commands.Cog):
 
         return [winner.aoc_userid for winner in prev_winners]
 
-    def _add_winners(self, winners: List[Tuple[int, str]], year: int):
+    def _add_winners(self, winners: List[Member], year: int):
         db_session = self.bot.create_db_session()
 
-        for userid, _ in winners:
-            winner = AOCWinner(aoc_userid=userid, year=year)
+        for winner in winners:
+            winner = AOCWinner(aoc_userid=winner.id, year=year)
             db_session.add(winner)
 
         db_session.commit()
         db_session.close()
 
     def random_choices_without_repition(self, population, weights, k):
-        print(population)
-        print(weights)
-
         result = []
         for _ in range(k):
             if sum(weights) == 0:
-                return result
+                return None
 
             result.append(choices(population, weights)[0])
             index = population.index(result[-1])
@@ -401,7 +398,7 @@ class Advent(commands.Cog):
     @loading_status
     async def advent_winners(self, ctx: commands.Context, start: int, end: int, numberOfWinners: int, *args):
         """
-        Prints the Advent of Code private leaderboard for UQCS. 
+        Determines winners for the AOC competition. Winners must be drawn by a member of the committee. 
         
         !advent --help for additional help.
         """
@@ -409,7 +406,6 @@ class Advent(commands.Cog):
             await ctx.send("Only committee can select the winners")
             return
 
-        
         try:
             args = self.parse_arguments( args)
         except discord.InvalidArgument as error:
@@ -429,15 +425,19 @@ class Advent(commands.Cog):
             await ctx.send("Error parsing leaderboard data.")
             raise
 
-        pre_winners = self._get_previous_winners(args.year)
-        print("winners:", pre_winners)
+        previous_winners = self._get_previous_winners(args.year)
+        potential_winners = [member for member in members if int(member.id) not in previous_winners]
+        weights = [sum([1 for d in range(start, end + 1) if len(member.all_times[d]) > 0]) for member in potential_winners]
 
-        dist = [((member.id, member.name), sum([1 for d in range(start, end + 1) if len(member.all_times[d]) > 0])) for member in members if int(member.id) not in pre_winners]
+        winners = self.random_choices_without_repition(potential_winners, weights, numberOfWinners)
+        
+        if winners == None:
+            await ctx.send(f"Insufficient participants to be able to draw {numberOfWinners} winners.")
+            return
 
-        winners = self.random_choices_without_repition([d[0] for d in dist], [d[1] for d in dist], numberOfWinners)
         self._add_winners(winners, args.year)
 
-        await ctx.send("And the winners are:\n" + "\n".join([winner[1] for winner in winners]))
+        await ctx.send("And the winners are:\n" + "\n".join([winner.name for winner in winners]))
 
 def setup(bot: UQCSBot):
     cog = Advent(bot)
