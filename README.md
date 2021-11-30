@@ -6,6 +6,10 @@ Our bot is open to feedback and improvements by our community and we encourage y
 
 ## Setup & Running Locally
 
+Make sure you have installed:
+- [Python](https://python.org) (Ideally 3.9 or newer)
+- [Poetry](https://python-poetry.org/) 
+
 UQCSbot uses [Poetry](https://python-poetry.org/) for dependency management. Once you have Poetry setup on your machine, you can setup and install the required dependencies by running:
 
 ```bash
@@ -14,24 +18,25 @@ poetry install
 
 There are two options to running the bot locally:
 - For most people, following the simple setup will allow you to work with the bot using an in-memory database for testing.
-- If you are familiar with Docker, or wanting to develop within a production like environment, use the Docker setup instructions. 
+- If you are familiar with Docker, and/or needing a proper PostgreSQL database, use the Docker setup instructions. 
 
 ### Getting a testing bot token
 
-To get access to the testing server and receive a testing token, run the _command_ in the #bot-testing channel in the Discord. The bot will DM you a testing token which will give you access to one of the four bots in the testing server.
+To get access to the testing server and receive a testing token, run the `command` in the #bot-testing channel in the Discord. The bot will DM you a testing token which will give you access to one of the four bots in the testing server.
 
 An invite to the bot testing server can be found in the pinned messages of the #bot-testing channel.
 
-Alternatively, you can create your own bot and add it to a server by following _these instructions_.
+Alternatively, you can create your own bot and add it to your own server by following _these instructions_.
 
 ### Simple Setup
 
-You can also run the bot without Docker, however you currently require to have a PostgreSQL instance to connect to.
+The simplest way to get up and running is to run either `launch-dev.ps1` on Windows (using PowerShell) or `launch-dev.sh` on Unix based systems (notably macOS & Linux).
 
-Export the environment variables into your environment, then run:
+The script will import a `.env` file in the root directory, and will also accept a file path to an alternative .env file. If no `.env` file is detected, the script will ask you for your bot token. You can use `.env.example` as a basis for your own .env file.
+
+Alternatively, you can export the required environment variables and run the following:
 ```
-poetry shell
-python -m uqcsbot
+poetry run python -m uqcsbot
 ```
 
 ### Setup with Docker
@@ -56,28 +61,20 @@ Make sure you shut down your Docker environment after you're finished as you may
 
 ### Environment Variables
 
-* `DISCORD_BOT_TOKEN` for the Discord provided bot token.
-* `POSTGRES_URI_BOT` for the PostgreSQL connection string. 
+See the [Wiki page](https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables) and the [.env.example](.env.example) for specifics about what environment variables the bot needs and uses.
 
-The `.env.example` file contains a basis for what you can use as a .env file. (Used for Docker only)
-
-## Testing
-
-Coming soon.
 
 ## Development Resources
 
 If this is your first time working on an open source project, we're here to walk you through every step of the way.
 
-If you're completely new to Git, check out [Atlassian's Git Tutorial site](https://www.atlassian.com/git).
+* If you're completely new to Git, check out [Atlassian's Git Tutorial site](https://www.atlassian.com/git).
 
-<!-- If you're feeling ready to start working on the repository, check out this tutorial on forking and creating a pull request: ** TODO **  -->
+* If you're unsure what to work on, check out the [issues labelled good first issue](https://github.com/UQComputingSociety/uqcsbot-discord/labels/good%20first%20issue).
 
-If you're unsure what to work on, check out the [issues labelled good first issue](https://github.com/UQComputingSociety/uqcsbot-discord/labels/good%20first%20issue).
+* UQCSbot uses the open source [Discord.py project](https://github.com/Rapptz/discord.py), check out the docs at: <https://discordpy.readthedocs.io/>
 
-UQCSbot uses the open source [Discord.py project](https://github.com/Rapptz/discord.py), check out the docs at: <https://discordpy.readthedocs.io/>
-
-If you want more information around working with Discord itself, check out the [Discord Developer Documentation](https://discord.com/developers/docs).
+* If you want more information around working with Discord itself, check out the [Discord Developer Documentation](https://discord.com/developers/docs).
 
 If you have any questions, reach out in the #bot-testing channel in the Discord!
 
