@@ -32,9 +32,9 @@ Alternatively, you can create your own bot and add it to your own server by foll
 
 The simplest way to get up and running is to run either `launch-dev.ps1` on Windows (using PowerShell) or `launch-dev.sh` on Unix based systems (notably macOS & Linux).
 
-The script will import a `.env` file in the root directory, and will also accept a file path to an alternative .env file. If no `.env` file is detected, the script will ask you for your bot token. You can use `.env.example` as a basis for your own .env file.
+The script will attempt to import the `.env` file by default. It can also accept a file path to an alternative .env file. If no `.env` file is detected, the script will ask you for your bot token. You can use `.env.example` as a basis for your own .env file.
 
-Alternatively, you can export the required environment variables and run the following:
+If you don't want to use the script, you can export the required environment variables to your shell and run the following command:
 ```
 poetry run python -m uqcsbot
 ```
