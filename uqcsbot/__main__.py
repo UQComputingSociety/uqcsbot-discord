@@ -3,6 +3,8 @@ import logging
 
 import discord
 from discord.ext import commands
+from discord.ext.commands import bot
+from discord.ext.commands.errors import MissingRequiredArgument
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import Base
 
@@ -36,6 +38,7 @@ def main():
             "advent",
             "basic", 
             "channels", 
+            "error_handler",
             "events", 
             "gaming", 
             "intros", 
