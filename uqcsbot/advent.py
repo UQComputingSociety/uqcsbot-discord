@@ -69,7 +69,8 @@ Delta = Optional[Seconds]
 # TODO: make these types more specific with TypedDict and Literal when possible.
 
 class Member:
-    def __init__(self, name: str, local: int, stars: int, global_: int) -> None:
+    def __init__(self, id: int, name: str, local: int, stars: int, global_: int) -> None:
+        self.id = id
         self.name = name
         self.local = local
         self.stars = stars
