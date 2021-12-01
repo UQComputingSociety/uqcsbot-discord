@@ -148,8 +148,8 @@ class Advent(commands.Cog):
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
-        self.bot.schedule_task(self.reminder_released, trigger='cron', hour=15, day='1-25', month=12)
-        self.bot.schedule_task(self.reminder_fifteen_minutes, trigger='cron', hour=14, minute=45, day='1-25', month=12)
+        self.bot.schedule_task(self.reminder_released, trigger='cron', timezone='Australia/Brisbane', hour=15, day='1-25', month=12)
+        self.bot.schedule_task(self.reminder_fifteen_minutes, trigger='cron', timezone='Australia/Brisbane', hour=14, minute=45, day='1-25', month=12)
 
     def star_char(self, num_stars: int):
         """
