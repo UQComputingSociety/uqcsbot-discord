@@ -437,7 +437,7 @@ class Advent(commands.Cog):
 
         self._add_winners(winners, args.year)
 
-        await ctx.send("And the winners are:\n" + "\n".join([winner.name for winner in winners]))
+        await ctx.send("And the winners are:\n" + "\n".join([winner.name if (winner.name != None) else "anonymous user #" + str(winner.id) for winner in winners]))
 
 def setup(bot: UQCSBot):
     cog = Advent(bot)
