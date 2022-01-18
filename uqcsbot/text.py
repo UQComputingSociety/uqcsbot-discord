@@ -86,7 +86,7 @@ class Text(commands.Cog):
         "adds" "scary" "quotes" "around" "the" "provided" "text"
         """
 
-        await ctx.send(" ".join(f'"{w}"' for w in text.split(' ')))
+        await ctx.send(" ".join(f'"{w}"' for w in text))
         
     @commands.command()
     async def zalgo(self, ctx: commands.Context, *text: str):
