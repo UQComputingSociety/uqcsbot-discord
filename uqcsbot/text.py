@@ -81,6 +81,14 @@ class Text(commands.Cog):
         await ctx.send("".join(choice((c.upper(), c.lower())) for c in " ".join(text)))
 
     @commands.command()
+    async def scare(self, ctx: commands.Context, *text: str):
+        """
+        "adds" "scary" "quotes" "around" "the" "provided" "text"
+        """
+
+        await ctx.send(" ".join(f'"{w}"' for w in text.split(' ')))
+        
+    @commands.command()
     async def zalgo(self, ctx: commands.Context, *text: str):
         """
         Ȃd͍̋͗̃d͒̈́s̒͢ ̅̂̚͏̞̩ͅZͩ̆a̦̐ͭ́l̠̫̈́̐g̡͗ͯo̝̱̽ ̮̰͊c̢̞ͬh̩ͤ̑a̡̫̟͐̽̌r̪̭͇̓a̘͕̣c͓̐́t̠̂̈̓e̳̣̣͂̉r͓͗s͉̞͝ t̙͓̊ͨoͭ ̋̽͊t̛̖̮̊͋hͤ̂͏̯̺͚e̷͖̩̙̿ ͇̩̕ğ̵̟̘̼i̢͙̜v̲ͫ͘e͐͐͆̕n͟ ̭͋͢ͅt͐͆̀e̝̱͑͛x̝̲t͇͕
