@@ -2,7 +2,7 @@
 name = "uqcsbot"
 version = "0.1.0"
 description = "UQCSbot is a chat bot built in Python for the UQCS Discord server."
-authors = ["Your Name <you@example.com>"]
+authors = ["UQ Computing Society <contact@uqcs.org.au>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
@@ -16,6 +16,7 @@ beautifulsoup4 = "^4.9"
 APScheduler = "^3.7.0"
 SQLAlchemy = {version = "^1.4.21", extras = ["postgresql_psycopg2binary"]}
 humanize = "^3.11.0"
+aiohttp = "^3.7"
 
 [tool.poetry.dev-dependencies]
 

@@ -46,9 +46,10 @@ def main():
             "latex", 
             "text", 
             "uptime",
-            "voteythumbs", 
-            "working_on", 
+            "voteythumbs",
+            "web", 
             "whatsdue", 
+            "working_on", 
             "yelling" 
             ]
     for cog in cogs:
