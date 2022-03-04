@@ -44,6 +44,7 @@ def main():
             "intros", 
             "jobs_bulletin", 
             "latex", 
+            "minecraft",
             "text", 
             "uptime",
             "voteythumbs", 
