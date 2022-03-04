@@ -50,6 +50,8 @@ class Minecraft(commands.Cog):
         response = await self.send_rcon_command(command)
         logging.info(response)
 
+        # As Discord has a 2000 character limit for messages, the message is split with space
+        # for any additional items within request. Notably useful for the help command.
         split_response = [response[0][i:i+1900] for i in range(0, len(response[0]), 1900)]
         for split in split_response:
             await ctx.send(f"```{split}```")
