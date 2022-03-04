@@ -8,6 +8,8 @@ class Web(commands.Cog):
         self.bot = bot
         self.bot.loop.create_task(self.web_server())
 
+    # Web server binds to port 8080. This is a basic template to ensure
+    # that Azure has something for a health check.
     async def web_server(self):
         def handle(request):
             return web.Response(text="UQCSbot is running")
