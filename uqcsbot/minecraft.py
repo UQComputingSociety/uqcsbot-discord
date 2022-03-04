@@ -1,9 +1,9 @@
 import logging
 import os
-import aiomcrcon
 import discord
 from discord.ext import commands
 from uqcsbot.bot import UQCSBot
+from aiomcrcon import Client, IncorrectPasswordError, RCONConnectionError
 
 RCON_ADDRESS = os.environ.get("MC_RCON_ADDRESS")
 RCON_PORT = os.environ.get("MC_RCON_PORT")
@@ -22,22 +22,17 @@ class Minecraft(commands.Cog):
 
         Returns:
         A tuple with the response message, and ID for the return message.
+        An ID of -1 is returned if there was an issue connecting to the server.
         """
-        client = aiomcrcon.Client(RCON_ADDRESS, RCON_PORT, RCON_PASSWORD)
-
         try:
-            await client.connect()
-        except aiomcrcon.RCONConnectionError:
+            async with Client(RCON_ADDRESS, RCON_PORT, RCON_PASSWORD) as client:
+                response = await client.send_cmd(command)
+
+        except RCONConnectionError:
             return ("An error occured whilst connecting to the configured server.", -1)
-        except aiomcrcon.IncorrectPasswordError:
+        except IncorrectPasswordError:
             return ("The configured password is incorrect.", -1)
 
-        try:
-            response = await client.send_cmd(command)
-        except aiomcrcon.ClientNotConnectedError:
-            return ("The bot has is not connected to the server, please try again", -1)
-
-        await client.close()
         return response
 
     @commands.command()
