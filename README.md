@@ -42,8 +42,7 @@ python -m uqcsbot
 
 ### Environment Variables
 
-* `DISCORD_BOT_TOKEN` for the Discord provided bot token.
-* `POSTGRES_URI_BOT` for the PostgreSQL connection string.
+See the [Tokens and Environment Variables wiki page](https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables) for what each environment variable is for and how to acquire tokens.
 
 The `.env.example` file contains a basis for what you can use as a .env file. (Used for Docker only)
 
