@@ -43,13 +43,14 @@ def main():
             "gaming", 
             "intros", 
             "jobs_bulletin", 
+            "join",
             "latex", 
             "text", 
             "uptime",
             "voteythumbs", 
             "working_on", 
             "whatsdue", 
-            "yelling" 
+            "yelling",
             ]
     for cog in cogs:
         bot.load_extension(f"uqcsbot.{cog}")
