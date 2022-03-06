@@ -7,18 +7,17 @@ from uqcsbot.bot import UQCSBot
 from uqcsbot.models import Channel
 
 JOINED_PERMISSIONS = discord.Permissions(read_messages=True)
-SERVER_ID = 946610592649728040
+SERVER_ID = 813324385179271168
+# Testing Server
+# SERVER_ID = 836589565237264415
 
-MESSAGE_ID = ""
+MESSAGE_ID = 949998063630577685
 
-EMOJIS = {"academic-advice": "🎓", "adulting": "😐", "banter": "😐", "bot-testing": "😐", "contests": "😐",
-                "covid": "😐", "creative": "😐", "events": "😐", "food": "😐", "games": "😐", "general": "😐",
-                "hackathon": "😐", "hardware": "😐", "jobs-bulletin": "😐", "jobs-discussion": "😐", 
-                "lgbtqia": "😐", "memes": "😐", "politics": "😐", "projects": "😐", "yelling": "😐"}
+EMOJIS = {"academic-advice": "🎓", "adulting": "😐", "covid": "😷"}
 
-prefix = "-"
+prefix = "!"
 intents = discord.Intents.all()
-bc = commands.Bot(command_prefix=prefix, intents=intents)
+client = UQCSBot
 
 class Join(commands.Cog):
 
@@ -31,7 +30,7 @@ class Join(commands.Cog):
         db_session.close()
         return channel_query
 
-    def get_key(map, value):
+    def get_key(self, map, value):
         for k, v in map.items():
             if v == value:
                 return k
@@ -44,10 +43,11 @@ class Join(commands.Cog):
 
         channel_emojis = {}
         for channel in channel_query:
-            channel_emojis[channel] = EMOJIS[channel] if channel in EMOJIS else "❓"
+            if channel.name in EMOJIS:
+                channel_emojis[channel.name] = EMOJIS[channel.name]
         return channel_emojis
 
-    @bc.event
+    @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         """ Add member to the corresponding channel. """
         guild = self.bot.get_guild(SERVER_ID)
@@ -76,7 +76,7 @@ class Join(commands.Cog):
             await channel.set_permissions(member, read_messages=True, reason="UQCSbot added.")
             await member.send(f"You've joined {channel.mention}.")
     
-    @bc.event
+    @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         """ Remove member from the corresponding channel. """
         guild = self.bot.get_guild(SERVER_ID)
@@ -93,10 +93,6 @@ class Join(commands.Cog):
 
             channel = self.bot.get_channel(channel_query.id)
 
-            if channel == None:
-                await member.send(f"Unable to join {channel}.")
-                return
-
             # You can't leave a channel that doesn't exist or you're not in.
             if channel == None or channel.permissions_for(member).is_strict_subset(JOINED_PERMISSIONS):
                 await member.send("Unable to leave that channel.")
@@ -105,19 +101,20 @@ class Join(commands.Cog):
             await channel.set_permissions(member, read_messages=False, reason="UQCSbot removed.")
             await member.send(f"You've left {channel.mention}")
 
-    @commands.command()
-    async def join(self, ctx: commands.Context):
-        """ Create a list of the channels available to join by reacting. """
+    @commands.command(hidden=True)
+    @commands.has_permissions(manage_channels=True)
+    async def joinmessage(self, ctx: commands.Context):
+        """ Create message for reacting. """
         channels = self.get_channel_map()
         channel_list = list(channels.items())
-        print(channel_list)
-        channel_list = [" ".join(emoji, name) for name, emoji in channel_list]
-        channel_list = "\n".join(channel_list)
-        channel_list.append("Hello1")
-               
-        message = await ctx.send(channel_list)
-        for emoji in channels.values(): await message.add_reaction(emoji=emoji)
+        text = ""
+        for name, emoji in channel_list:
+            text += f"``{name}`` : {emoji}\n\n"
 
-    
+        react_message = await ctx.send(text)
+        for name, emoji in channel_list:
+            await react_message.add_reaction(emoji=emoji)
+
+
 def setup(bot: commands.Bot):
     bot.add_cog(Join(bot))
