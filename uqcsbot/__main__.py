@@ -50,12 +50,8 @@ def main():
             "voteythumbs",
             "web", 
             "whatsdue", 
-<<<<<<< HEAD
-            "yelling"
-=======
             "working_on", 
             "yelling" 
->>>>>>> f0a804b5e1e59e29d2f2bc8e771e28702c0979cf
             ]
     for cog in cogs:
         bot.load_extension(f"uqcsbot.{cog}")
