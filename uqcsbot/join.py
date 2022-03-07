@@ -11,13 +11,9 @@ SERVER_ID = 813324385179271168
 # Testing Server
 # SERVER_ID = 836589565237264415
 
-MESSAGE_ID = 950006955961892904
+MESSAGE_ID = 950228218357637150
 
 EMOJIS = {"academic-advice": "🎓", "adulting": "😐", "covid": "😷"}
-
-prefix = "!"
-intents = discord.Intents.all()
-client = UQCSBot
 
 class Join(commands.Cog):
 
@@ -54,13 +50,14 @@ class Join(commands.Cog):
         guild = self.bot.get_guild(SERVER_ID)
         member = guild.get_member(payload.user_id)
 
-        channel = self.bot.get_channel(payload.channel_id)
-        msg = await channel.fetch_message(payload.message_id)
-
-        if not member.bot:
-            await msg.remove_reaction(payload.emoji, member)
-
         if payload.emoji.name in channels.values() and payload.message_id == MESSAGE_ID:
+            channel = self.bot.get_channel(payload.channel_id)
+            msg = await channel.fetch_message(payload.message_id)
+
+            # Remove reaction if not a bot
+            if not member.bot:
+                await msg.remove_reaction(payload.emoji, member)
+                
             channel = self.get_key(channels, payload.emoji.name)
             channel_query = self._channel_query(channel)
 
@@ -90,7 +87,7 @@ class Join(commands.Cog):
         """ Create message for reacting. """
         channels = self.get_channel_map()
         channel_list = list(channels.items())
-        message = ""
+        message = "**Channel Menu:**\nReact to join these channels.\n\n"
         for name, emoji in channel_list:
             message += f"{emoji} : ``{name}``\n\n"
 
