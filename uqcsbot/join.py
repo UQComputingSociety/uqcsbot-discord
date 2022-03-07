@@ -1,5 +1,3 @@
-import logging
-
 import discord
 from discord.ext import commands
 
@@ -11,9 +9,13 @@ SERVER_ID = 813324385179271168
 # Testing Server
 # SERVER_ID = 836589565237264415
 
-MESSAGE_ID = 950228218357637150
+MESSAGE_ID = 950265978888007770
 
-EMOJIS = {"academic-advice": "🎓", "adulting": "😐", "covid": "😷"}
+EMOJIS = {"academic-advice": "📖", "adulting": "🧑", "banter": "💬", "bot-testing" : "🤖",
+                "contests" : "⚔️", "covid" : "⚛️", "creative" : "🎨", "events" : "🗓️", "food" : "🍔",
+                "games" : "🎮", "general" : "⚪", "hackathons" : "🍕", "hardware" : "💻", "jobs-bulletin" : "📌",
+                "jobs-discussion" : "🔈", "lgbtqia" : "🏳️‍🌈", "media" : "📺", "memes" : "🎭", "politics" : "📮",
+                "projects" : "🔨", "uqic-sport" : "🏅", "yelling" : "🗣️"}
 
 class Join(commands.Cog):
 
@@ -22,7 +24,8 @@ class Join(commands.Cog):
 
     def _channel_query(self, channel: str):
         db_session = self.bot.create_db_session()
-        channel_query = db_session.query(Channel).filter(Channel.name == channel).one_or_none()
+        channel_query = db_session.query(Channel).filter(Channel.name == channel,
+                                                         Channel.joinable == True).one_or_none()
         db_session.close()
         return channel_query
 
@@ -34,7 +37,7 @@ class Join(commands.Cog):
 
     def get_channel_map(self):
         db_session = self.bot.create_db_session()
-        channel_query = db_session.query(Channel).order_by(Channel.name)
+        channel_query = db_session.query(Channel).filter(Channel.joinable == True).order_by(Channel.name)
         db_session.close()
 
         channel_emojis = {}
@@ -50,25 +53,25 @@ class Join(commands.Cog):
         guild = self.bot.get_guild(SERVER_ID)
         member = guild.get_member(payload.user_id)
 
-        if payload.emoji.name in channels.values() and payload.message_id == MESSAGE_ID:
+        if payload.message_id == MESSAGE_ID:
             channel = self.bot.get_channel(payload.channel_id)
             msg = await channel.fetch_message(payload.message_id)
 
             # Remove reaction if not a bot
             if not member.bot:
                 await msg.remove_reaction(payload.emoji, member)
-                
+
             channel = self.get_key(channels, payload.emoji.name)
             channel_query = self._channel_query(channel)
 
             if channel_query == None:
-                await member.send(f"Unable to find channel {channel}.")
+                await member.send(f"Unable to find that channel.")
                 return
 
             channel = self.bot.get_channel(channel_query.id)
 
             if channel == None:
-                await member.send(f"Unable to find channel {channel}.")
+                await member.send(f"Unable to find that channel.")
                 return
 
             # Leave the channel if the user is currently a member.
@@ -79,20 +82,21 @@ class Join(commands.Cog):
 
             # Otherwise, join the channel.
             await channel.set_permissions(member, read_messages=True, reason="UQCSbot added.")
-            await member.send(f"You've joined {channel.mention}.")
+            await member.send(f"You've joined {channel.mention}")
 
     @commands.command(hidden=True)
     @commands.has_permissions(manage_channels=True)
     async def joinmessage(self, ctx: commands.Context):
-        """ Create message for reacting. """
+        """ Create message to react to. """
         channels = self.get_channel_map()
         channel_list = list(channels.items())
         message = "**Channel Menu:**\nReact to join these channels.\n\n"
+
         for name, emoji in channel_list:
             message += f"{emoji} : ``{name}``\n\n"
-
         react_message = await ctx.send(message)
-        for name, emoji in channel_list:
+
+        for emoji in channels.values():
             await react_message.add_reaction(emoji=emoji)
 
 def setup(bot: commands.Bot):
