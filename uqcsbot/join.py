@@ -9,8 +9,6 @@ SERVER_ID = 813324385179271168
 # Testing Server
 # SERVER_ID = 836589565237264415
 
-MESSAGE_ID = 950265978888007770
-
 EMOJIS = {"academic-advice": "📖", "adulting": "🧑", "banter": "💬", "bot-testing" : "🤖",
                 "contests" : "⚔️", "covid" : "⚛️", "creative" : "🎨", "events" : "🗓️", "food" : "🍔",
                 "games" : "🎮", "general" : "⚪", "hackathons" : "🍕", "hardware" : "💻", "jobs-bulletin" : "📌",
@@ -21,6 +19,7 @@ class Join(commands.Cog):
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
+        self.message_id = None
 
     def _channel_query(self, channel: str):
         db_session = self.bot.create_db_session()
@@ -49,20 +48,19 @@ class Join(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         """ Toggle adding/removing member from the corresponding channel. """
-        channels = self.get_channel_map()
-        guild = self.bot.get_guild(SERVER_ID)
-        member = guild.get_member(payload.user_id)
-
-        if payload.message_id == MESSAGE_ID:
-            channel = self.bot.get_channel(payload.channel_id)
-            msg = await channel.fetch_message(payload.message_id)
+        if payload.message_id == self.message_id:
+            channels = self.get_channel_map()
+            guild = self.bot.get_guild(SERVER_ID)
+            member = guild.get_member(payload.user_id)
 
             # Remove reaction if not a bot
+            channel = self.bot.get_channel(payload.channel_id)
+            msg = await channel.fetch_message(payload.message_id)
             if not member.bot:
                 await msg.remove_reaction(payload.emoji, member)
 
-            channel = self.get_key(channels, payload.emoji.name)
-            channel_query = self._channel_query(channel)
+            channel_name = self.get_key(channels, payload.emoji.name)
+            channel_query = self._channel_query(channel_name)
 
             if channel_query == None:
                 await member.send(f"Unable to find that channel.")
@@ -95,9 +93,11 @@ class Join(commands.Cog):
         for name, emoji in channel_list:
             message += f"{emoji} : ``{name}``\n\n"
         react_message = await ctx.send(message)
+        self.message_id = react_message.id
 
         for emoji in channels.values():
             await react_message.add_reaction(emoji=emoji)
 
 def setup(bot: commands.Bot):
     bot.add_cog(Join(bot))
+    
