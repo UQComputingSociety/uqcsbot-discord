@@ -50,7 +50,7 @@ def main():
             "voteythumbs", 
             "working_on", 
             "whatsdue", 
-            "yelling",
+            "yelling"
             ]
     for cog in cogs:
         bot.load_extension(f"uqcsbot.{cog}")
