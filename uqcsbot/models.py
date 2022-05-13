@@ -9,9 +9,10 @@ class Channel(Base):
     id = Column("id", BigInteger, primary_key=True, nullable=False)
     name = Column("name", String, nullable=False)
     joinable = Column("joinable", Boolean)
+    emoji = Column("emoji", String, nullable=False)
 
     def __repr__(self):
-        return f"Channel({self.id}, {self.name}, {self.joinable})"
+        return f"Channel({self.id}, {self.name}, {self.joinable}, {self.emoji})"
 
 class AOCWinner(Base):
     __tablename__ = 'aoc_winner'
@@ -19,4 +20,3 @@ class AOCWinner(Base):
     id = Column("id", BigInteger, primary_key=True, nullable=False)
     aoc_userid = Column("aoc_userid", Integer, nullable=False)
     year = Column("year", Integer, nullable=False)
-
