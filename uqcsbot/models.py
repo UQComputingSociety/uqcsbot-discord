@@ -14,6 +14,12 @@ class Channel(Base):
     def __repr__(self):
         return f"Channel({self.id}, {self.name}, {self.joinable}, {self.emoji})"
 
+class Message(Base):
+    __tablename__= 'messages'
+
+    id = Column("id", BigInteger, primary_key=True, nullable=False)
+    type = Column("type", String, nullable=False)
+
 class AOCWinner(Base):
     __tablename__ = 'aoc_winner'
 

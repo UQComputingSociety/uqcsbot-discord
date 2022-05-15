@@ -5,7 +5,7 @@ from discord.ext import commands
 from sqlalchemy.exc import NoResultFound
 
 from uqcsbot.bot import UQCSBot
-from uqcsbot.models import Channel
+from uqcsbot.models import Channel, Message
 
 from emoji import UNICODE_EMOJI_ENGLISH
 
@@ -14,12 +14,11 @@ SERVER_ID = 813324385179271168
 # Testing Server
 #SERVER_ID = 836589565237264415
 
-MESSAGE_ID = 974553937984229386
-
 class Channels(commands.Cog):
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
+        self.message_id = None
 
     def _channel_query(self, channel: str):
         db_session = self.bot.create_db_session()
@@ -28,10 +27,21 @@ class Channels(commands.Cog):
         db_session.close()
 
         return channel_query
-    
+
+    def _get_message_id(self):
+        db_session = self.bot.create_db_session()
+        message_query = db_session.query(Message).filter(Message.type == "react_message").one_or_none()
+        db_session.close()
+
+        return message_query.id
+
     def _valid_emoji(self, emoji):
-        custom = [f"<:{e.name}:{e.id}>" for e in self.bot.emojis]
+        custom = set([f"<:{e.name}:{e.id}>" for e in self.bot.emojis])
         return emoji in UNICODE_EMOJI_ENGLISH or emoji in custom
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.message_id = self._get_message_id()
 
     @commands.command()
     async def joinchannel(self, ctx: commands.Context, *channels: str):
@@ -140,7 +150,7 @@ class Channels(commands.Cog):
         db_session.close()
 
         await ctx.send(f"{channel.mention} was added as a joinable channel.")
-        react_message = await ctx.fetch_message(MESSAGE_ID)
+        react_message = await ctx.fetch_message(self.message_id)
         await self.update_message(react_message)
 
     @commands.command()
@@ -158,7 +168,24 @@ class Channels(commands.Cog):
         db_session.close()
 
         await ctx.send(f"{channel.mention} was removed as a joinable channel.")
-        react_message = await ctx.fetch_message(MESSAGE_ID)
+        react_message = await ctx.fetch_message(self.message_id)
+        await self.update_message(react_message)
+
+    @commands.command(hidden=True)
+    @commands.has_permissions(manage_channels=True)
+    async def setmessageid(self, ctx: commands.Context, message_id):
+        """ Changes the id of the react-joins message. """
+        db_session = self.bot.create_db_session()
+        query = db_session.query(Message).filter(Message.type == "react_message")
+        if query.first():
+            query.update({"id": message_id})
+        else:
+            db_session.add(Message(id=message_id, type="react_message"))
+        db_session.commit()
+        db_session.close()
+
+        self.message_id = self._get_message_id()
+        react_message = await ctx.fetch_message(self.message_id)
         await self.update_message(react_message)
 
     @addjoinchannel.error
@@ -173,7 +200,7 @@ class Channels(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         """ Toggle adding/removing member from the corresponding channel. """
-        if payload.message_id == MESSAGE_ID:
+        if payload.message_id == self.message_id:
             guild = self.bot.get_guild(SERVER_ID)
             member = guild.get_member(payload.user_id)
 
@@ -213,7 +240,7 @@ class Channels(commands.Cog):
             await member.send(f"You've joined {channel.mention}")
 
     async def update_message(self, react_message: discord.Message):
-        """ Update react join message. """
+        """ Updates react-joins message. """
         db_session = self.bot.create_db_session()
         channel_query = db_session.query(Channel).filter(Channel.joinable == True).order_by(Channel.name)
         db_session.close()
@@ -229,4 +256,3 @@ class Channels(commands.Cog):
 
 def setup(bot: commands.Bot):
     bot.add_cog(Channels(bot))
-    
