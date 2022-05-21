@@ -20,7 +20,7 @@ class Yelling(commands.Cog):
 
         # ignore emoji and links
         text = re.sub(r":[\w\-\+\_']+:", lambda m: m.group(0).upper(), msg.content, flags=re.UNICODE)
-        text = re.sub(r"(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)", lambda m: m.group(0).upper(), text, flags=re.UNICODE)
+        text = re.sub(r"(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]+)(((%[\da-f]{2})|[\/\w\.-])*)", lambda m: m.group(0).upper(), text, flags=re.UNICODE)
         text = text.replace("&gt;", ">").replace("&lt;", "<").replace("&amp;", "&")
 
         response = choice(["WHAT’S THAT‽",
