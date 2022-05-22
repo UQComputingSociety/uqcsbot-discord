@@ -19,8 +19,11 @@ class Yelling(commands.Cog):
             return
 
         # ignore emoji and links
-        text = re.sub(r":[\w\-\+\_']+:", lambda m: m.group(0).upper(), msg.content, flags=re.UNICODE)
-        text = re.sub(r"(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]+)(((%[\da-f]{2})|([\{\}_@#$%^+*<>~\"\'\[\]\?\=\&\/\w\.-])*))", lambda m: m.group(0).upper(), text, flags=re.UNICODE)
+        text = re.sub(r":[\w\-\+\~]+:", lambda m: m.group(0).upper(), msg.content, flags=re.UNICODE)
+
+        # slightly more permissive version of discord's url regex, matches absolutely anything between http(s):// and whitespace
+        text = re.sub(r"https?:\/\/[^\s]+", lambda m: m.group(0).upper(), text, flags=re.UNICODE)
+
         text = text.replace("&gt;", ">").replace("&lt;", "<").replace("&amp;", "&")
 
         response = choice(["WHAT’S THAT‽",
