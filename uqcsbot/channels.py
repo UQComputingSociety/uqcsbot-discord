@@ -128,7 +128,7 @@ class Channels(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(manage_channels=True)
-    async def addjoinchannel(self, ctx: commands.Context, channel: discord.TextChannel, emoji):
+    async def addjoinchannel(self, ctx: commands.Context, channel: discord.TextChannel, emoji: str):
         """ Sets a channel to be joinable with UQCSbot. """
         if not self._valid_emoji(emoji):
             await ctx.send("Please select an emoji found within this server.")
@@ -173,10 +173,10 @@ class Channels(commands.Cog):
         react_message = await ctx.fetch_message(self.message_id)
         await self.update_message(react_message)
 
-    @commands.command(hidden=True)
+    @commands.command()
     @commands.has_permissions(manage_channels=True)
     async def setmessageid(self, ctx: commands.Context, message_id):
-        """ Changes the id of the react-joins message. """
+        """ Changes which message is used for react-joins given a new message id. """
         db_session = self.bot.create_db_session()
         query = db_session.query(Message).filter(Message.type == "react_message")
         if query.first():
