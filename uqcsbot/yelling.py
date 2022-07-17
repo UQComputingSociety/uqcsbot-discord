@@ -13,13 +13,17 @@ class Yelling(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, msg: discord.Message):
-        """ Detects if a message is sent in #jobs_bulletin and sends notification to channel and author. """
+        """ Detects if a user is not yelling in #yelling and responds accordingly """
         if not self.bot.user or not isinstance(msg.channel, discord.TextChannel) or \
                 msg.author.id == self.bot.user.id or msg.channel.name != self.CHANNEL_NAME:
             return
 
-        # ignore emoji
-        text = re.sub(r":[\w\-\+\_']+:", lambda m: m.group(0).upper(), msg.content, flags=re.UNICODE)
+        # ignore emoji and links
+        text = re.sub(r":[\w\-\+\~]+:", lambda m: m.group(0).upper(), msg.content, flags=re.UNICODE)
+
+        # slightly more permissive version of discord's url regex, matches absolutely anything between http(s):// and whitespace
+        text = re.sub(r"https?:\/\/[^\s]+", lambda m: m.group(0).upper(), text, flags=re.UNICODE)
+
         text = text.replace("&gt;", ">").replace("&lt;", "<").replace("&amp;", "&")
 
         response = choice(["WHAT’S THAT‽",

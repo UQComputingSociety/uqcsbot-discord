@@ -22,6 +22,8 @@ class Channels(commands.Cog):
 
     def _channel_query(self, channel: str):
         db_session = self.bot.create_db_session()
+        if len(channel) >= 2:
+            channel = channel if channel[0] != "#" else channel[1 : ]
         channel_query = db_session.query(Channel).filter(Channel.name == channel,
                                                          Channel.joinable == True).one_or_none()
         db_session.close()
