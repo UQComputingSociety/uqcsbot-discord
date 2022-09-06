@@ -243,6 +243,6 @@ class Gaming(commands.Cog):
             for face in card['card_faces']:
                 await ctx.send(face['image_uris']['png'])
 
-def setup(bot: commands.Bot):
-    bot.add_cog(Gaming(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Gaming(bot))
 

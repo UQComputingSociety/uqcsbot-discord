@@ -38,6 +38,6 @@ class UpTime(commands.Cog):
         await ctx.send(message)
 
 
-def setup(bot: UQCSBot):
-    bot.add_cog(UpTime(bot))
+async def setup(bot: UQCSBot):
+    await bot.add_cog(UpTime(bot))
 

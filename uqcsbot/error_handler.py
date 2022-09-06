@@ -10,5 +10,5 @@ class ErrorHandler(commands.Cog):
 
         logging.error(err)
 
-def setup(bot: commands.Bot):
-    bot.add_cog(ErrorHandler(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(ErrorHandler(bot))

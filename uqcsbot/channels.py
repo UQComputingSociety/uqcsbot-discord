@@ -10,9 +10,9 @@ from uqcsbot.models import Channel, Message
 from emoji import UNICODE_EMOJI_ENGLISH
 
 JOINED_PERMISSIONS = discord.Permissions(read_messages=True)
-SERVER_ID = 813324385179271168
+# SERVER_ID = 813324385179271168
 # Testing Server
-#SERVER_ID = 836589565237264415
+SERVER_ID = 836589565237264415
 
 class Channels(commands.Cog):
 
@@ -256,5 +256,5 @@ class Channels(commands.Cog):
         for channel in channel_query:
             await react_message.add_reaction(channel.emoji)
 
-def setup(bot: commands.Bot):
-    bot.add_cog(Channels(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Channels(bot))

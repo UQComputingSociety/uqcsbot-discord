@@ -103,6 +103,6 @@ class Text(commands.Cog):
                 response += choice(horror)
         await ctx.send(response)
 
-def setup(bot: commands.Bot):
-    bot.add_cog(Text(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Text(bot))
 

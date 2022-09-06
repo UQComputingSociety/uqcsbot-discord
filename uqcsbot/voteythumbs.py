@@ -16,6 +16,6 @@ class VoteyThumbs(commands.Cog):
         thumbsright = discord.utils.get(self.bot.emojis, name="thumbsright")
         await ctx.message.add_reaction(str(thumbsright))
 
-def setup(bot: commands.Bot):
-    bot.add_cog(VoteyThumbs(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(VoteyThumbs(bot))
 

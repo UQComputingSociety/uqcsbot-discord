@@ -25,5 +25,5 @@ class Web(commands.Cog):
     def __unload(self):
         asyncio.ensure_future(self.site.stop())
 
-def setup(bot: UQCSBot):
-    bot.add_cog(Web(bot))
+async def setup(bot: UQCSBot):
+    await bot.add_cog(Web(bot))

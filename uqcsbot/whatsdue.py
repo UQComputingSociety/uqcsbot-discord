@@ -71,5 +71,5 @@ class WhatsDue(commands.Cog):
         message += f'\nLink to assessment page <{asses_page}|here>'
         await ctx.send(message)
 
-def setup(bot: commands.Bot):
-    bot.add_cog(WhatsDue(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(WhatsDue(bot))

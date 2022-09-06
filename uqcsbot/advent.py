@@ -1,5 +1,5 @@
+from multiprocessing.sharedctypes import Value
 import discord
-from discord.errors import InvalidArgument
 from discord.ext import commands
 from uqcsbot.bot import UQCSBot
 from uqcsbot.utils.command_utils import loading_status
@@ -282,13 +282,13 @@ class Advent(commands.Cog):
         # used to propagate usage errors out.
         # somewhat hacky. typically, this should be done by subclassing ArgumentParser
         def usage_error(message, *args, **kwargs):
-            raise discord.InvalidArgument(message)
+            raise ValueError(message)
         parser.error = usage_error  # type: ignore
 
         args = parser.parse_args(argv)
 
         if args.help:
-            raise discord.InvalidArgument("```\n" + parser.format_help() + "\n```")
+            raise ValueError("```\n" + parser.format_help() + "\n```")
 
         return args
 
@@ -323,7 +323,7 @@ class Advent(commands.Cog):
 
         try:
             args = self.parse_arguments( args)
-        except discord.InvalidArgument as error:
+        except ValueError as error:
             await ctx.send(str(error))
             return
 
@@ -408,7 +408,7 @@ class Advent(commands.Cog):
 
         try:
             args = self.parse_arguments( args)
-        except discord.InvalidArgument as error:
+        except ValueError as error:
             await ctx.send(str(error))
             return
 
@@ -439,6 +439,6 @@ class Advent(commands.Cog):
 
         await ctx.send("And the winners are:\n" + "\n".join([winner.name if (winner.name != None) else "anonymous user #" + str(winner.id) for winner in winners]))
 
-def setup(bot: UQCSBot):
+async def setup(bot: UQCSBot):
     cog = Advent(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)

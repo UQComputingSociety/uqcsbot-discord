@@ -63,6 +63,6 @@ class JobsBulletin(commands.Cog):
         await msg.author.send(embed=user_message)
             
 
-def setup(bot: commands.Bot):
-    bot.add_cog(JobsBulletin(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(JobsBulletin(bot))
 

@@ -6,17 +6,17 @@ authors = ["UQ Computing Society <contact@uqcs.org.au>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.7"
-"discord.py" = "^1.7.3"
-icalendar = "^4.0"
+python = "^3.9"
+"discord.py" = "^2.0"
+icalendar = "^4.1"
 "python-dateutil" = "^2.8"
-pytz = "^2021.1"
-requests = "^2.25"
-beautifulsoup4 = "^4.9"
-APScheduler = "^3.7.0"
-SQLAlchemy = {version = "^1.4.21", extras = ["postgresql_psycopg2binary"]}
-humanize = "^3.11.0"
-aiohttp = "^3.7"
+pytz = "^2022.2"
+requests = "^2.28"
+beautifulsoup4 = "^4.11"
+APScheduler = "^3.9"
+SQLAlchemy = {version = "^1.4.40", extras = ["postgresql_psycopg2binary"]}
+humanize = "^4.3"
+aiohttp = "^3.8"
 emoji = "^1.7.0"
 
 [tool.poetry.dev-dependencies]

@@ -22,6 +22,6 @@ class Latex(commands.Cog):
         await self._handle_latex_internal(ctx, " ".join(args))
 
 
-def setup(bot: commands.Bot):
-    bot.add_cog(Latex(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Latex(bot))
 

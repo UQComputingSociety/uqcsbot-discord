@@ -24,6 +24,6 @@ class WorkingOn(commands.Cog):
         
         await self.bot.get_channel(GENERAL_CHANNEL).send("\n".join(message), allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=False))
 
-def setup(bot: UQCSBot):
+async def setup(bot: UQCSBot):
     cog = WorkingOn(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)

@@ -304,6 +304,6 @@ class Events(commands.Cog):
             http_response = requests.get(EXTERNAL_CALENDAR_URL)
         return http_response.content
 
-def setup(bot: commands.Bot):
-    bot.add_cog(Events(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Events(bot))
 

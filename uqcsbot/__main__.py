@@ -1,3 +1,4 @@
+import asyncio
 import os
 import logging
 
@@ -12,7 +13,7 @@ from sqlalchemy import create_engine
 
 description = "The helpful and always listening, UQCSbot."
 
-def main():
+async def main():
 
     logging.basicConfig(level=logging.INFO)
 
@@ -22,6 +23,7 @@ def main():
     # This requires the privileged members intent.
     # Info here: https://discord.com/developers/docs/topics/gateway#privileged-intents
     intents.members = True
+    intents.message_content = True
 
     DISCORD_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
 
@@ -47,18 +49,18 @@ def main():
             "text", 
             "uptime",
             "voteythumbs",
-            "web", 
+            # "web", 
             "whatsdue", 
             "working_on", 
             "yelling" 
             ]
     for cog in cogs:
-        bot.load_extension(f"uqcsbot.{cog}")
+        await bot.load_extension(f"uqcsbot.{cog}")
 
     db_engine = create_engine(DATABASE_URI, echo=True)
     Base.metadata.create_all(db_engine)
     bot.set_db_engine(db_engine)
 
-    bot.run(DISCORD_TOKEN)
+    await bot.start(DISCORD_TOKEN)
 
-main()
+asyncio.run(main())
