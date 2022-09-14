@@ -49,6 +49,7 @@ def main():
             "voteythumbs",
             "web", 
             "whatsdue", 
+            "whatweekisit",
             "working_on", 
             "yelling" 
             ]
