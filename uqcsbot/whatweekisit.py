@@ -5,20 +5,39 @@ from datetime import datetime, timedelta
 from math import ceil
 
 from bs4 import BeautifulSoup
-import discord
 from discord.ext import commands
 
 from uqcsbot.utils.command_utils import loading_status
 
 # Endpoint that contains a table of semester dates
 MARKUP_CALENDAR_URL: str = "https://systems-training.its.uq.edu.au/systems/student-systems/electronic-course-profile-system/design-or-edit-course-profile/academic-calendar-teaching-week"
+DATE_FORMAT = "%d/%m/%Y"
 
 
+# Semester information
 class Semester(NamedTuple):
     name: str
     start_date: datetime
     end_date: datetime
     weeks: List[str]
+
+
+def date_to_string(date: datetime):
+    """
+    Formats date based on the format used for the command
+        Returns:
+            Stringified date
+    """
+    return date.strftime(DATE_FORMAT)
+
+
+def string_to_date(date: str) -> datetime:
+    """
+    Returns datetime object from string based on the format used for the command
+        Returns:
+            Stringified date
+    """
+    return datetime.strptime(date, DATE_FORMAT)
 
 
 def get_semester_times(markup: str) -> List[Semester]:
@@ -41,13 +60,13 @@ def get_semester_times(markup: str) -> List[Semester]:
 
         # We assume the term starts on a Monday
         sem_start = weeks[0].find_all("td")[0].text
-        start_date: datetime = datetime.strptime(sem_start, "%d/%m/%Y")
+        start_date: datetime = string_to_date(sem_start)
 
         # We'll filter out the empty cells at the end of the term, say in case it ends on a Tuesday
         last_week_dates = [
             cell for cell in weeks[-1].find_all("td") if len(cell.text.strip())
         ]
-        end_date: datetime = datetime.strptime(last_week_dates[-1].text, "%d/%m/%Y")
+        end_date: datetime = string_to_date(last_week_dates[-1].text)
 
         week_names = [week.text.strip() for week in table.find("tbody").find_all("th")]
         # Invariant
@@ -71,8 +90,7 @@ def get_semester_week(
             checked_date: the given date that we'll be checking the semester and week for
         Returns:
             A tuple containing the semester, the name of the week we're in, and the weekday
-            respectively. If we're past a given semester and not into the next one, semester will
-            be set to the _last_ semester and week will be None.
+            respectively.
     """
     semester_name = None
     week_name = None
@@ -88,7 +106,8 @@ def get_semester_week(
             weekday = checked_date.strftime("%A")
             week_name = semester.weeks[week_index]
             if "week" not in week_name.lower():
-                week_name = "Week of " + week_name
+                # Accounts for & makes things like "Revision", "Exam", "Pause" a bit nicer
+                week_name = week_name + " Week"
             semester_name = semester.name
 
             break
@@ -105,14 +124,14 @@ class WhatWeekIsIt(commands.Cog):
     async def whatweekisit(self, ctx: commands.Context, *args):
         """
         `!whatweekisit [SPECIFIED_DATE]` - Sends information about which semester, week and weekday
-        it is on the specified date (in %d/%m/%Y format) -- if there's no specified date, it takes
+        it is on the specified date (in DATE_FORMAT) -- if there's no specified date, it takes
         it to be the current one.
         """
         if len(args) > 1:
             await ctx.send("No more than one argument (specified date) is required/s")
             return
         elif len(args) == 1:
-            check_date = datetime.strptime(args[0], "%d/%m/%Y")
+            check_date = string_to_date(args[0], DATE_FORMAT)
         else:
             check_date = datetime.now()
 
@@ -121,7 +140,7 @@ class WhatWeekIsIt(commands.Cog):
 
         semester_name, week_name, weekday = get_semester_week(semesters, check_date)
         if not semester_name:
-            date = check_date.strftime("%d/%m/%Y")
+            date = date_to_string(check_date)
             message = f"University isn't in session on {date}, enjoy the break :)"
         else:
             message = "The week we're in is:\n> "
