@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 
 .vim
+
+# We hate Macs :smiling_face_with_3_hearts:
+**/.DS_STORE
