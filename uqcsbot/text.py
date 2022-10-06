@@ -103,6 +103,11 @@ class Text(commands.Cog):
                 response += choice(horror)
         await ctx.send(response)
 
+    @commands.Cog.listener("on_message")
+    async def cato(self, message):
+        if message.author.id == 813171093405827101:
+            await message.reply("_Ceterum autem censeo praeses capillum esse delendam_.")
+
 def setup(bot: commands.Bot):
     bot.add_cog(Text(bot))
 
