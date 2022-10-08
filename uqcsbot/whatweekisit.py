@@ -1,6 +1,6 @@
 import requests
 from collections import namedtuple
-from typing import NamedTuple, List, Tuple
+from typing import NamedTuple, List, Tuple, Optional
 from datetime import datetime, timedelta
 from math import ceil
 
@@ -83,14 +83,14 @@ def get_semester_times(markup: str) -> List[Semester]:
 
 def get_semester_week(
     semesters: List[Semester], checked_date: datetime
-) -> Tuple[str, str, str]:
+) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     """
     Gets the name of the semester, week and weekday of the date that's to be checked
         Parameters:
             checked_date: the given date that we'll be checking the semester and week for
         Returns:
             A tuple containing the semester, the name of the week we're in, and the weekday
-            respectively.
+            respectively. 
     """
     semester_name = None
     week_name = None
@@ -123,19 +123,26 @@ class WhatWeekIsIt(commands.Cog):
     @loading_status
     async def whatweekisit(self, ctx: commands.Context, *args):
         """
-        `!whatweekisit [SPECIFIED_DATE]` - Sends information about which semester, week and weekday
-        it is on the specified date (in DATE_FORMAT) -- if there's no specified date, it takes
-        it to be the current one.
+        `!whatweekisit [SPECIFIED_DATE]` - Sends information about which
+        semester, week and weekday it is on the specified date (in %d/%m/%Y) --
+        if there's no specified date, it takes it to be the current one.
         """
         if len(args) > 1:
-            await ctx.send("No more than one argument (specified date) is required/s")
+            await ctx.send("No more than one argument (specified date) is required")
             return
         elif len(args) == 1:
-            check_date = string_to_date(args[0], DATE_FORMAT)
+            try:
+                check_date = string_to_date(args[0])
+            except ValueError:
+                await ctx.send(f"Specified date should be in format `{DATE_FORMAT}`")
+                return
         else:
             check_date = datetime.now()
 
         calendar_page = requests.get(MARKUP_CALENDAR_URL)
+        if (calendar_page.status_code != requests.codes.ok):
+            await ctx.send("An error occurred, please try again.")
+
         semesters = get_semester_times(calendar_page.text)
 
         semester_name, week_name, weekday = get_semester_week(semesters, check_date)
@@ -143,8 +150,8 @@ class WhatWeekIsIt(commands.Cog):
             date = date_to_string(check_date)
             message = f"University isn't in session on {date}, enjoy the break :)"
         else:
-            message = "The week we're in is:\n> "
-            message += f"{weekday}, {week_name} of {semester_name}"
+            message = "The week we're in is:\n"
+            message += f"> {weekday}, {week_name} of {semester_name}"
 
         await ctx.send(message)
 
