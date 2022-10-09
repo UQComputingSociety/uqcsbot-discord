@@ -83,18 +83,15 @@ def get_semester_times(markup: str) -> List[Semester]:
 
 def get_semester_week(
     semesters: List[Semester], checked_date: datetime
-) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+) -> Optional[Tuple[str, str, str]]:
     """
     Gets the name of the semester, week and weekday of the date that's to be checked
         Parameters:
             checked_date: the given date that we'll be checking the semester and week for
         Returns:
-            A tuple containing the semester, the name of the week we're in, and the weekday
-            respectively. 
+            If the date exists in one of the semesters: a tuple containing the semester,
+            the name of the week we're in, and the weekday respectively; else, None.
     """
-    semester_name = None
-    week_name = None
-    weekday = None
 
     for semester in semesters:
         # Check if the current date is within the semester range
@@ -109,10 +106,9 @@ def get_semester_week(
                 # Accounts for & makes things like "Revision", "Exam", "Pause" a bit nicer
                 week_name = week_name + " Week"
             semester_name = semester.name
+            return semester_name, week_name, weekday
 
-            break
-
-    return semester_name, week_name, weekday
+    return None
 
 
 class WhatWeekIsIt(commands.Cog):
@@ -140,18 +136,24 @@ class WhatWeekIsIt(commands.Cog):
             check_date = datetime.now()
 
         calendar_page = requests.get(MARKUP_CALENDAR_URL)
-        if (calendar_page.status_code != requests.codes.ok):
+        if calendar_page.status_code != requests.codes.ok:
             await ctx.send("An error occurred, please try again.")
 
         semesters = get_semester_times(calendar_page.text)
 
-        semester_name, week_name, weekday = get_semester_week(semesters, check_date)
-        if not semester_name:
+        semester_tuple = get_semester_week(semesters, check_date)
+        if not semester_tuple:
             date = date_to_string(check_date)
             message = f"University isn't in session on {date}, enjoy the break :)"
         else:
-            message = "The week we're in is:\n"
-            message += f"> {weekday}, {week_name} of {semester_name}"
+            semester_name, week_name, weekday = semester_tuple
+
+            message = (
+                "The week we're in is:"
+                if len(args) == 0
+                else f"The week of {args[0]} is in:"
+            )
+            message += f"\n> {weekday}, {week_name} of {semester_name}"
 
         await ctx.send(message)
 
