@@ -104,7 +104,7 @@ class Text(commands.Cog):
         await ctx.send(response)
 
     @commands.Cog.listener("on_message")
-    async def sealgair(self, message):
+    async def Sealgair(self, message):
         """ Tells off a certain member. """
         if message.author.id == 151616989545234432 and "<@&813325414302875669>" in message.content:
             await message.reply("WHO TF @ ME")
