@@ -106,8 +106,8 @@ class Text(commands.Cog):
     @commands.Cog.listener("on_message")
     async def sealgair(self, message):
         """ Tells off a certain member. """
-        if message.author.id == 151616989545234432 and "<@&813325414302875669>" in message.content:
-            await message.reply("WHO TF @ ME")
+        if message.author.id == 151616989545234432:
+            await message.reply("No Jay")
 
 def setup(bot: commands.Bot):
     bot.add_cog(Text(bot))
