@@ -87,7 +87,7 @@ class Text(commands.Cog):
         """
 
         await ctx.send(" ".join(f'"{w}"' for w in text))
-        
+
     @commands.command()
     async def zalgo(self, ctx: commands.Context, *text: str):
         """
@@ -108,6 +108,12 @@ class Text(commands.Cog):
         if message.author.id == 813171093405827101:
             await message.reply("_Ceterum autem censeo praeses capillum esse delendam_.")
 
+    @commands.Cog.listener("on_message")
+    async def sealgair(self, message):
+        """ Tells off a certain member. """
+        if message.author.id == 151616989545234432 and "<@&813325414302875669>" in message.content:
+            await message.reply("WHO TF @ ME")
+
+
 def setup(bot: commands.Bot):
     bot.add_cog(Text(bot))
-

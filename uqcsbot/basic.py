@@ -30,6 +30,8 @@ class Basic(commands.Cog):
         """ Echos back the text that you send. """
         if text == "":
             await ctx.send("ECHO!")
+        elif text == "I have rebooted!":
+            await ctx.send("No I haven't!")
         else:
             await ctx.send(text)
 
