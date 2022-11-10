@@ -86,7 +86,7 @@ class Channels(commands.Cog):
             message.append(f"Unable to join {commas(failed)}.")
         
         if message:
-            await ctx.send(' '.join(message))
+            await ctx.send('\n'.join(message))
         else:
             await ctx.send("... but nothing happened!")
 
