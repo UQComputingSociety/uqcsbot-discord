@@ -76,13 +76,14 @@ class Channels(commands.Cog):
             await join_message.add_reaction("👋")
             joined.append(channel)
         
+        commas = lambda chans: ', '.join(chans)
         message = []
         if joined:
-            message.append(f"You've joined {','.join(joined)}.")
+            message.append(f"You've joined {commas(joined)}.")
         if already:
-            message.append(f"You're already a member of {','.join(already)}.")
+            message.append(f"You're already a member of {commas(already)}.")
         if failed:
-            message.append(f"Unable to join {','.join(failed)}.")
+            message.append(f"Unable to join {commas(failed)}.")
         
         if message:
             await ctx.send(' '.join(message))
