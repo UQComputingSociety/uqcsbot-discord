@@ -12,8 +12,7 @@ from emoji import UNICODE_EMOJI_ENGLISH
 JOINED_PERMISSIONS = discord.Permissions(read_messages=True)
 SERVER_ID = 813324385179271168
 # Testing Server
-#SERVER_ID = 836589565237264415
-
+# SERVER_ID = 836589565237264415
 class Channels(commands.Cog):
 
     def __init__(self, bot: UQCSBot):
@@ -76,7 +75,7 @@ class Channels(commands.Cog):
             await join_message.add_reaction("👋")
             joined.append(channel)
         
-        commas = lambda chans: ', '.join(chans)
+        commas = lambda chans: ', '.join(map(str, chans))
         message = []
         if joined:
             message.append(f"You've joined {commas(joined)}.")
