@@ -4,6 +4,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
+from aiohttp import web
 
 class UQCSBot(commands.Bot):
     """ An extended bot client to add extra functionality. """
@@ -20,6 +21,23 @@ class UQCSBot(commands.Bot):
     def set_db_engine(self, db_engine: Engine):
         """ Creates a sessionmaker from the provided database engine which can be called from commands. """
         self.create_db_session = sessionmaker(bind=db_engine)
+
+    async def setup_hook(self):
+        await self.web_server()
+
+    # Web server binds to port 8080. This is a basic template to ensure
+    # that Azure has something for a health check.
+    async def web_server(self):
+        def handle(request):
+            return web.Response(text="UQCSbot is running")
+
+        app = web.Application()
+        app.router.add_get('/', handle)
+        runner = web.AppRunner(app)
+        await runner.setup()
+        self.site = web.TCPSite(runner, '0.0.0.0', 8080)
+        # await self.bot.wait_until_ready()
+        await self.site.start()
 
     async def on_ready(self):
         """ Once the bot is loaded and has connected, run these commands first. """

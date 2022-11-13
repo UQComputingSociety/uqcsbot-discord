@@ -49,7 +49,6 @@ async def main():
             "text", 
             "uptime",
             "voteythumbs",
-            # "web", 
             "whatsdue", 
             "working_on", 
             "yelling" 
