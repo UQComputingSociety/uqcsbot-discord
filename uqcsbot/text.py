@@ -54,7 +54,7 @@ class Text(commands.Cog):
 
         await ctx.send(result)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def httpcat(self, ctx: commands.Context, code: int):
         """
         Posts an httpcat image.

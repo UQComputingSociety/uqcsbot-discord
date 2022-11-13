@@ -23,7 +23,7 @@ class UpTime(commands.Cog):
         else:
             logging.warning(f"bot-testing channel not found {self.CHANNEL_ID}") 
 
-    @commands.command()
+    @commands.hybrid_command()
     async def uptime(self, ctx: commands.Context):
         """
             Defines the current uptime for UQCSBot
@@ -36,7 +36,6 @@ class UpTime(commands.Cog):
                    # adds ordinal suffix
                    + f"{(lambda n: 'tsnrhtdd'[(n//10%10!=1)*(n%10<4)*n%10::4])(self.bot.start_time.day):s}.")
         await ctx.send(message)
-
 
 async def setup(bot: UQCSBot):
     await bot.add_cog(UpTime(bot))

@@ -5,14 +5,15 @@ from typing import List
 UQCS_REPO_URL = "https://github.com/UQComputingSociety/"
 
 REPOS = {
+    "cpg": ("cpg", "Resources for the UQCS competitive programming group"),
     "coc": ("code-of-conduct", "The UQCS Code of Conduct to be followed by all community members"),
     "constitution": ("constitution", "All the business details"),
+    "cookbook": ("cookbook", "A cookbook of recipes contributed by UQCS members"),
     "design": ("design", "All UQCS design assets"),
     "events": ("events", "A repository for events and talk materials"),
-    "inviter": ("slack-invite-automation", "Web application to invite users to our slack team"),
     "minutes": ("minutes", "Minutes from UQCS committee meetings and general meetings"),
     "signup": ("signup", "The UQCS membership signup system"),
-    "uqcsbot-discord": ("uqcsbot", "Our friendly little Discord bot"),
+    "uqcsbot": ("uqcsbot-discord", "Our friendly little Discord bot"),
     "website": ("website", "The UQ Computing Society website"),
 }
 
@@ -33,10 +34,10 @@ class Basic(commands.Cog):
         else:
             await ctx.send(text)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def conduct(self, ctx: commands.Context):
-        await ctx.send("UQCS Code of Conduct")
-        await ctx.send("https://github.com/UQComputingSociety/code-of-conduct")
+        """ Returns the URL for the UQCS Code of Conduct. """
+        await ctx.send("UQCS Code of Conduct: https://uqcs.org/code-of-conduct")
 
     def format_repo_message(self, repos: List[str]) -> str:
         """
@@ -56,6 +57,7 @@ class Basic(commands.Cog):
 
     @commands.command()
     async def repo(self, ctx: commands.Context, *args):
+        """ List of UQCS repos. """
         # All repos
         if len(args) == 1 and args[0] in ["--list", "-l", "list", "full", "all"]:
             await ctx.send("_Useful :uqcs: Github repositories_:\n"
@@ -71,6 +73,11 @@ class Basic(commands.Cog):
             await ctx.send("_Have you considered contributing to the bot?_\n" +
                                     self.format_repo_message(["uqcsbot"]) +
                                     "\n _For more repositories, try_ `!repo list`")
+
+    @commands.command(hidden=True)
+    async def repos(self, ctx: commands.Context, *args):
+        """ Alias for repo command """
+        await self.repo(ctx, *args)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):

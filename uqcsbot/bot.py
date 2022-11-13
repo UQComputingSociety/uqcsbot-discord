@@ -36,12 +36,13 @@ class UQCSBot(commands.Bot):
         runner = web.AppRunner(app)
         await runner.setup()
         self.site = web.TCPSite(runner, '0.0.0.0', 8080)
-        # await self.bot.wait_until_ready()
         await self.site.start()
 
     async def on_ready(self):
         """ Once the bot is loaded and has connected, run these commands first. """
         self._scheduler.start()
-
         logging.info(f"Bot online and logged in: [Name=\"{self.user.name}\", ID={self.user.id}]")
 
+        # Sync the app comamand tree with servers.
+        await self.tree.sync()
+        logging.info(f"Synced app command tree with guilds.")

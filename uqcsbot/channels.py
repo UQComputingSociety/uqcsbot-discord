@@ -10,9 +10,9 @@ from uqcsbot.models import Channel, Message
 from emoji import UNICODE_EMOJI_ENGLISH
 
 JOINED_PERMISSIONS = discord.Permissions(read_messages=True)
-# SERVER_ID = 813324385179271168
+SERVER_ID = 813324385179271168
 # Testing Server
-SERVER_ID = 836589565237264415
+# SERVER_ID = 836589565237264415
 
 class Channels(commands.Cog):
 
@@ -78,7 +78,7 @@ class Channels(commands.Cog):
         """ Alias for !joinchannel. """
         return await self.joinchannel(ctx, *channels)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def leavechannel(self, ctx: commands.Context, channel=""):
         """ Leaves the channel that you specify. """
         
@@ -108,7 +108,7 @@ class Channels(commands.Cog):
         else:
             await ctx.send(f"You've left {channel.mention}")
 
-    @commands.command()
+    @commands.hybrid_command()
     async def listchannels(self, ctx: commands.Context):
         """ Lists the channels that you can join. """
         db_session = self.bot.create_db_session()

@@ -279,7 +279,6 @@ class Events(commands.Cog):
 
     @commands.command()
     @loading_status
-    # TODO: @loading_status
     async def events(self, ctx: commands.Context, *args):
         """
         !events [full|all|weeks <NUM_WEEKS>] [uqcs|itee]
