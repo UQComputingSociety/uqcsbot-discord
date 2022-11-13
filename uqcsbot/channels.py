@@ -12,8 +12,7 @@ from emoji import UNICODE_EMOJI_ENGLISH
 JOINED_PERMISSIONS = discord.Permissions(read_messages=True)
 SERVER_ID = 813324385179271168
 # Testing Server
-#SERVER_ID = 836589565237264415
-
+# SERVER_ID = 836589565237264415
 class Channels(commands.Cog):
 
     def __init__(self, bot: UQCSBot):
@@ -48,11 +47,14 @@ class Channels(commands.Cog):
     @commands.command()
     async def joinchannel(self, ctx: commands.Context, *channels: str):
         """ Joins the channel (or channels) that you specify. """
+        joined = []
+        already = []
+        failed = []
         for channel in channels:
             channel_query = self._channel_query(channel)
 
             if channel_query == None:
-                await ctx.send(f"Unable to join {channel}.")
+                failed.append(channel)
                 continue
 
             channel = self.bot.get_channel(channel_query.id)
@@ -60,18 +62,32 @@ class Channels(commands.Cog):
             member = guild.get_member(ctx.author.id)
 
             if channel == None:
-                await ctx.send(f"Unable to join {channel}.")
+                failed.append(channel)
                 continue
 
             # Don't let a user join the channel again if they are already in it.
             if channel.permissions_for(member).is_superset(JOINED_PERMISSIONS):
-                await ctx.send(f"You're already a member of {channel}.")
+                already.append(channel)
                 continue
 
             await channel.set_permissions(member, read_messages=True, reason="UQCSbot added.")
             join_message = await channel.send(f"{member.display_name} joined {channel.mention}")
             await join_message.add_reaction("👋")
-            await ctx.send(f"You've joined {channel.mention}.")
+            joined.append(channel)
+        
+        commas = lambda chans: ', '.join(map(str, chans))
+        message = []
+        if joined:
+            message.append(f"You've joined {commas(joined)}.")
+        if already:
+            message.append(f"You're already a member of {commas(already)}.")
+        if failed:
+            message.append(f"Unable to join {commas(failed)}.")
+        
+        if message:
+            await ctx.send('\n'.join(message))
+        else:
+            await ctx.send("... but nothing happened!")
 
     @commands.command(hidden=True)
     async def joinchannels(self, ctx: commands.Context, *channels: str):
