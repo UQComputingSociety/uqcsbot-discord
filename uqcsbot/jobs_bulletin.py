@@ -1,17 +1,18 @@
-from discord.ext import commands
 import discord
-import logging
+from discord.ext import commands
+
 
 class JobsBulletin(commands.Cog):
     CHANNEL_NAME = "jobs-bulletin"
+    DISCUSSION_CHANNEL_NAME = "jobs-discussion"
     FAIR_WORK_INFO = "https://www.fairwork.gov.au/pay/unpaid-work/work-experience-and-internships"
     EAIT_UNPAID_JOBS = "https://www.eait.uq.edu.au/engineering-professional-practice-unpaid-placements"
     EAIT_FACULTY = "https://www.eait.uq.edu.au/"
     CODE_OF_CONDUCT = "https://github.com/UQComputingSociety/code-of-conduct"
-    UQCS_EMAIL = "mailto:contact@uqcs.org.au"
+    UQCS_EMAIL = "contact@uqcs.org"
     WELCOME_MESSAGES = [    # Welcome messages sent to new members
         "#jobs-bulletin is a little different to your average"
-        + " UQCS :slack: channel and has a few extra rules:",
+        + " UQCS Discord channel and has a few extra rules:",
         "**Rules for Everyone** \n"
         "1. The _only_ posts allowed in this channel are job advertisements.\n"
         "2. All discussion about the posted jobs must take place in the #jobs-discussion "
@@ -28,25 +29,28 @@ class JobsBulletin(commands.Cog):
         + " (we will protect our members from being exploited)."
         + f" Additionally, all [unpaid placements]({EAIT_UNPAID_JOBS}) for students in the"
         + f" [EAIT Faculty]({EAIT_FACULTY}) must be approved by the faculty placement advisers.",
-        f"4. Job postings _must_ conform to our [Code of Conduct]({CODE_OF_CONDUCT})"
+        f"4. Job postings **must** conform to our [Code of Conduct]({CODE_OF_CONDUCT})"
         + " and must not discriminate against applicants based on race, religion,"
         + " sexual orientation, gender identity or age.",
         "If you have any questions, please get in touch with the committee in"
-        + f" #uqcs-meta or by email at [contact@uqcs.org.au]({UQCS_EMAIL})."
+        + f" #uqcs-meta or by email at {UQCS_EMAIL}."
     ]
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_message(self, msg):
+    async def on_message(self, msg: discord.Message):
         """ Detects if a message is sent in #jobs_bulletin and sends notification to channel and author. """
         if not self.bot.user or not isinstance(msg.channel, discord.TextChannel) or \
                 msg.author.id == self.bot.user.id or msg.channel.name != self.CHANNEL_NAME:
             return
 
-        channel_message = (f"{msg.author.display_name} has posted a new job in #jobs-bulletin! :tada: \n"
-                   f"Please ask any questions in #jobs-discussion"
+        jobs_bulletin = discord.utils.get(msg.guild.channels, name=self.CHANNEL_NAME)
+        jobs_discussion = discord.utils.get(msg.guild.channels, name=self.DISCUSSION_CHANNEL_NAME)
+
+        channel_message = (f"{msg.author.display_name} has posted a new job in {jobs_bulletin.mention}! :tada: \n"
+                   f"Please ask any questions in {jobs_discussion.mention}"
                    + f" or in a private message to {msg.author.mention}")
         await msg.channel.send(channel_message, allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=False))
         

@@ -1,15 +1,12 @@
 import asyncio
-import os
 import logging
+import os
 
 import discord
-from discord.ext import commands
-from discord.ext.commands import bot
-from discord.ext.commands.errors import MissingRequiredArgument
+from sqlalchemy import create_engine
+
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import Base
-
-from sqlalchemy import create_engine
 
 description = "The helpful and always listening, UQCSbot."
 
@@ -27,8 +24,10 @@ async def main():
 
     DISCORD_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
 
-    # TODO: Handle if postgres URI is not defined.
     DATABASE_URI = os.environ.get("POSTGRES_URI_BOT")
+    if DATABASE_URI == None:
+        # If the database env variable is not defined, default to SQLite in memory db.
+        DATABASE_URI = "sqlite:///"
 
     # If you need to override the allowed mentions that can be done on a per message basis, but default to off
     allowed_mentions = discord.AllowedMentions.none()

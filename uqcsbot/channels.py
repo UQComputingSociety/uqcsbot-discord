@@ -1,18 +1,15 @@
 import logging
 
 import discord
+from discord import app_commands
 from discord.ext import commands
+from emoji import UNICODE_EMOJI_ENGLISH
 from sqlalchemy.exc import NoResultFound
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import Channel, Message
 
-from emoji import UNICODE_EMOJI_ENGLISH
-
 JOINED_PERMISSIONS = discord.Permissions(read_messages=True)
-SERVER_ID = 813324385179271168
-# Testing Server
-# SERVER_ID = 836589565237264415
 
 class Channels(commands.Cog):
 
@@ -56,7 +53,7 @@ class Channels(commands.Cog):
                 continue
 
             channel = self.bot.get_channel(channel_query.id)
-            guild = self.bot.get_guild(SERVER_ID)
+            guild = self.bot.uqcs_server
             member = guild.get_member(ctx.author.id)
 
             if channel == None:
@@ -94,7 +91,7 @@ class Channels(commands.Cog):
             return
 
         channel = self.bot.get_channel(channel_query.id)
-        guild = self.bot.get_guild(SERVER_ID)
+        guild = self.bot.uqcs_server
         member = guild.get_member(ctx.author.id)
 
         # You can't leave a channel that doesn't exist or you're not in.
@@ -203,7 +200,7 @@ class Channels(commands.Cog):
     async def on_raw_reaction_add(self, payload):
         """ Toggle adding/removing member from the corresponding channel. """
         if payload.message_id == self.message_id:
-            guild = self.bot.get_guild(SERVER_ID)
+            guild = self.bot.uqcs_server
             member = guild.get_member(payload.user_id)
 
             # Remove the reaction if not a bot.

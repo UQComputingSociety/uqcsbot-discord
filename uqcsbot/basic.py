@@ -1,12 +1,14 @@
-from discord.ext import commands
-import discord
 from typing import List
+
+import discord
+from discord import app_commands
+from discord.ext import commands
 
 UQCS_REPO_URL = "https://github.com/UQComputingSociety/"
 
 REPOS = {
     "cpg": ("cpg", "Resources for the UQCS competitive programming group"),
-    "coc": ("code-of-conduct", "The UQCS Code of Conduct to be followed by all community members"),
+    "conduct": ("code-of-conduct", "The UQCS Code of Conduct to be followed by all community members"),
     "constitution": ("constitution", "All the business details"),
     "cookbook": ("cookbook", "A cookbook of recipes contributed by UQCS members"),
     "design": ("design", "All UQCS design assets"),
@@ -23,21 +25,45 @@ class Basic(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        """ Sets the status for the bot """
         # TODO: This can be removed once the presence has a better home.
         await self.bot.change_presence(activity=discord.Streaming(name="UQCS Live Stream", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=43s", platform="YouTube"))
 
-    @commands.command()
-    async def echo(self, ctx: commands.Context, *, text=""):
-        """ Echos back the text that you send. """
-        if text == "":
-            await ctx.send("ECHO!")
-        else:
-            await ctx.send(text)
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        """ Member join listener """
+        channel = member.guild.system_channel
+        # On user joining, a system join message will appear in the system channel
+        # This should prevent the bot waving on a user message when #general is busy
+        async for msg in channel.history(limit=5):
+            # Wave only on new member system message
+            if msg.type == discord.MessageType.new_member:
+                await msg.add_reaction('👋')
+                break
 
-    @commands.hybrid_command()
-    async def conduct(self, ctx: commands.Context):
+
+    @app_commands.command()
+    @app_commands.describe(text="Text to echo back")
+    async def echo(self, interaction: discord.Interaction, text: str):
+        """ Echos back the text that you send. """
+        await interaction.response.send_message(text)
+
+    @app_commands.command()
+    async def conduct(self, interaction: discord.Interaction):
         """ Returns the URL for the UQCS Code of Conduct. """
-        await ctx.send("UQCS Code of Conduct: https://uqcs.org/code-of-conduct")
+        await interaction.response.send_message("UQCS Code of Conduct: https://uqcs.org/code-of-conduct")
+
+
+    def find_repo(self, repo: str) -> str:
+        """
+        Finds a specific repo from the REPO dict and constructs a single string for it.
+        :param repo: name of the repo to find.
+        :return: single string containing the info for the given repo.
+        """
+        if repo not in REPOS.keys():
+            return f"> Unrecognised repo \"{repo}\"\n"
+        else:
+            return f"> {UQCS_REPO_URL + REPOS[repo][0]}: {REPOS[repo][1]}\n"
 
     def format_repo_message(self, repos: List[str]) -> str:
         """
@@ -48,47 +74,37 @@ class Basic(commands.Cog):
         """
         repo_strings = []
         for potential_repo in repos:
-            if potential_repo not in REPOS.keys():
-                repo_strings.append(f"> Unrecognised repo \"{potential_repo}\"\n")
-            else:
-                repo_strings.append(f"> {UQCS_REPO_URL + REPOS[potential_repo][0]}"
-                                    f": {REPOS[potential_repo][1]}\n")
+            repo_strings.append(self.find_repo(potential_repo))
         return "".join(repo_strings)
 
-    @commands.command()
-    async def repo(self, ctx: commands.Context, *args):
-        """ List of UQCS repos. """
-        # All repos
-        if len(args) == 1 and args[0] in ["--list", "-l", "list", "full", "all"]:
-            await ctx.send("_Useful :uqcs: Github repositories_:\n"
+    repo_group = app_commands.Group(name="repo", description="Commands for UQCS repos")
+
+    @repo_group.command(name="list")
+    async def repo_list(self, interaction: discord.Interaction):
+        """ Lists the UQCS GitHub repositories """
+        await interaction.response.send_message("_Useful :uqcs: Github repositories_:\n"
                 + self.format_repo_message(list(REPOS.keys())))
 
-        # List of specific repos
-        elif len(args) > 0:
-            await ctx.send("_Requested UQCS Github repositories_:\n"
-                                    + self.format_repo_message(list(args)))
+    @repo_group.command(name="find")
+    @app_commands.describe(name="Name of the repo to find")
+    async def repo_find(self, interaction: discord.Interaction, name: str):
+        """ Finds a specific UQCS GitHub repository """
+        await interaction.response.send_message("_Requested UQCS Github repository_:\n"
+                        + self.find_repo(name))
 
-        # Default option: just uqcsbot link
-        else:
-            await ctx.send("_Have you considered contributing to the bot?_\n" +
-                                    self.format_repo_message(["uqcsbot"]) +
-                                    "\n _For more repositories, try_ `!repo list`")
+    @repo_find.autocomplete('name')
+    async def repo_search_autocomplete(
+        self,
+        interaction: discord.Interaction, 
+        current: str
+    ) -> List[app_commands.Choice[str]]: 
+        """ Autocomplete handler for repo_find command """
+        repo_names = REPOS.keys()
+        return [ 
+            app_commands.Choice(name=name, value=name) 
+            for name in repo_names if current.lower() in name
+        ]
 
-    @commands.command(hidden=True)
-    async def repos(self, ctx: commands.Context, *args):
-        """ Alias for repo command """
-        await self.repo(ctx, *args)
-
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        channel = member.guild.system_channel
-        # On user joining, a system join message will appear in the system channel
-        # This should prevent the bot waving on a user message when #general is busy
-        async for msg in channel.history(limit=5):
-            # Wave only on new member system message
-            if msg.type == discord.MessageType.new_member:
-                await msg.add_reaction('👋')
-                break
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Basic(bot))
