@@ -1,21 +1,25 @@
-import discord
-from discord.ext import commands
-from typing import Optional
 from random import choice, randrange
+from typing import Optional
+
+import discord
+from discord import app_commands
+from discord.ext import commands
+
 
 class Text(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.command()
-    async def binify(self, ctx: commands.Context, *message: str):
+    @app_commands.command()
+    @app_commands.describe(message="Input string")
+    async def binify(self, interaction: discord.Interaction, message: str):
         """
         Converts a binary string to an ascii string or vice versa.
         """
         if not message:
             response = "Please include string to convert."
-        elif set("".join(message)).issubset(["0", "1", " "]) and len("".join(message)) > 2:
-            string = "".join(message)
+        elif set(message).issubset(["0", "1", " "]) and len(message) > 2:
+            string = message
             if len(string) % 8 != 0:
                 response = "Binary string contains partial byte."
             else:
@@ -28,23 +32,24 @@ class Text(commands.Cog):
                     response += chr(n)
         else:
             response = ""
-            for c in " ".join(message).replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">"):
+            for c in message.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">"):
                 n = ord(c)
                 if n >= 128:
                     response = "Character out of ascii range (0-127)"
                     break
                 response += f"{n:08b}"
 
-        await ctx.send(response)
+        await interaction.response.send_message(response)
 
-    @commands.command()
-    async def caesar(self, ctx: commands.Context, distance: Optional[int] = 13, *message: str):
+    @app_commands.command()
+    @app_commands.describe(message="Text to shift", distance="Distance to shift, defaults to 13")
+    async def caesar(self, interaction: discord.Interaction, message: str, distance: Optional[int] = 13):
         """
         Performs caesar shift with a shift of N on given text.
         N defaults to 13 if not given.
         """
         result = ""
-        for c in " ".join(message):
+        for c in message:
             if ord("A") <= ord(c) <= ord("Z"):
                 result += chr((ord(c) - ord("A") + distance) % 26 + ord("A"))
             elif ord("a") <= ord(c) <= ord("z"):
@@ -52,10 +57,11 @@ class Text(commands.Cog):
             else:
                 result += c
 
-        await ctx.send(result)
+        await interaction.response.send_message(result)
 
-    @commands.hybrid_command()
-    async def httpcat(self, ctx: commands.Context, code: int):
+    @app_commands.command()
+    @app_commands.describe(code="HTTP code")
+    async def httpcat(self, interaction: discord.Interaction, code: int):
         """
         Posts an httpcat image.
         """
@@ -63,33 +69,30 @@ class Text(commands.Cog):
                     400, 401, 402, 403, 404, 405, 406, 408, 409, 410, 411, 412, 413, 414, 415,
                     416, 417, 418, 420, 421, 422, 423, 424, 425, 426, 429, 431, 444, 450, 451,
                     500, 502, 503, 504, 506, 507, 508, 509, 510, 511, 599}:
-            await ctx.send(f"https://http.cat/{code}")
+            await interaction.response.send_message(f"https://http.cat/{code}")
         else:
-            await ctx.send(f"HTTP cat {code} is not available")
+            await interaction.response.send_message(f"HTTP cat {code} is not available")
 
-    @httpcat.error
-    async def httpcat_cat(self, ctx, error):
-        if isinstance(error, commands.BadArgument):
-            ctx.command_failed = False
-            await ctx.send("Code not an integer.")
-
-    @commands.command()
-    async def mock(self, ctx: commands.Context, *text: str):
+    @app_commands.command()
+    @app_commands.describe(text="Text to mock")
+    async def mock(self, interaction: discord.Interaction, text: str):
         """
         mOckS ThE pRovIdEd teXT.
         """
-        await ctx.send("".join(choice((c.upper(), c.lower())) for c in " ".join(text)))
+        await interaction.response.send_message("".join(choice((c.upper(), c.lower())) for c in text))
 
-    @commands.command()
-    async def scare(self, ctx: commands.Context, *text: str):
+    @app_commands.command()
+    @app_commands.describe(text="Text to \"scare\"")
+    async def scare(self, interaction: discord.Interaction, text: str):
         """
         "adds" "scary" "quotes" "around" "the" "provided" "text"
         """
 
-        await ctx.send(" ".join(f'"{w}"' for w in text))
+        await interaction.response.send_message(" ".join(f'"{w}"' for w in text.split(" ")))
         
-    @commands.command()
-    async def zalgo(self, ctx: commands.Context, *text: str):
+    @app_commands.command()
+    @app_commands.describe(text="Input text")
+    async def zalgo(self, interaction: discord.Interaction, text: str):
         """
         Ȃd͍̋͗̃d͒̈́s̒͢ ̅̂̚͏̞̩ͅZͩ̆a̦̐ͭ́l̠̫̈́̐g̡͗ͯo̝̱̽ ̮̰͊c̢̞ͬh̩ͤ̑a̡̫̟͐̽̌r̪̭͇̓a̘͕̣c͓̐́t̠̂̈̓e̳̣̣͂̉r͓͗s͉̞͝ t̙͓̊ͨoͭ ̋̽͊t̛̖̮̊͋hͤ̂͏̯̺͚e̷͖̩̙̿ ͇̩̕ğ̵̟̘̼i̢͙̜v̲ͫ͘e͐͐͆̕n͟ ̭͋͢ͅt͐͆̀e̝̱͑͛x̝̲t͇͕
         """
@@ -101,7 +104,7 @@ class Text(commands.Cog):
             response += c
             for i in range(randrange(7)//3):
                 response += choice(horror)
-        await ctx.send(response)
+        await interaction.response.send_message(response)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Text(bot))
