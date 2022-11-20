@@ -1,20 +1,20 @@
-from multiprocessing.sharedctypes import Value
-import discord
-from discord.ext import commands
-from uqcsbot.bot import UQCSBot
-from uqcsbot.utils.command_utils import loading_status
-from uqcsbot.models import AOCWinner
-
+import io
+import logging
+import os
 from argparse import ArgumentParser, Namespace
 from datetime import datetime, timedelta, timezone
-from requests.exceptions import RequestException
-from typing import Any, Callable, Dict, List, Optional, Tuple
 from enum import Enum
 from random import choices
-import os
-import io
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import discord
 import requests
-import logging
+from discord.ext import commands
+from requests.exceptions import RequestException
+
+from uqcsbot.bot import UQCSBot
+from uqcsbot.models import AOCWinner
+from uqcsbot.utils.command_utils import loading_status
 
 # Leaderboard API URL with placeholders for year and code.
 LEADERBOARD_URL = "https://adventofcode.com/{year}/leaderboard/private/view/{code}.json"

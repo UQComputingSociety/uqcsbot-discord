@@ -1,20 +1,20 @@
-from discord.ext import commands
-import discord
-import re
-import requests
 import logging
-from uqcsbot.bot import UQCSBot
-
-from typing import List
+import re
+from calendar import day_abbr, month_abbr, month_name
 from datetime import date, datetime, timedelta
-from calendar import month_name, month_abbr, day_abbr
+from typing import List, Optional, Tuple
+
+import discord
+import requests
+from dateutil.rrule import rrulestr
+from discord.ext import commands
 from icalendar import Calendar
 from pytz import timezone, utc
-from typing import Tuple, Optional
-from dateutil.rrule import rrulestr
 
+from uqcsbot.bot import UQCSBot
 from uqcsbot.utils.command_utils import loading_status
-from uqcsbot.utils.seminar_utils import (get_seminars, HttpException, InvalidFormatException)
+from uqcsbot.utils.seminar_utils import (HttpException, InvalidFormatException,
+                                         get_seminars)
 
 UQCS_CALENDAR_URL = "https://calendar.google.com/calendar/ical/" \
                     "q3n3pce86072n9knt3pt65fhio%40group.calendar.google.com/public/basic.ics"

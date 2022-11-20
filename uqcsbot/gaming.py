@@ -1,7 +1,6 @@
 from difflib import SequenceMatcher
 from html import unescape
 from json import loads
-import logging
 from typing import Optional
 from urllib.error import HTTPError
 from urllib.request import urlopen

@@ -1,9 +1,8 @@
-import logging
-
 import discord
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
+
 
 class Intros(commands.Cog):
     CHANNEL_NAME = 'intros'

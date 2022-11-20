@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from random import choice, random
-from typing import List, Tuple
 import re
 
 
