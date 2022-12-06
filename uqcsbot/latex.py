@@ -8,7 +8,7 @@ class Latex(commands.Cog):
 
     @classmethod
     async def _handle_latex_internal(cls, ctx: commands.Context, data):
-        url = f"http://latex.codecogs.com/gif.latex?\\bg_white&space;{quote(data)}"
+        url = f"https://latex.codecogs.com/png.image?%5Cdpi%7B200%7D%5Cbg%7B36393f%7D%5Cfg%7Bwhite%7D{quote(data)}"
 
         await ctx.send(
             f"LaTeX render for \"{data}\"\n{url}",
