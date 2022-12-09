@@ -1,10 +1,10 @@
 import logging
-import re
 from calendar import day_abbr, month_abbr, month_name
 from datetime import date, datetime, timedelta
 from typing import List, Optional, Tuple
 
 import discord
+from discord import app_commands
 import requests
 from dateutil.rrule import rrulestr
 from discord.ext import commands
@@ -12,14 +12,11 @@ from icalendar import Calendar
 from pytz import timezone, utc
 
 from uqcsbot.bot import UQCSBot
-from uqcsbot.utils.command_utils import loading_status
-from uqcsbot.utils.seminar_utils import (HttpException, InvalidFormatException,
-                                         get_seminars)
 
 UQCS_CALENDAR_URL = "https://calendar.google.com/calendar/ical/" \
                     "q3n3pce86072n9knt3pt65fhio%40group.calendar.google.com/public/basic.ics"
-EXTERNAL_CALENDAR_URL = "https://calendar.google.com/calendar/ical/" \
-                        "72abf01afvsl3bjd9oq2g1avgg%40group.calendar.google.com/public/basic.ics"
+# EXTERNAL_CALENDAR_URL = "https://calendar.google.com/calendar/ical/" \
+#                         "72abf01afvsl3bjd9oq2g1avgg%40group.calendar.google.com/public/basic.ics"
 # Testing calendar: "https://calendar.google.com/calendar/ical/7djv171v2mdr4dmufq612j6uj4%40group.calendar.google.com/public/basic.ics"
 
 MONTH_NUMBER = {month.lower(): index for index, month in enumerate(month_abbr)}
@@ -27,7 +24,8 @@ MONTH_NUMBER = {month.lower(): index for index, month in enumerate(month_abbr)}
 MAX_RECURRING_EVENTS = 3
 BRISBANE_TZ = timezone('Australia/Brisbane')
 
-# For testing server: EVENTS_CHANNEL = 867246372670668810
+# For testing server:
+# EVENTS_CHANNEL = 867246372670668810
 EVENTS_CHANNEL = 813378207696945172
 
 class EventFilter(object):
@@ -136,14 +134,6 @@ class Event(object):
                    f"{'[External] ' if source == 'external' else ''}{summary}",
                    recurrence_dt is not None, None, source)
 
-    @classmethod
-    def from_seminar(cls, seminar_event: Tuple[str, str, datetime, str]):
-        title, link, start, location = seminar_event
-        # ITEE doesn't specify the length of seminars, but they are normally one hour
-        end = start + timedelta(hours=1)
-        # Note: this
-        return cls(start, end, location, f"[ITEE Seminar] {title}", False, link, "ITEE")
-
     def get_title(self):
         # TODO: fix for case with link
         return Event.encode_text(("[Recurring] " if self.recurring else "") + self.summary)
@@ -171,7 +161,7 @@ class Events(commands.Cog):
     """
     def __init__(self, bot: UQCSBot):
         self.bot = bot
-        self.bot.schedule_task(self.scheduled_message, trigger='cron', hour=9, day_of_week="mon", timezone='Australia/Brisbane')
+        self.bot.schedule_task(self.scheduled_message, trigger='cron', hour=22, minute=32, timezone='Australia/Brisbane')
 
     async def scheduled_message(self):
         await self.send_events(self.bot.get_channel(EVENTS_CHANNEL))
@@ -222,35 +212,13 @@ class Events(commands.Cog):
 
         return events
 
-    async def send_events(self, channel: discord.abc.Messageable, *args):
+    async def send_events(self, channel: discord.abc.Messageable, interaction: discord.Interaction = None, *args):
         current_time = self._get_current_time()
-        source_get = {"uqcs": False, "itee": False, "external": False}
-        for k in source_get:
-            if k in args:
-                source_get[k] = True
-        if not any(source_get.values()):
-            source_get = dict.fromkeys(source_get, True)
-
         event_filter = EventFilter.from_argument(args)
-
         events = []
 
-        if source_get["uqcs"]:
-            uqcs_calendar = Calendar.from_ical(self._get_calendar_file("uqcs"))
-            events += self._handle_calendar(uqcs_calendar)
-        if source_get["external"]:
-            external_calendar = Calendar.from_ical(self._get_calendar_file("external"))
-            events += self._handle_calendar(external_calendar)
-        if source_get["itee"]:
-            try:
-                # Try to include events from the ITEE seminars page
-                seminars = get_seminars()
-                for seminar in seminars:
-                    # The ITEE website only lists current events.
-                    event = Event.from_seminar(seminar)
-                    events.append(event)
-            except (HttpException, InvalidFormatException) as e:
-                logging.error(e.message)
+        uqcs_calendar = Calendar.from_ical(self._get_calendar_file())
+        events += self._handle_calendar(uqcs_calendar)
 
         # then we apply our event filter as generated earlier
         events = event_filter.filter_events(events, current_time)
@@ -260,47 +228,46 @@ class Events(commands.Cog):
         if not events:
             message_text = f"_{event_filter.get_no_result_msg()}_\n" \
                            f"For a full list of events, visit: " \
-                           f"https://uqcs.org/events " \
-                           f"and https://itee.uq.edu.au/event/3891/phd-confirmation-seminars"
-            await channel.send(message_text)
+                           f"https://uqcs.org/events " 
+            if interaction == None:
+                await channel.send(message_text)
+            else:
+                await interaction.response.send_message(message_text)
         else:
             message_text = f"{event_filter.get_header()}"
-            await channel.send(message_text)
+            if interaction == None:
+                await channel.send(message_text)
+            else:
+                await interaction.response.send_message(message_text)
 
             for event in events:
-                colour = discord.Colour.from_rgb(82, 151, 209) if event.source == "UQCS" else \
-                    discord.Colour.from_rgb(81, 122, 1) if event.source == "ITEE" else discord.Colour.from_rgb(17, 107, 23)
-
+                colour = discord.Colour.from_rgb(82, 151, 209)
+     
                 embed = discord.Embed()
                 embed.colour = colour
                 embed.title = f"{event.get_title()}"
                 embed.description = f"{event.get_time_loc()}"
                 await channel.send(embed=embed)
 
-    @commands.command()
-    @loading_status
-    async def events(self, ctx: commands.Context, *args):
-        """
-        !events [full|all|weeks <NUM_WEEKS>] [uqcs|itee]
-        - Lists all the UQCS and/or  ITEE events that are
-        scheduled to occur within the given filter.
-        If unspecified or invalid, will return the next 2 weeks of events.
-        """
-        await self.send_events(ctx.channel, *args)
+    @app_commands.command()
+    @app_commands.describe(weeks="Number of weeks to return, defaults to 2")
+    async def events(self, interaction: discord.Interaction, weeks: int = 2):
+        """ Shows the upcoming UQCS events for the next 2 weeks. """
+        await self.send_events(interaction.channel, interaction, "weeks", weeks)
 
-                
+    @app_commands.command()
+    async def allevents(self, interaction: discord.Interaction):
+        """ Shows all upcoming UQCS events. """
+        await self.send_events(interaction.channel, interaction, "full")
 
     @classmethod
-    def _get_calendar_file(cls, calendar: str = "uqcs") -> bytes:
+    def _get_calendar_file(cls) -> bytes:
         """
         Loads the UQCS or External Events calender .ics file from Google Calendar.
         This method is mocked by unit tests.
         :return: The returned ics calendar file, as a stream
         """
-        if calendar == "uqcs":
-            http_response = requests.get(UQCS_CALENDAR_URL)
-        else:
-            http_response = requests.get(EXTERNAL_CALENDAR_URL)
+        http_response = requests.get(UQCS_CALENDAR_URL)
         return http_response.content
 
 async def setup(bot: commands.Bot):

@@ -193,7 +193,7 @@ class Channels(commands.Cog):
 
     @channel_group.command(name="setmessageid")
     @app_commands.checks.has_permissions(manage_channels=True)
-    @commands.has_permissions(manage_channels=True)
+    @app_commands.describe(message_id="ID of message to react to")
     async def setmessageid_command(self, interaction: discord.Interaction, message_id: int):
         """ Changes which message is used for react-joins given a new message id. """
         db_session = self.bot.create_db_session()
