@@ -18,9 +18,10 @@ SQLAlchemy = {version = "^1.4.40", extras = ["postgresql_psycopg2binary"]}
 humanize = "^4.3"
 aiohttp = "^3.8"
 emoji = "^1.7.0"
+pytest-datafiles = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.2.1"]
 build-backend = "poetry.core.masonry.api"

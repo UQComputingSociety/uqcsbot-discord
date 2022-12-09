@@ -46,7 +46,12 @@ class Basic(commands.Cog):
     @app_commands.describe(text="Text to echo back")
     async def echo(self, interaction: discord.Interaction, text: str):
         """ Echos back the text that you send. """
-        await interaction.response.send_message(text)
+        if text == "":
+            await interaction.response.send_message("ECHO!")
+        elif text == "I have rebooted!":
+            await interaction.response.send_message("No I haven't!")
+        else:
+            await interaction.response.send_message(text)
 
     @app_commands.command()
     async def conduct(self, interaction: discord.Interaction):
