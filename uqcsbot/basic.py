@@ -13,7 +13,7 @@ REPOS = {
     "cookbook": ("cookbook", "A cookbook of recipes contributed by UQCS members"),
     "design": ("design", "All UQCS design assets"),
     "events": ("events", "A repository for events and talk materials"),
-    "minutes": ("minutes", "Minutes from UQCS committee meetings and general meetings"),
+    "minutes": ("minutes", "Minutes from UQCS general meetings"),
     "signup": ("signup", "The UQCS membership signup system"),
     "uqcsbot": ("uqcsbot-discord", "Our friendly little Discord bot"),
     "website": ("website", "The UQ Computing Society website"),

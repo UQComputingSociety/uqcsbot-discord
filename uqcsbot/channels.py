@@ -130,7 +130,7 @@ class Channels(commands.Cog):
 
     @channel_group.command(name="addjoinable")
     @app_commands.checks.has_permissions(manage_channels=True)
-    @app_commands.describe(channelname="Channel to add as addable", emoji="Emoji to associate with channel")
+    @app_commands.describe(channelname="Channel to add as joinable", emoji="Emoji to associate with channel")
     async def addjoinable_command(self, interaction: discord.Interaction, channelname: str, emoji: str):
         """ Sets a channel to be joinable with UQCSbot. """
         if not self._valid_emoji(emoji):

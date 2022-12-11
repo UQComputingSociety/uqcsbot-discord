@@ -161,7 +161,7 @@ class Events(commands.Cog):
     """
     def __init__(self, bot: UQCSBot):
         self.bot = bot
-        self.bot.schedule_task(self.scheduled_message, trigger='cron', hour=22, minute=32, timezone='Australia/Brisbane')
+        self.bot.schedule_task(self.scheduled_message, trigger='cron', hour=9, day_of_week="mon", timezone='Australia/Brisbane')
 
     async def scheduled_message(self):
         await self.send_events(self.bot.get_channel(EVENTS_CHANNEL))
