@@ -1,20 +1,20 @@
-import discord
-from discord.errors import InvalidArgument
-from discord.ext import commands
-from uqcsbot.bot import UQCSBot
-from uqcsbot.utils.command_utils import loading_status
-from uqcsbot.models import AOCWinner
-
+import io
+import logging
+import os
 from argparse import ArgumentParser, Namespace
 from datetime import datetime, timedelta, timezone
-from requests.exceptions import RequestException
-from typing import Any, Callable, Dict, List, Optional, Tuple
 from enum import Enum
 from random import choices
-import os
-import io
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import discord
 import requests
-import logging
+from discord.ext import commands
+from requests.exceptions import RequestException
+
+from uqcsbot.bot import UQCSBot
+from uqcsbot.models import AOCWinner
+from uqcsbot.utils.command_utils import loading_status
 
 # Leaderboard API URL with placeholders for year and code.
 LEADERBOARD_URL = "https://adventofcode.com/{year}/leaderboard/private/view/{code}.json"
@@ -282,13 +282,13 @@ class Advent(commands.Cog):
         # used to propagate usage errors out.
         # somewhat hacky. typically, this should be done by subclassing ArgumentParser
         def usage_error(message, *args, **kwargs):
-            raise discord.InvalidArgument(message)
+            raise ValueError(message)
         parser.error = usage_error  # type: ignore
 
         args = parser.parse_args(argv)
 
         if args.help:
-            raise discord.InvalidArgument("```\n" + parser.format_help() + "\n```")
+            raise ValueError("```\n" + parser.format_help() + "\n```")
 
         return args
 
@@ -323,7 +323,7 @@ class Advent(commands.Cog):
 
         try:
             args = self.parse_arguments( args)
-        except discord.InvalidArgument as error:
+        except ValueError as error:
             await ctx.send(str(error))
             return
 
@@ -408,7 +408,7 @@ class Advent(commands.Cog):
 
         try:
             args = self.parse_arguments( args)
-        except discord.InvalidArgument as error:
+        except ValueError as error:
             await ctx.send(str(error))
             return
 
@@ -439,6 +439,6 @@ class Advent(commands.Cog):
 
         await ctx.send("And the winners are:\n" + "\n".join([winner.name if (winner.name != None) else "anonymous user #" + str(winner.id) for winner in winners]))
 
-def setup(bot: UQCSBot):
+async def setup(bot: UQCSBot):
     cog = Advent(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)

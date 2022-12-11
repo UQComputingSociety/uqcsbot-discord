@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from random import choice, random
-from typing import List, Tuple
 import re
 
 
@@ -39,7 +38,6 @@ class Yelling(commands.Cog):
                    "IT’S ON THE LEFT OF THE “A” KEY!",
                    "FORMER PRESIDENT THEODORE ROOSEVELT’S FOREIGN POLICY IS A SHAM!",
                    "#YELLING IS FOR EXTERNAL SCREAMING!"
-                   + " (FOR INTERNAL SCREAMING, VISIT #CRIPPLINGDEPRESSION!)",
                    f"DID YOU SAY \n>>>{self.mutate_minuscule(text)}".upper(),
                    f"WHAT IS THE MEANING OF THIS ARCANE SYMBOL “{self.random_minuscule(text)}”‽"
                    + " I RECOGNISE IT NOT!"]
@@ -82,6 +80,6 @@ class Yelling(commands.Cog):
                 possible += char
         return choice(possible) if possible else ""
 
-def setup(bot: commands.Bot):
-    bot.add_cog(Yelling(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Yelling(bot))
 

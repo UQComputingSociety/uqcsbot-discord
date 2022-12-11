@@ -1,9 +1,11 @@
 from random import choice
+
 import discord
 from discord.ext import commands
+
 from uqcsbot.bot import UQCSBot
 
-GENERAL_CHANNEL = 813325735620116490
+GENERAL_CHANNEL = "general"
 
 class WorkingOn(commands.Cog):
 
@@ -22,8 +24,10 @@ class WorkingOn(commands.Cog):
             if not chosen.bot:
                 message.append(f"Hey {chosen.mention}! Tell us about something cool you are working on!")
         
-        await self.bot.get_channel(GENERAL_CHANNEL).send("\n".join(message), allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=False))
+        general_channel = discord.utils.get(self.bot.uqcs_server.channels, name=GENERAL_CHANNEL)
 
-def setup(bot: UQCSBot):
+        await general_channel.send("\n".join(message), allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=False))
+
+async def setup(bot: UQCSBot):
     cog = WorkingOn(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)

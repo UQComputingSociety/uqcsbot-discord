@@ -1,15 +1,17 @@
-import discord
-from discord.ext import commands
 from datetime import datetime
-from uqcsbot.utils.command_utils import loading_status
-from uqcsbot.utils.uq_course_utils import (get_course_assessment,
-                                           get_course_assessment_page,
-                                           HttpException,
-                                           CourseNotFoundException,
-                                           ProfileNotFoundException)
+import logging
+from typing import Optional
 
-# Maximum number of courses supported by !whatsdue to reduce call abuse.
-COURSE_LIMIT = 6
+import discord
+from discord import app_commands
+from discord.ext import commands
+
+from uqcsbot.utils.command_utils import loading_status
+from uqcsbot.utils.uq_course_utils import (CourseNotFoundException,
+                                           HttpException,
+                                           ProfileNotFoundException,
+                                           get_course_assessment,
+                                           get_course_assessment_page)
 
 class WhatsDue(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -23,53 +25,60 @@ class WhatsDue(commands.Cog):
         course, task, due, weight = assessment_item
         return f'**{course}**: `{weight}` *{task}* **({due})**'
 
-    @commands.command()
-    @loading_status
-    async def whatsdue(self, ctx: commands.Context, *args):
+    @app_commands.command()
+    @app_commands.describe(
+        fulloutput="Display the full list of assessment. Defaults to False, which only " +
+                   "shows assessment due from today onwards",
+        course1="Course code",
+        course2="Course code",
+        course3="Course code",
+        course4="Course code",
+        course5="Course code",
+        course6="Course code"
+    )
+    async def whatsdue(self, 
+                        interaction: discord.Interaction, 
+                        course1: str, 
+                        course2: Optional[str], 
+                        course3: Optional[str], 
+                        course4: Optional[str],
+                        course5: Optional[str],
+                        course6: Optional[str],
+                        fulloutput: Optional[bool] = False
+                        ):
         """
-        `!whatsdue [-f] [--full] [COURSE CODE 1] [COURSE CODE 2] ...` - Returns all
-        the assessment for a given list of course codes that are scheduled to occur
-        after today. If unspecified, will attempt to return the assessment for the
-        channel that the command was called from. If -f/--full is provided, will
-        return the full assessment list without filtering by cutoff dates.
+        Returns all the assessment for a given list of course codes that are scheduled to occur.
+        Defaults to sending assessment due today onwards.
         """
-        if len(args) == 0:
-            await ctx.send("Must provide argument/s")
-            return 
+        
+        await interaction.response.defer(thinking=True)
 
-        is_full_output = False
-        if '--full' in args or '-f' in args:
-            is_full_output = True
-
-        # If we have any command args left, they're course names. If we don't,
-        # attempt to instead use the channel name as the course name.
-        course_names = [c for c in args if (c != '--full' and c != '-f')]
-
-        if len(course_names) > COURSE_LIMIT:
-            await ctx.send(f'Cannot process more than {COURSE_LIMIT} courses.')
-            return
+        possible_courses = [course1, course2, course3, course4, course5, course6]
+        course_names = [c for c in possible_courses if c != None]
+        
 
         # If full output is not specified, set the cutoff to today's date.
-        cutoff = None if is_full_output else datetime.today()
+        cutoff = None if fulloutput else datetime.today()
         try:
             asses_page = get_course_assessment_page(course_names)
             assessment = get_course_assessment(course_names, cutoff, asses_page)
         except HttpException as e:
-            # TODO bot.logger.error(e.message)
-            await ctx.send(f'An error occurred, please try again.')
+            logging.error(e.message)
+            await interaction.edit_original_response(content=f'An error occurred, please try again.')
             return
         except (CourseNotFoundException, ProfileNotFoundException) as e:
-            await ctx.send(e.message)
+            await interaction.edit_original_response(content=e.message)
             return
 
         message = ('_*WARNING:* Assessment information may vary/change/be entirely'
                    + ' different! Use at your own discretion_\n> ')
         message += '\n> '.join(map(self.get_formatted_assessment_item, assessment))
-        if not is_full_output:
-            message += ('\n_Note: This may not be the full assessment list. Use -f'
-                        + '/--full to print out the full list._')
+        if not fulloutput:
+            message += ('\n_Note: This may not be the full assessment list. Set fulloutput'
+                        + 'to True for the full list._')
         message += f'\nLink to assessment page <{asses_page}|here>'
-        await ctx.send(message)
+        await interaction.edit_original_response(content=message)
 
-def setup(bot: commands.Bot):
-    bot.add_cog(WhatsDue(bot))
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(WhatsDue(bot))
