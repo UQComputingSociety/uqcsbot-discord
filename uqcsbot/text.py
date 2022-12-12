@@ -133,7 +133,7 @@ class Text(commands.Cog):
         
         await interaction.response.send_message(self.zalgo_common(message.text))
         
-    @app_commands.command()
+    @app_commands.command(name="zalgo")
     @app_commands.describe(text="Input text")
     async def zalgo_command(self, interaction: discord.Interaction, text: str):
         """
