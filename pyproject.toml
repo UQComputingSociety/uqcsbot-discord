@@ -21,6 +21,10 @@ emoji = "^1.7.0"
 pytest-datafiles = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
+python-dotenv = "^0.21.0"
+
+[tool.poetry.scripts]
+botdev = "dev.cli:main"
 
 [build-system]
 requires = ["poetry-core>=1.2.1"]
