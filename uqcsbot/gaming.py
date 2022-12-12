@@ -244,8 +244,7 @@ class Gaming(commands.Cog):
             await interaction.edit_original_response(content=card['image_uris']['png'])
         else:
             # double faced cards
-            for face in card['card_faces']:
-                await interaction.edit_original_response(content=face['image_uris']['png'])
+            await interaction.edit_original_response(content="\n".join(face['image_uris']['png'] for face in card['card_faces']))
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Gaming(bot))
