@@ -93,7 +93,7 @@ class Text(commands.Cog):
     async def mock_context(self, interaction: discord.Interaction, message: discord.Message):
         """ mOCkS tHis MEssAgE """
 
-        await interaction.response.send_message("".join(choice((c.upper(), c.lower())) for c in message.text))
+        await interaction.response.send_message("".join(choice((c.upper(), c.lower())) for c in message.content))
 
     @app_commands.command(name="mock")
     @app_commands.describe(text="Text to mock")
@@ -105,7 +105,7 @@ class Text(commands.Cog):
     async def scare_context(self, interaction: discord.Interaction, message: discord.Message):
         """ "adds" "scare" "quotes" "to" "this" "message" """
 
-        await interaction.response.send_message(" ".join(f'"{w}"' for w in message.text.split(" ")))
+        await interaction.response.send_message(" ".join(f'"{w}"' for w in message.content.split(" ")))
 
     @app_commands.command(name="scare")
     @app_commands.describe(text="Text to \"scare\"")
@@ -116,7 +116,7 @@ class Text(commands.Cog):
 
         await interaction.response.send_message(" ".join(f'"{w}"' for w in text.split(" ")))
     
-    def zalgo_common(message: str) -> str:
+    def zalgo_common(self, message: str) -> str:
         """ Zalgo-ifies a given string. """
         horror = ('\u0315', '\u0358', '\u0328', '\u034f', '\u035f', '\u0337', '\u031b',
                   '\u0321', '\u0334', '\u035c', '\u0360', '\u0361', '\u0340', '\u0322',
@@ -131,7 +131,7 @@ class Text(commands.Cog):
     async def zalgo_context(self, interaction: discord.Interaction, message: discord.Message):
         "á ̵d ̵d s̨  ̨͟ z ̛a l g o  ̸ e͝ ͘f f̵͠ e͢ c̷ ̸t  ́ ̡͟t o ̶ ̀ t̶͞ h́ ̡i͢ s  m ́͟e̶ ̢s s̢ a͝ ̨g e͞"
         
-        await interaction.response.send_message(self.zalgo_common(message.text))
+        await interaction.response.send_message(self.zalgo_common(message.content))
         
     @app_commands.command(name="zalgo")
     @app_commands.describe(text="Input text")
