@@ -56,7 +56,7 @@ class Basic(commands.Cog):
     @app_commands.command()
     async def smoko(self, interaction: discord.Interaction):
         """ For when you just need a break. """
-        await interaction.response.send_message("https://www.youtube.com/watch?v=j58V2vC9EP")
+        await interaction.response.send_message("https://www.youtube.com/watch?v=j58V2vC9EPc")
 
     @app_commands.command()
     async def conduct(self, interaction: discord.Interaction):
