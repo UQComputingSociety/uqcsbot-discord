@@ -48,6 +48,8 @@ class Basic(commands.Cog):
         """ Echos back the text that you send. """
         if text == "":
             await interaction.response.send_message("ECHO!")
+        elif interaction.channel is not None and interaction.channel.name == "yelling" and any(i.islower() for i in text):
+            await interaction.response.send_message("<:disapproval:894539741997977621>")
         elif text == "I have rebooted!":
             await interaction.response.send_message("No I haven't!")
         else:
