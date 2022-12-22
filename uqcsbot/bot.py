@@ -33,7 +33,15 @@ class UQCSBot(commands.Bot):
     async def setup_hook(self):
         await self.web_server()
 
-    async def admin_alert(self, title: str, footer: str, colour: discord.Colour, description: str = None, fields: List[tuple] = None, fields_inline: bool = True):
+    async def admin_alert(
+        self, 
+        title: str, 
+        colour: discord.Colour, 
+        description: str = None, 
+        footer: str = None, 
+        fields: List[tuple] = None, 
+        fields_inline: bool = True
+    ):
         """ Sends an alert to the admin channel for logging. """
         admin_channel = discord.utils.get(self.uqcs_server.channels, name=ADMIN_ALERTS)
 
@@ -46,8 +54,8 @@ class UQCSBot(commands.Bot):
         if fields:
             for field in fields:
                 admin_message.add_field(name=field[0], value=field[1], inline=fields_inline)
-
-        admin_message.set_footer(text=footer)
+        if footer:
+            admin_message.set_footer(text=footer)
 
         await admin_channel.send(embed=admin_message)
 
