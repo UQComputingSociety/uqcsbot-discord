@@ -26,3 +26,9 @@ class AOCWinner(Base):
     id = Column("id", BigInteger, primary_key=True, nullable=False)
     aoc_userid = Column("aoc_userid", Integer, nullable=False)
     year = Column("year", Integer, nullable=False)
+
+class MCWhitelist(Base):
+    __tablename__ = 'mc_whitelisted'
+    discord_id = Column("discordid", BigInteger, nullable=False)
+    mc_username = Column("mcuser", String, primary_key=True, nullable=False)
+    admin_whitelisted = Column("adminwl", Boolean)
