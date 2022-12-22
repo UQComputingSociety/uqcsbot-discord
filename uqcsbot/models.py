@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, BigInteger, Boolean, Integer
+from sqlalchemy import Column, DateTime, String, BigInteger, Boolean, Integer
 
 Base = declarative_base()
 
@@ -29,6 +29,7 @@ class AOCWinner(Base):
 
 class MCWhitelist(Base):
     __tablename__ = 'mc_whitelisted'
-    discord_id = Column("discordid", BigInteger, nullable=False)
     mc_username = Column("mcuser", String, primary_key=True, nullable=False)
+    discord_id = Column("discordid", BigInteger, nullable=False)
     admin_whitelisted = Column("adminwl", Boolean)
+    added_dt = Column("added_dt", DateTime, nullable=False)

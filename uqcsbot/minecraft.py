@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime
 
 import discord
 from aiomcrcon import Client, IncorrectPasswordError, RCONConnectionError
@@ -57,7 +58,12 @@ class Minecraft(commands.Cog):
 
             # If the response contains "Added", assume that it was successful and add a database item for it
             if "Added" in response[0]:
-                new_whitelist = MCWhitelist(mc_username=username, discord_id=interaction.user.id, admin_whitelisted=is_user_admin)
+                new_whitelist = MCWhitelist(
+                    mc_username=username, 
+                    discord_id=interaction.user.id, 
+                    admin_whitelisted=is_user_admin,
+                    added_dt=datetime.now()
+                )
                 db_session.add(new_whitelist)
                 db_session.commit()
 
