@@ -37,7 +37,7 @@ class Yelling(commands.Cog):
                    "PLEASE USE YOUR OUTSIDE VOICE!",
                    "IT’S ON THE LEFT OF THE “A” KEY!",
                    "FORMER PRESIDENT THEODORE ROOSEVELT’S FOREIGN POLICY IS A SHAM!",
-                   "#YELLING IS FOR EXTERNAL SCREAMING!"
+                   "#YELLING IS FOR EXTERNAL SCREAMING!",
                    f"DID YOU SAY \n>>>{self.mutate_minuscule(text)}".upper(),
                    f"WHAT IS THE MEANING OF THIS ARCANE SYMBOL “{self.random_minuscule(text)}”‽"
                    + " I RECOGNISE IT NOT!"]
