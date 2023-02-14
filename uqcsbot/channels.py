@@ -56,6 +56,7 @@ class Channels(commands.Cog):
         except:
             logging.warning("Channel react message not found.")
 
+
     channel_group = app_commands.Group(name="channel", description="Commands for joining and leaving channels")
 
     @channel_group.command(name="join")
