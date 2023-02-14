@@ -26,3 +26,9 @@ class AOCWinner(Base):
     id = Column("id", BigInteger, primary_key=True, nullable=False)
     aoc_userid = Column("aoc_userid", Integer, nullable=False)
     year = Column("year", Integer, nullable=False)
+
+class Starboard(Base):
+    __tablename__ = 'starboard'
+
+    recv = Column("recv", BigInteger, primary_key=True, nullable=False)
+    sent = Column("sent", BigInteger, nullable=False, unique=True)
