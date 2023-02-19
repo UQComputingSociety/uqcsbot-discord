@@ -6,11 +6,6 @@ from discord.ext import commands
 from uqcsbot import models
 # needs to be models and not just starboard because of namespacing with this class
 
-class SBView(discord.ui.View):
-    def __init__(self, button: discord.ui.Button):
-        self.add_item(button)
-        self.timeout = None
-
 class Starboard(commands.Cog):
     CHANNEL_NAME = "starboard"
     EMOJI_NAME = "neat"
@@ -23,7 +18,12 @@ class Starboard(commands.Cog):
     
     @commands.Cog.listener()
     async def on_ready(self):
-        """ Really this should be in __init__ but this stuff doesn't exist until the bot is ready """
+        """ 
+        Really this should be in __init__ but this stuff doesn't exist until the bot is ready.
+        N.B. this does assume the bot only has access to one channel called "starboard" and one emoji called "neat".
+        If this assumption stops holding, we may need to move back to IDs (cringe) or ensure we only get them from the
+        correct guild (cringer).
+        """
         self.starboard_emoji = discord.utils.get(self.bot.emojis, name=self.EMOJI_NAME)
         self.starboard_channel = discord.utils.get(self.bot.get_all_channels(), name=self.CHANNEL_NAME)
     
@@ -53,15 +53,15 @@ class Starboard(commands.Cog):
         db_session.close()
     
     def _create_sb_embed(self, recv: discord.Message) -> discord.Embed:
-        # TODO: embed replies, embed images, timestamp, link to original, link to channel
         embed = discord.Embed(color=recv.author.top_role.color, description=recv.content)
         embed.set_author(name=recv.author.display_name, icon_url=recv.author.display_avatar.url)
         embed.set_footer(text=recv.created_at.strftime('%b %d, %H:%M:%S'))
 
         if len(recv.attachments) > 0:
             embed.set_image(url = recv.attachments[0].url)
+            # only takes the first attachment to avoid sending large numbers of images to starboard.
         
-        if recv.reference is not None:
+        if recv.reference is not None and not isinstance(recv.reference, discord.DeletedReferencedMessage):            
             replied = discord.Embed(color=recv.reference.resolved.author.top_role.color, description=recv.reference.resolved.content)
             replied.set_author(name=f"Replying to {recv.reference.resolved.author.display_name}", icon_url=recv.reference.resolved.author.display_avatar.url)
             replied.set_footer(text=recv.reference.resolved.created_at.strftime('%b %d, %H:%M:%S'))
@@ -81,7 +81,7 @@ class Starboard(commands.Cog):
         
         channel = self.bot.get_channel(payload.channel_id)
         if channel == self.starboard_channel or channel.category.name.startswith("admin"):
-            # TODO: "reaction count" for starboard should take into account (original + starboard)
+            # TODO: "reaction count" for starboard could take into account (original + starboard)
             return
         
         recv_message = await channel.fetch_message(payload.message_id)
@@ -93,20 +93,22 @@ class Starboard(commands.Cog):
         
         sb_message_id = self._query_sb_message(recv_message.id)
 
-        if new_reaction_count == self.STARBOARD_BASE_THRESHOLD or (new_reaction_count > self.STARBOARD_BASE_THRESHOLD and sb_message_id is None):
+        if new_reaction_count >= self.STARBOARD_BASE_THRESHOLD and sb_message_id is None:
             new_sb_message = await self.starboard_channel.send(
                 content=f"{str(self.starboard_emoji)} {new_reaction_count} | {recv_message.channel.mention}",
                 embeds=self._create_sb_embed(recv_message)
+                # note that the embed is never edited, which means the content of the starboard post is fixed as soon
+                # as the 5th reaction is processed
             )
             await new_sb_message.edit(view=discord.ui.View.from_message(new_sb_message).add_item(discord.ui.Button(label="Original Message", style=discord.ButtonStyle.link, url=recv_message.jump_url)))
 
             self._update_sb_message(recv_message.id, new_sb_message.id)
-        elif new_reaction_count > self.STARBOARD_BASE_THRESHOLD:
+        elif new_reaction_count > self.STARBOARD_BASE_THRESHOLD and sb_message_id is not None:
             old_sb_message = await self.starboard_channel.fetch_message(sb_message_id)
 
             await old_sb_message.edit(content=f"{str(self.starboard_emoji)} {new_reaction_count} | {recv_message.channel.mention}")
 
-            if new_reaction_count == self.STARBOARD_BIG_THRESHOLD:
+            if new_reaction_count >= self.STARBOARD_BIG_THRESHOLD and not old_sb_message.pinned:
                 await old_sb_message.pin(reason="Reached 20 starboard reactions")
 
 
@@ -121,7 +123,7 @@ class Starboard(commands.Cog):
         
         channel = self.bot.get_channel(payload.channel_id)
         if channel == self.starboard_channel or channel.category.name.startswith("admin"):
-            # TODO: "reaction count" for starboard should take into account (original + starboard)
+            # TODO: "reaction count" for starboard could take into account (original + starboard)
             return
         
         recv_message = await channel.fetch_message(payload.message_id)
@@ -138,7 +140,7 @@ class Starboard(commands.Cog):
         sb_message = await self.starboard_channel.fetch_message(sb_message_id)
 
         if new_reaction_count < self.STARBOARD_BASE_THRESHOLD:
-            await sb_message.delete()
+            await sb_message.delete() # delete will also unpin
             self._remove_sb_message(payload.message_id)
             return
         
@@ -157,7 +159,7 @@ class Starboard(commands.Cog):
         
         channel = self.bot.get_channel(payload.channel_id)
         if channel == self.starboard_channel or channel.category.name.startswith("admin"):
-            # TODO: "reaction count" for starboard should take into account (original + starboard)
+            # TODO: "reaction count" for starboard could take into account (original + starboard)
             return
         
         recv_message = await channel.fetch_message(payload.message_id)
@@ -168,8 +170,7 @@ class Starboard(commands.Cog):
         
         sb_message = await self.starboard_channel.fetch_message(sb_message_id)
 
-        if sb_message.pinned:
-            await sb_message.unpin()
+        # delete will also unpin
         await sb_message.delete()
         self._remove_sb_message(payload.message_id)
 
@@ -185,7 +186,7 @@ class Starboard(commands.Cog):
         
         channel = self.bot.get_channel(payload.channel_id)
         if channel == self.starboard_channel or channel.category.name.startswith("admin"):
-            # TODO: "reaction count" for starboard should take into account (original + starboard)
+            # TODO: "reaction count" for starboard could take into account (original + starboard)
             return
         
         recv_message = await channel.fetch_message(payload.message_id)
@@ -196,8 +197,7 @@ class Starboard(commands.Cog):
         
         sb_message = await self.starboard_channel.fetch_message(sb_message_id)
 
-        if sb_message.pinned:
-            await sb_message.unpin()
+        # delete will also unpin
         await sb_message.delete()
         self._remove_sb_message(payload.message_id)
 
