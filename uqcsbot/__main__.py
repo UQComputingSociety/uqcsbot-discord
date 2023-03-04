@@ -35,10 +35,6 @@ async def main():
 
     bot = UQCSBot(command_prefix="!", description=description, intents=intents, allowed_mentions=allowed_mentions)
 
-    db_engine = create_engine(DATABASE_URI, echo=True)
-    Base.metadata.create_all(db_engine)
-    bot.set_db_engine(db_engine)
-
     cogs = [
             "advent",
             "basic", 
@@ -60,6 +56,10 @@ async def main():
             ]
     for cog in cogs:
         await bot.load_extension(f"uqcsbot.{cog}")
+
+    db_engine = create_engine(DATABASE_URI, echo=True)
+    Base.metadata.create_all(db_engine)
+    bot.set_db_engine(db_engine)
 
     await bot.start(DISCORD_TOKEN)
 

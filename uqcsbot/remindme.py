@@ -114,8 +114,13 @@ class RemindMe(commands.Cog):
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        """ Schedule all pre-existing reminders once bot is ready """
         for reminder in self._get_all_reminders():
             self._schedule_reminder(reminder)
+        logging.info(f"All pre-existing reminders scheduled")
 
     def _add_reminder_to_db(self, reminder: Reminder):
         """ Adds the given Reminder to the Reminders table in the database """
