@@ -16,6 +16,7 @@ class Starboard(commands.Cog):
         self.bot = bot
         self.base_threshold = int(os.environ.get("SB_BASE_THRESHOLD"))
         self.big_threshold = int(os.environ.get("SB_BIG_THRESHOLD"))
+        self.ratelimit = int(os.environ.get("SB_RATELIMIT"))
 
         self.base_blocked_messages = [] # messages that are temp blocked from being resent to the starboard
         self.big_blocked_messages = [] # messages that are temp blocked from being re-pinned in the starboard
@@ -114,7 +115,7 @@ class Starboard(commands.Cog):
         sb_message_id = self._query_sb_message(recv_message.id)
 
         if new_reaction_count >= self.base_threshold and \
-                sb_message_id is None and sb_message_id not in self.base_blocked_messages:
+                sb_message_id is None and recv_message.id not in self.base_blocked_messages:
             new_sb_message = await self.starboard_channel.send(
                 content=f"{str(self.starboard_emoji)} {new_reaction_count} | {recv_message.channel.mention}",
                 embeds=self._create_sb_embed(recv_message)
@@ -131,10 +132,10 @@ class Starboard(commands.Cog):
 
             self._update_sb_message(recv_message.id, new_sb_message.id)
             
-            self.base_blocked_messages += [sb_message_id]
-            Timer(60.0, self._rm_base_ratelimit, [sb_message_id]).start()
+            self.base_blocked_messages += [recv_message.id]
+            Timer(self.ratelimit, self._rm_base_ratelimit, [recv_message.id]).start()
         elif new_reaction_count > self.base_threshold and \
-                sb_message_id is not None and sb_message_id not in self.big_blocked_messages:
+                sb_message_id is not None and recv_message.id not in self.big_blocked_messages:
             old_sb_message = await self.starboard_channel.fetch_message(sb_message_id)
 
             await old_sb_message.edit(
@@ -144,8 +145,8 @@ class Starboard(commands.Cog):
             if new_reaction_count >= self.big_threshold and not old_sb_message.pinned:
                 await old_sb_message.pin(reason=f"Reached {self.big_threshold} starboard reactions")
             
-            self.big_blocked_messages += [sb_message_id]
-            Timer(60.0, self._rm_big_ratelimit, [sb_message_id]).start()
+            self.big_blocked_messages += [recv_message.id]
+            Timer(self.ratelimit, self._rm_big_ratelimit, [recv_message.id]).start()
 
 
     @commands.Cog.listener()
@@ -175,12 +176,12 @@ class Starboard(commands.Cog):
 
         sb_message = await self.starboard_channel.fetch_message(sb_message_id)
 
-        if new_reaction_count < self.STARBOARD_BASE_THRESHOLD:
+        if new_reaction_count < self.base_threshold:
             await sb_message.delete() # delete will also unpin
             self._remove_sb_message(payload.message_id)
             return
         
-        if new_reaction_count < self.STARBOARD_BIG_THRESHOLD and sb_message.pinned:
+        if new_reaction_count < self.big_threshold and sb_message.pinned:
             await sb_message.unpin()
         
         old_sb_message = await self.starboard_channel.fetch_message(sb_message_id)
