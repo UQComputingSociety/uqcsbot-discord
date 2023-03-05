@@ -20,7 +20,9 @@ class Starboard(commands.Cog):
     async def on_ready(self):
         """ 
         Really this should be in __init__ but this stuff doesn't exist until the bot is ready.
-        N.B. this does assume the bot only has access to one channel called "starboard" and one emoji called "neat". If this assumption stops holding, we may need to move back to IDs (cringe) or ensure we only get them from the correct guild (cringer).
+        N.B. this does assume the bot only has access to one channel called "starboard" and one emoji called
+        "starhaj". If this assumption stops holding, we may need to move back to IDs (cringe) or ensure we only get
+        them from the correct guild (cringer).
         """
         self.starboard_emoji = discord.utils.get(self.bot.emojis, name=self.EMOJI_NAME)
         self.starboard_channel = discord.utils.get(self.bot.get_all_channels(), name=self.CHANNEL_NAME)
@@ -60,8 +62,16 @@ class Starboard(commands.Cog):
             # only takes the first attachment to avoid sending large numbers of images to starboard.
         
         if recv.reference is not None and not isinstance(recv.reference, discord.DeletedReferencedMessage):            
-            replied = discord.Embed(color=recv.reference.resolved.author.top_role.color, description=recv.reference.resolved.content)
-            replied.set_author(name=f"Replying to {recv.reference.resolved.author.display_name}", icon_url=recv.reference.resolved.author.display_avatar.url)
+            replied = discord.Embed(
+                color=recv.reference.resolved.author.top_role.color,
+                description=recv.reference.resolved.content
+            )
+
+            replied.set_author(
+                name=f"Replying to {recv.reference.resolved.author.display_name}",
+                icon_url=recv.reference.resolved.author.display_avatar.url
+            )
+
             replied.set_footer(text=recv.reference.resolved.created_at.strftime('%b %d, %H:%M:%S'))
 
             return [replied, embed]
@@ -95,7 +105,8 @@ class Starboard(commands.Cog):
             new_sb_message = await self.starboard_channel.send(
                 content=f"{str(self.starboard_emoji)} {new_reaction_count} | {recv_message.channel.mention}",
                 embeds=self._create_sb_embed(recv_message)
-                # note that the embed is never edited, which means the content of the starboard post is fixed as soon as the 5th reaction is processed
+                # note that the embed is never edited, which means the content of the starboard post is fixed as soon
+                # as the 5th reaction is processed
             )
             await new_sb_message.edit(view=discord.ui.View.from_message(new_sb_message).add_item(discord.ui.Button(label="Original Message", style=discord.ButtonStyle.link, url=recv_message.jump_url)))
 
@@ -103,10 +114,12 @@ class Starboard(commands.Cog):
         elif new_reaction_count > self.base_threshold and sb_message_id is not None:
             old_sb_message = await self.starboard_channel.fetch_message(sb_message_id)
 
-            await old_sb_message.edit(content=f"{str(self.starboard_emoji)} {new_reaction_count} | {recv_message.channel.mention}")
+            await old_sb_message.edit(
+                content=f"{str(self.starboard_emoji)} {new_reaction_count} | {recv_message.channel.mention}"
+            )
 
             if new_reaction_count >= self.big_threshold and not old_sb_message.pinned:
-                await old_sb_message.pin(reason="Reached 20 starboard reactions")
+                await old_sb_message.pin(reason=f"Reached {self.big_threshold} starboard reactions")
 
 
     @commands.Cog.listener()
