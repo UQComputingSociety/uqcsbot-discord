@@ -1,5 +1,6 @@
 import os
 from typing import Optional
+from threading import Timer
 
 import discord
 from discord.ext import commands
@@ -15,6 +16,9 @@ class Starboard(commands.Cog):
         self.bot = bot
         self.base_threshold = int(os.environ.get("SB_BASE_THRESHOLD"))
         self.big_threshold = int(os.environ.get("SB_BIG_THRESHOLD"))
+
+        self.base_blocked_messages = [] # messages that are temp blocked from being resent to the starboard
+        self.big_blocked_messages = [] # messages that are temp blocked from being re-pinned in the starboard
     
     @commands.Cog.listener()
     async def on_ready(self):
@@ -26,6 +30,14 @@ class Starboard(commands.Cog):
         """
         self.starboard_emoji = discord.utils.get(self.bot.emojis, name=self.EMOJI_NAME)
         self.starboard_channel = discord.utils.get(self.bot.get_all_channels(), name=self.CHANNEL_NAME)
+    
+    def _rm_base_ratelimit(self, id: int):
+        """ Callback to remove a message from the base-ratelimited list """
+        self.base_blocked_messages.remove(id)
+    
+    def _rm_big_ratelimit(self, id: int):
+        """ Callback to remove a message from the big-ratelimited list """
+        self.big_blocked_messages.remove(id)
     
     def _query_sb_message(self, recv: int) -> Optional[int]:
         """ Get the starboard message ID corresponding to the recieved message """
@@ -61,7 +73,7 @@ class Starboard(commands.Cog):
             embed.set_image(url = recv.attachments[0].url)
             # only takes the first attachment to avoid sending large numbers of images to starboard.
         
-        if recv.reference is not None and not isinstance(recv.reference, discord.DeletedReferencedMessage):            
+        if recv.reference is not None and not isinstance(recv.reference, discord.DeletedReferencedMessage):
             replied = discord.Embed(
                 color=recv.reference.resolved.author.top_role.color,
                 description=recv.reference.resolved.content
@@ -101,17 +113,28 @@ class Starboard(commands.Cog):
         
         sb_message_id = self._query_sb_message(recv_message.id)
 
-        if new_reaction_count >= self.base_threshold and sb_message_id is None:
+        if new_reaction_count >= self.base_threshold and \
+                sb_message_id is None and sb_message_id not in self.base_blocked_messages:
             new_sb_message = await self.starboard_channel.send(
                 content=f"{str(self.starboard_emoji)} {new_reaction_count} | {recv_message.channel.mention}",
                 embeds=self._create_sb_embed(recv_message)
-                # note that the embed is never edited, which means the content of the starboard post is fixed as soon
-                # as the 5th reaction is processed
+                # note that the embed is never edited, which means the content of the starboard post is fixed as
+                # soon as the 5th reaction is processed
             )
-            await new_sb_message.edit(view=discord.ui.View.from_message(new_sb_message).add_item(discord.ui.Button(label="Original Message", style=discord.ButtonStyle.link, url=recv_message.jump_url)))
+            await new_sb_message.edit(
+                view=discord.ui.View.from_message(new_sb_message).add_item(discord.ui.Button(
+                    label="Original Message",
+                    style=discord.ButtonStyle.link,
+                    url=recv_message.jump_url
+                ))
+            )
 
             self._update_sb_message(recv_message.id, new_sb_message.id)
-        elif new_reaction_count > self.base_threshold and sb_message_id is not None:
+            
+            self.base_blocked_messages += [sb_message_id]
+            Timer(60.0, self._rm_base_ratelimit, [sb_message_id]).start()
+        elif new_reaction_count > self.base_threshold and \
+                sb_message_id is not None and sb_message_id not in self.big_blocked_messages:
             old_sb_message = await self.starboard_channel.fetch_message(sb_message_id)
 
             await old_sb_message.edit(
@@ -120,6 +143,9 @@ class Starboard(commands.Cog):
 
             if new_reaction_count >= self.big_threshold and not old_sb_message.pinned:
                 await old_sb_message.pin(reason=f"Reached {self.big_threshold} starboard reactions")
+            
+            self.big_blocked_messages += [sb_message_id]
+            Timer(60.0, self._rm_big_ratelimit, [sb_message_id]).start()
 
 
     @commands.Cog.listener()
@@ -158,7 +184,9 @@ class Starboard(commands.Cog):
             await sb_message.unpin()
         
         old_sb_message = await self.starboard_channel.fetch_message(sb_message_id)
-        await old_sb_message.edit(content=f"{str(self.starboard_emoji)} {new_reaction_count} | {recv_message.channel.mention}")
+        await old_sb_message.edit(
+            content=f"{str(self.starboard_emoji)} {new_reaction_count} | {recv_message.channel.mention}"
+        )
 
 
     @commands.Cog.listener()
