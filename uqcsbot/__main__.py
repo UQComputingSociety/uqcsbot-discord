@@ -42,6 +42,7 @@ async def main():
             "error_handler",
             "events", 
             "gaming", 
+            "holidays",
             "intros", 
             "jobs_bulletin", 
             "latex", 

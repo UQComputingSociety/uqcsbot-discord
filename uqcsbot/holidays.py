@@ -1,15 +1,21 @@
-from uqcsbot import bot
-from uqcsbot.utils.command_utils import HYPE_REACTS
 from bs4 import BeautifulSoup
-from datetime import datetime
-from random import choice
-from requests.exceptions import RequestException
-import requests
 import csv
+from datetime import datetime
+import discord
+from discord.ext import commands
+import logging
+from random import choice
+import requests
+from requests.exceptions import RequestException
 from typing import List
+
+from uqcsbot.bot import UQCSBot
+from uqcsbot.utils.command_utils import HYPE_REACTS
 
 HOLIDAY_URL = "https://www.timeanddate.com/holidays/fun/"
 HOLIDAY_CSV_PATH = "uqcsbot/static/geek_holidays.csv"
+HOLIDAY_MESSAGE = "Today is {}!"
+GENERAL_CHANNEL = "general"
 
 
 class Holiday:
@@ -25,28 +31,8 @@ class Holiday:
         now = datetime.now()
         return self.date.month == now.month and self.date.day == now.day
 
-
-@bot.on_schedule('cron', hour=9, timezone='Australia/Brisbane')
-def holiday() -> None:
-    """
-    Posts a random celebratory day on #general from
-    https://www.timeanddate.com/holidays/fun/
-    """
-    channel = bot.channels.get("general")
-
-    holiday = get_holiday()
-    if holiday is None:
-        return
-
-    message = bot.post_message(channel, f'Today is {holiday.description}!')
-    bot.api.reactions.add(name=choice(HYPE_REACTS), channel=channel.id, timestamp=message['ts'])
-
-
-def get_holiday() -> Holiday:
-    """
-    Gets the holiday for a given day. If there are multiple
-    holidays, choose a random one.
-    """
+def get_holiday() -> Holiday | None:
+    """ Gets the holiday for a given day. If there are multiple holidays, choose a random one. """
     holiday_page = get_holiday_page()
     if holiday_page is None:
         return None
@@ -58,11 +44,8 @@ def get_holiday() -> Holiday:
 
     return choice(holidays_today) if holidays_today else None
 
-
 def get_holidays_from_page(holiday_page) -> List[Holiday]:
-    """
-    Strips results from html page
-    """
+    """ Strips results from html page """
     soup = BeautifulSoup(holiday_page, 'html.parser')
     soup_holidays = (soup.find_all(class_="c0") + soup.find_all(class_="c1")
                      + soup.find_all(class_="hl"))
@@ -79,7 +62,6 @@ def get_holidays_from_page(holiday_page) -> List[Holiday]:
 
     return holidays
 
-
 def get_holidays_from_csv() -> List[Holiday]:
     """
     Returns list of holiday objects, one for each holiday in csv file
@@ -94,8 +76,7 @@ def get_holidays_from_csv() -> List[Holiday]:
 
     return holidays
 
-
-def get_holiday_page() -> bytes:
+def get_holiday_page() -> bytes | None:
     """
     Gets the holiday page HTML
     """
@@ -103,5 +84,37 @@ def get_holiday_page() -> bytes:
         response = requests.get(HOLIDAY_URL)
         return response.content
     except RequestException as e:
-        bot.logger.error(e.response.content)
+        logging.warning(e.response.content)
     return None
+
+class Holidays(commands.Cog):
+    def __init__(self, bot: UQCSBot):
+        self.bot = bot
+        self.bot.schedule_task(self.holiday, trigger='cron', hour=16, minute=12, timezone='Australia/Brisbane')
+
+    async def holiday(self):
+        """
+        Posts a random celebratory day on #general from
+        https://www.timeanddate.com/holidays/fun/
+        """
+        holiday = get_holiday()
+        if holiday is None:
+            return
+
+        if self.bot.uqcs_server is None:
+            logging.warning("UQCS guild not found (?!).")
+            return
+
+        general_channel = discord.utils.get(self.bot.uqcs_server.channels, name=GENERAL_CHANNEL)
+        if general_channel is None:
+            logging.warning("General channel not found.")
+            return
+
+        if isinstance(general_channel, discord.TextChannel):
+            message = await general_channel.send(HOLIDAY_MESSAGE.format(holiday.description))
+            emoji = discord.utils.get(self.bot.emojis, name=choice(HYPE_REACTS))
+            if emoji is not None:
+                await message.add_reaction(emoji)
+
+async def setup(bot: UQCSBot):
+    await bot.add_cog(Holidays(bot))
