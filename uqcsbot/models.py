@@ -27,7 +27,6 @@ class AOCWinner(Base):
     aoc_userid = Column("aoc_userid", Integer, nullable=False)
     year = Column("year", Integer, nullable=False)
 
-
 class Reminders(Base):
     __tablename__ = 'reminders'
 
@@ -40,3 +39,9 @@ class Reminders(Base):
     start_date = Column("start_date", Date, nullable=False)
     end_date = Column("end_date", Date, nullable=True)
     week_frequency = Column("week_frequency", Integer, nullable=True)
+
+class Starboard(Base):
+    __tablename__ = 'starboard'
+
+    recv = Column("recv", BigInteger, primary_key=True, nullable=False)
+    sent = Column("sent", BigInteger, nullable=False, unique=True)

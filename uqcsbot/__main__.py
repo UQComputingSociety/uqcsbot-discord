@@ -46,6 +46,7 @@ async def main():
             "jobs_bulletin", 
             "latex", 
             "remindme",
+            "starboard",
             "text", 
             "uptime",
             "voteythumbs",
