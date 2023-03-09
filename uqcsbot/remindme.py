@@ -4,7 +4,6 @@ from discord import app_commands
 from discord.ext import commands
 from functools import partial
 import logging
-import random
 from typing import List, NamedTuple, Optional, Union
 
 from uqcsbot.bot import UQCSBot
@@ -12,7 +11,6 @@ from uqcsbot.models import Reminders
 
 
 USER_REMINDER_LIMIT = 10
-REMINDER_IDS_RANGE = (1, 100)  # range from which reminder ids will be randomly chosen
 
 REMINDME_MESSAGE_TITLE = "RemindMe: Reminder"
 REMINDME_ERROR_TITLE = "RemindMe: Error"
@@ -182,12 +180,13 @@ class RemindMe(commands.Cog):
         """ Returns all the active reminders belonging to the user with id `user_id` in creation order """
         return list(filter(lambda reminder: reminder.user_id == user_id, self._get_all_reminders()))
     
-    def _get_unused_reminder_id(self, user_id: int) -> int:
-        """ Returns a reminder id that is not currently in use by the user with id `user_id` """
-        reminders = self._get_user_reminders(user_id)
+    def _get_unused_reminder_id(self) -> int:
+        """ Returns a reminder id that is not currently in use """
+        reminders = self._get_all_reminders()
         reminder_ids = [reminder.id for reminder in reminders]
-        while (id := random.randint(*REMINDER_IDS_RANGE)) in reminder_ids:
-            continue
+        i = 1
+        while (id := i) in reminder_ids:
+            i += 1
         return id
 
     def _reached_reminder_limit(self, user: Union[discord.User, discord.Member]) -> bool:
@@ -313,7 +312,7 @@ class RemindMe(commands.Cog):
 
         # add reminder to db and schedule
         reminder = Reminder(
-            self._get_unused_reminder_id(interaction.user.id),
+            self._get_unused_reminder_id(),
             interaction.user.id,
             interaction.channel_id,
             dt.datetime.now(),
@@ -367,7 +366,7 @@ class RemindMe(commands.Cog):
 
         # add reminder to db and schedule
         reminder = Reminder(
-            self._get_unused_reminder_id(interaction.user.id),
+            self._get_unused_reminder_id(),
             interaction.user.id,
             interaction.channel_id,
             dt.datetime.now(),
