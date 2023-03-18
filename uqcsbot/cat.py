@@ -29,13 +29,12 @@ class Cat(commands.Cog):
         for i in range(shift):
             order.append(order.popleft())
 
-
         cat = "\n".join(("```ansi",
-                "{}       {}  __..--{}''``\\-{}-....___{}   _..,_{}            ".format(order[0], order[1], order[2], order[3], order[4], order[5]),
-                "{}     _.{}-'    .-{}/\";  `{}        {}``<._  `{}`-+'~=.     ".format(order[0], order[1], order[2], order[3], order[4], order[5]),
-                "{} _.-' _{}..--.'_ {}   \\  {}        {}        {}  `(^) )    ".format(order[0], order[1], order[2], order[3], order[4], order[5]),
-                "{}((..-' {}   (< _ {}    ;_.{}.__     {}        {}  ; `'   fL".format(order[0], order[1], order[2], order[3], order[4], order[5]),
-                "{}       {}    `-._{},_)'   {}   ``--.{}..____..{}-'         ```".format(order[0], order[1], order[2], order[3], order[4], order[5])))
+                f"{order[0]}       {order[1]}  __..--{order[2]}''``\\-{order[3]}-....___{order[4]}   _..,_{order[5]}            ",
+                f"{order[0]}     _.{order[1]}-'    .-{order[2]}/\";  `{order[3]}        {order[4]}``<._  `{order[5]}`-+'~=.     ",
+                f"{order[0]} _.-' _{order[1]}..--.'_ {order[2]}   \\  {order[3]}        {order[4]}        {order[5]}  `(^) )    ",
+                f"{order[0]}((..-' {order[1]}   (< _ {order[2]}    ;_.{order[3]}.__     {order[4]}        {order[5]}  ; `'   fL",
+                f"{order[0]}       {order[1]}    `-._{order[2]},_)'   {order[3]}   ``--.{order[4]}..____..{order[5]}-'         ```"))
         await interaction.response.send_message(cat)
 
 async def setup(bot: commands.Bot):
