@@ -1,3 +1,6 @@
+from random import randrange
+from collections import deque
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -20,12 +23,19 @@ class Cat(commands.Cog):
         cyan = "\u001b[0;36m"
         blue = "\u001b[0;34m"
 
+        order = deque([pink, red, yellow, green, cyan, blue])
+        #sometimes shifts colour order to start at red or yellow
+        shift = randrange(0, 3)
+        for i in range(shift):
+            order.append(order.popleft())
+
+
         cat = "\n".join(("```ansi",
-                    f"{pink}       {red}  __..--{yellow}''``\\-{green}-....___{cyan}   _..,_{blue}            ",
-                    f"{pink}     _.{red}-'    .-{yellow}/\";  `{green}        {cyan}``<._  `{blue}`-+'~=.     ",
-                    f"{pink} _.-' _{red}..--.'_ {yellow}   \\  {green}        {cyan}        {blue}  `(^) )    ",
-                    f"{pink}((..-' {red}   (< _ {yellow}    ;_.{green}.__     {cyan}        {blue}  ; `'   fL",
-                    f"{pink}       {red}    `-._{yellow},_)'   {green}   ``--.{cyan}..____..{blue}-'         ```"))
+                "{}       {}  __..--{}''``\\-{}-....___{}   _..,_{}            ".format(order[0], order[1], order[2], order[3], order[4], order[5]),
+                "{}     _.{}-'    .-{}/\";  `{}        {}``<._  `{}`-+'~=.     ".format(order[0], order[1], order[2], order[3], order[4], order[5]),
+                "{} _.-' _{}..--.'_ {}   \\  {}        {}        {}  `(^) )    ".format(order[0], order[1], order[2], order[3], order[4], order[5]),
+                "{}((..-' {}   (< _ {}    ;_.{}.__     {}        {}  ; `'   fL".format(order[0], order[1], order[2], order[3], order[4], order[5]),
+                "{}       {}    `-._{},_)'   {}   ``--.{}..____..{}-'         ```".format(order[0], order[1], order[2], order[3], order[4], order[5])))
         await interaction.response.send_message(cat)
 
 async def setup(bot: commands.Bot):
