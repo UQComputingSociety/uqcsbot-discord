@@ -43,6 +43,7 @@ async def main():
             "error_handler",
             "events", 
             "gaming", 
+            "hoogle",
             "intros", 
             "jobs_bulletin", 
             "latex", 
