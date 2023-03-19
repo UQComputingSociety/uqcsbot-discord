@@ -38,6 +38,7 @@ async def main():
     cogs = [
             "advent",
             "basic", 
+            "cat",
             "channels", 
             "error_handler",
             "events", 
@@ -46,7 +47,6 @@ async def main():
             "jobs_bulletin", 
             "latex", 
             "starboard",
-            "cat",
             "text", 
             "uptime",
             "voteythumbs",
