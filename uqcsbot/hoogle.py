@@ -28,7 +28,7 @@ class Hoogle(commands.Cog):
     async def hoogle(self, interaction: discord.Interaction, search: str):
         """
         Queries the Hoogle Haskell API search engine, searching Haskell libraries by either function name 
-        or approximate type signature.
+        or approximate type signature. Retrieves up to 10 results.
         """
         await interaction.response.defer(thinking=True)
 
