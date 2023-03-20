@@ -1,16 +1,22 @@
 import os
-from typing import Optional
 from threading import Timer
+from datetime import timezone
 
 import discord
+from discord import app_commands
 from discord.ext import commands
+from pytz import timezone
 
 from uqcsbot import models
 # needs to be models and not just starboard because of namespacing with this class
 
+class BlacklistedMessageError(Exception):
+    pass
+
 class Starboard(commands.Cog):
     CHANNEL_NAME = "starboard"
     EMOJI_NAME = "starhaj"
+    BRISBANE_TZ = timezone('Australia/Brisbane')
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -20,6 +26,18 @@ class Starboard(commands.Cog):
 
         self.base_blocked_messages = [] # messages that are temp blocked from being resent to the starboard
         self.big_blocked_messages = [] # messages that are temp blocked from being re-pinned in the starboard
+
+        self.whitelist_menu = app_commands.ContextMenu(
+            name="Starboard Whitelist",
+            callback=self.context_whitelist_sb_message,
+        )
+        self.bot.tree.add_command(self.whitelist_menu)
+        
+        self.blacklist_menu = app_commands.ContextMenu(
+            name="Starboard Blacklist",
+            callback=self.context_blacklist_sb_message,
+        )
+        self.bot.tree.add_command(self.blacklist_menu)
     
     @commands.Cog.listener()
     async def on_ready(self):
@@ -40,16 +58,55 @@ class Starboard(commands.Cog):
         """ Callback to remove a message from the big-ratelimited list """
         self.big_blocked_messages.remove(id)
     
+    @app_commands.default_permissions(manage_messages=True)
+    async def context_blacklist_sb_message(self, interaction: discord.Interaction, message: discord.Message):
+        """ Blacklists a message from being starboarded. If the message is already starboarded, also deletes it. """
+        db_session = self.bot.create_db_session()
+        entry = db_session.query(models.Starboard).filter(models.Starboard.recv == message.id)
+        query_val = entry.one_or_none()
+
+        if query_val != None:
+            if query_val.sent == None:
+                return
+
+            await (await self.starboard_channel.fetch_message(query_val.sent)).delete()
+            query_val.sent = None
+        else:
+            db_session.add(models.Starboard(recv=message.id, sent=None))
+
+        db_session.commit()
+        db_session.close()
+
+        await interaction.response.send_message(f"Blacklisted message {message.id}.")
+
+    @app_commands.default_permissions(manage_messages=True)
+    async def context_whitelist_sb_message(self, interaction: discord.Interaction, message: discord.Message):
+        """ Removes a message from the starboard blacklist. Doesn't perform an 'update' of the message. """
+        db_session = self.bot.create_db_session()
+        entry = db_session.query(models.Starboard).filter(
+            models.Starboard.recv == message.id,
+            models.Starboard.sent == None
+        )
+        if entry.one_or_none() != None:
+            entry.delete(synchronize_session=False)
+            db_session.commit()
+        db_session.close()
+        await interaction.response.send_message(f"Whitelisted message {message.id}.")
+    
     async def _query_sb_message(self, recv: int) -> discord.Message:
-        """ Get the starboard message corresponding to the recieved message. Handles messages no longer existing and cleans up the DB accordingly. """
+        """ Get the starboard message corresponding to the recieved message.
+        Handles messages no longer existing and cleans up the DB accordingly. """
         db_session = self.bot.create_db_session()
         entry = db_session.query(models.Starboard).filter(models.Starboard.recv == recv)
-        message_id = entry.one_or_none()
+        query_val = entry.one_or_none()
         
         message = None
-        if message_id is not None:
+        if query_val is not None:
             try:
-                message = await self.starboard_channel.fetch_message(message_id.sent)
+                if query_val.sent == None:
+                    raise BlacklistedMessageError()
+
+                message = await self.starboard_channel.fetch_message(query_val.sent)
             except discord.errors.NotFound:
                 entry.delete(synchronize_session=False)
                 db_session.commit()
@@ -76,7 +133,7 @@ class Starboard(commands.Cog):
     def _create_sb_embed(self, recv: discord.Message) -> discord.Embed:
         embed = discord.Embed(color=recv.author.top_role.color, description=recv.content)
         embed.set_author(name=recv.author.display_name, icon_url=recv.author.display_avatar.url)
-        embed.set_footer(text=recv.created_at.strftime('%b %d, %H:%M:%S'))
+        embed.set_footer(text=recv.created_at.astimezone(tz=self.BRISBANE_TZ).strftime('%b %d, %H:%M:%S'))
 
         if len(recv.attachments) > 0:
             embed.set_image(url = recv.attachments[0].url)
@@ -93,7 +150,9 @@ class Starboard(commands.Cog):
                 icon_url=recv.reference.resolved.author.display_avatar.url
             )
 
-            replied.set_footer(text=recv.reference.resolved.created_at.strftime('%b %d, %H:%M:%S'))
+            replied.set_footer(
+                text=recv.reference.resolved.created_at.astimezone(tz=self.BRISBANE_TZ).strftime('%b %d, %H:%M:%S')
+            )
 
             return [replied, embed]
         
@@ -120,7 +179,10 @@ class Starboard(commands.Cog):
         if reaction is not None:
             new_reaction_count = reaction.count
         
-        sb_message = await self._query_sb_message(recv_message.id)
+        try:
+            sb_message = await self._query_sb_message(recv_message.id)
+        except BlacklistedMessageError:
+            return
 
         if new_reaction_count >= self.base_threshold and \
                 sb_message is None and recv_message.id not in self.base_blocked_messages:
@@ -177,7 +239,11 @@ class Starboard(commands.Cog):
         if reaction is not None:
             new_reaction_count = reaction.count
         
-        sb_message = await self._query_sb_message(recv_message.id)
+        try:
+            sb_message = await self._query_sb_message(recv_message.id)
+        except BlacklistedMessageError:
+            return
+        
         if sb_message is None:
             return
 
@@ -207,7 +273,11 @@ class Starboard(commands.Cog):
         
         recv_message = await channel.fetch_message(payload.message_id)
     
-        sb_message= await self._query_sb_message(recv_message.id)
+        try:
+            sb_message = await self._query_sb_message(recv_message.id)
+        except BlacklistedMessageError:
+            return
+        
         if sb_message is None:
             return
 
@@ -232,13 +302,18 @@ class Starboard(commands.Cog):
         
         recv_message = await channel.fetch_message(payload.message_id)
     
-        sb_message = await self._query_sb_message(recv_message.id)
+        try:
+            sb_message = await self._query_sb_message(recv_message.id)
+        except BlacklistedMessageError:
+            return
+        
         if sb_message is None:
             return
 
         # delete will also unpin
         await sb_message.delete()
         self._remove_sb_message(payload.message_id)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Starboard(bot))

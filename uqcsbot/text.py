@@ -21,11 +21,11 @@ class Text(commands.Cog):
         )
         self.bot.tree.add_command(self.mock_menu)
 
-        self.scare_menu = app_commands.ContextMenu(
-            name="Scare",
-            callback=self.scare_context,
-        )
-        self.bot.tree.add_command(self.scare_menu)
+        #self.scare_menu = app_commands.ContextMenu(
+        #    name="Scare",
+        #    callback=self.scare_context,
+        #)
+        #self.bot.tree.add_command(self.scare_menu)
 
     @app_commands.command()
     @app_commands.describe(message="Input string")

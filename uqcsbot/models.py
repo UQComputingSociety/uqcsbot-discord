@@ -31,4 +31,4 @@ class Starboard(Base):
     __tablename__ = 'starboard'
 
     recv = Column("recv", BigInteger, primary_key=True, nullable=False)
-    sent = Column("sent", BigInteger, nullable=False, unique=True)
+    sent = Column("sent", BigInteger, nullable=True, unique=True)
