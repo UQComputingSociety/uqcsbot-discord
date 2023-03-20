@@ -1,5 +1,6 @@
 import os
 from threading import Timer
+from typing import List
 from datetime import timezone
 
 import discord
@@ -65,14 +66,14 @@ class Starboard(commands.Cog):
         entry = db_session.query(models.Starboard).filter(models.Starboard.recv == message.id)
         query_val = entry.one_or_none()
 
-        if query_val != None:
-            if query_val.sent == None:
+        if query_val is not None:
+            if query_val.sent is None:
                 return
 
             await (await self.starboard_channel.fetch_message(query_val.sent)).delete()
             query_val.sent = None
         else:
-            db_session.add(models.Starboard(recv=message.id, sent=None))
+            db_session.add(models.Starboard(recv=message.id, recv_location=message.channel.id, sent=None))
 
         db_session.commit()
         db_session.close()
@@ -87,7 +88,7 @@ class Starboard(commands.Cog):
             models.Starboard.recv == message.id,
             models.Starboard.sent == None
         )
-        if entry.one_or_none() != None:
+        if entry.one_or_none() is not None:
             entry.delete(synchronize_session=False)
             db_session.commit()
         db_session.close()
@@ -103,7 +104,7 @@ class Starboard(commands.Cog):
         message = None
         if query_val is not None:
             try:
-                if query_val.sent == None:
+                if query_val.sent is None:
                     raise BlacklistedMessageError()
 
                 message = await self.starboard_channel.fetch_message(query_val.sent)
@@ -115,10 +116,51 @@ class Starboard(commands.Cog):
         
         return message
 
-    def _update_sb_message(self, recv: int, sent: int):
+    async def _query_og_message(self, sent: int) -> discord.Message:
+        """ Get the og message corresponding to this starboard message.
+        Handles messages no longer existing. """
+        db_session = self.bot.create_db_session()
+        entry = db_session.query(models.Starboard).filter(
+            models.Starboard.sent == sent
+        ).one_or_none()
+
+        message = None
+        if entry is not None:
+            if entry.recv is not None and entry.recv_location is not None:
+                try:
+                    channel = self.bot.get_channel(entry.recv_location)
+                    if channel is None:
+                        raise discord.errors.NotFound()
+                    
+                    message = await channel.fetch_message(entry.recv)
+                except discord.errors.NotFound:
+                    entry.recv_location = None
+                    entry.recv = None
+                    db_session.commit()
+        
+        db_session.close()
+        return message
+    
+    async def _find_num_reactions(self, messages: List[discord.Message]) -> int:
+        """ Find the total number of starboard_emoji reacts across this list of messages. """
+        users = []
+        authors = []
+
+        for message in messages:
+            if message is None:
+                continue
+            
+            authors += [message.author.id]
+            reaction = discord.utils.get(message.reactions, emoji=self.starboard_emoji)
+            if reaction is not None:
+                users += [user.id async for user in reaction.users()]
+
+        return len(set([user for user in users if user not in authors]))
+
+    def _update_sb_message(self, recv: int, recv_location: int, sent: int):
         """ Sets the ID of the starboard message corresponding to the recieved message """
         db_session = self.bot.create_db_session()
-        db_session.add(models.Starboard(recv=recv, sent=sent))
+        db_session.add(models.Starboard(recv=recv, recv_location=recv_location, sent=sent))
         db_session.commit()
         db_session.close()
     
@@ -157,6 +199,24 @@ class Starboard(commands.Cog):
             return [replied, embed]
         
         return [embed]
+
+    @app_commands.command()
+    @app_commands.default_permissions(manage_messages=True)
+    async def cleanup_starboard(self, interaction: discord.Interaction):
+        """ Cleans up the last 100 messages from the starboard.
+        Removes any uqcsbot message that doesn't have a corresponding message id. """
+        sb_messages = await self.starboard_channel.history(limit=100)
+        db_session = self.bot.create_db_session()
+
+        await interaction.defer(thinking=True)
+
+        for message in sb_messages:
+            query = db_session.query(models.Starboard).filter(models.Starboard.sent == message.id).one_or_none()
+            if query is None and message.author.id == self.user.id:
+                message.delete()
+        
+        db_session.close()
+        await interaction.followup.send("Finished cleaning up.")
     
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
@@ -168,26 +228,24 @@ class Starboard(commands.Cog):
             return
         
         channel = self.bot.get_channel(payload.channel_id)
-        if channel == self.starboard_channel or channel.category.name.startswith("admin"):
-            # TODO: "reaction count" for starboard could take into account (original + starboard)
-            return
-        
-        recv_message = await channel.fetch_message(payload.message_id)
-        reaction = discord.utils.get(recv_message.reactions, emoji=self.starboard_emoji)
-
-        new_reaction_count = 0
-        if reaction is not None:
-            new_reaction_count = reaction.count
         
         try:
-            sb_message = await self._query_sb_message(recv_message.id)
+            messages = [await channel.fetch_message(payload.message_id)]
+            if channel == self.starboard_channel:
+                messages += [await self._query_og_message(payload.message_id)]
+                sb_message, recv_message = messages
+            else:
+                messages += [await self._query_sb_message(payload.message_id)]
+                recv_message, sb_message = messages
         except BlacklistedMessageError:
             return
+        
+        new_reaction_count = await self._find_num_reactions(messages)
 
         if new_reaction_count >= self.base_threshold and \
                 sb_message is None and recv_message.id not in self.base_blocked_messages:
             new_sb_message = await self.starboard_channel.send(
-                content=f"{str(self.starboard_emoji)} {new_reaction_count} | {recv_message.channel.mention}",
+                content=f"{str(self.starboard_emoji)} {new_reaction_count} | #{recv_message.channel.name}",
                 embeds=self._create_sb_embed(recv_message)
                 # note that the embed is never edited, which means the content of the starboard post is fixed as
                 # soon as the 5th reaction is processed
@@ -200,7 +258,7 @@ class Starboard(commands.Cog):
                 ))
             )
 
-            self._update_sb_message(recv_message.id, new_sb_message.id)
+            self._update_sb_message(recv_message.id, recv_message.channel.id, new_sb_message.id)
             
             self.base_blocked_messages += [recv_message.id]
             Timer(self.ratelimit, self._rm_base_ratelimit, [recv_message.id]).start()
@@ -208,7 +266,7 @@ class Starboard(commands.Cog):
                 sb_message is not None and recv_message.id not in self.big_blocked_messages:
 
             await sb_message.edit(
-                content=f"{str(self.starboard_emoji)} {new_reaction_count} | {recv_message.channel.mention}"
+                content=f"{str(self.starboard_emoji)} {new_reaction_count} | #{recv_message.channel.name}"
             )
 
             if new_reaction_count >= self.big_threshold and not sb_message.pinned:
@@ -228,24 +286,22 @@ class Starboard(commands.Cog):
             return
         
         channel = self.bot.get_channel(payload.channel_id)
-        if channel == self.starboard_channel or channel.category.name.startswith("admin"):
-            # TODO: "reaction count" for starboard could take into account (original + starboard)
-            return
-        
-        recv_message = await channel.fetch_message(payload.message_id)
-        reaction = discord.utils.get(recv_message.reactions, emoji=self.starboard_emoji)
-
-        new_reaction_count = 0
-        if reaction is not None:
-            new_reaction_count = reaction.count
         
         try:
-            sb_message = await self._query_sb_message(recv_message.id)
+            messages = [await channel.fetch_message(payload.message_id)]
+            if channel == self.starboard_channel:
+                messages += [await self._query_og_message(payload.message_id)]
+                sb_message, recv_message = messages
+            else:
+                messages += [await self._query_sb_message(payload.message_id)]
+                recv_message, sb_message = messages
         except BlacklistedMessageError:
             return
         
-        if sb_message is None:
+        if sb_message == None:
             return
+        
+        new_reaction_count = await self._find_num_reactions(messages)
 
         if new_reaction_count < self.base_threshold:
             await sb_message.delete() # delete will also unpin
@@ -256,7 +312,7 @@ class Starboard(commands.Cog):
             await sb_message.unpin()
 
         await sb_message.edit(
-            content=f"{str(self.starboard_emoji)} {new_reaction_count} | {recv_message.channel.mention}"
+            content=f"{str(self.starboard_emoji)} {new_reaction_count} | #{recv_message.channel.name}"
         )
 
 
@@ -267,23 +323,33 @@ class Starboard(commands.Cog):
             return
         
         channel = self.bot.get_channel(payload.channel_id)
-        if channel == self.starboard_channel or channel.category.name.startswith("admin"):
-            # TODO: "reaction count" for starboard could take into account (original + starboard)
-            return
-        
-        recv_message = await channel.fetch_message(payload.message_id)
-    
         try:
-            sb_message = await self._query_sb_message(recv_message.id)
+            messages = [await channel.fetch_message(payload.message_id)]
+            if channel == self.starboard_channel:
+                messages += [await self._query_og_message(payload.message_id)]
+                sb_message, recv_message = messages
+            else:
+                messages += [await self._query_sb_message(payload.message_id)]
+                recv_message, sb_message = messages
         except BlacklistedMessageError:
             return
         
-        if sb_message is None:
+        if sb_message == None:
             return
+        
+        new_reaction_count = await self._find_num_reactions(messages)
 
-        # delete will also unpin
-        await sb_message.delete()
-        self._remove_sb_message(payload.message_id)
+        if new_reaction_count < self.base_threshold:
+            await sb_message.delete() # delete will also unpin
+            self._remove_sb_message(payload.message_id)
+            return
+        
+        if new_reaction_count < self.big_threshold and sb_message.pinned:
+            await sb_message.unpin()
+
+        await sb_message.edit(
+            content=f"{str(self.starboard_emoji)} {new_reaction_count} | #{recv_message.channel.name}"
+        )
 
 
     @commands.Cog.listener()
@@ -296,23 +362,33 @@ class Starboard(commands.Cog):
             return
         
         channel = self.bot.get_channel(payload.channel_id)
-        if channel == self.starboard_channel or channel.category.name.startswith("admin"):
-            # TODO: "reaction count" for starboard could take into account (original + starboard)
-            return
-        
-        recv_message = await channel.fetch_message(payload.message_id)
-    
         try:
-            sb_message = await self._query_sb_message(recv_message.id)
+            messages = [await channel.fetch_message(payload.message_id)]
+            if channel == self.starboard_channel:
+                messages += [await self._query_og_message(payload.message_id)]
+                sb_message, recv_message = messages
+            else:
+                messages += [await self._query_sb_message(payload.message_id)]
+                recv_message, sb_message = messages
         except BlacklistedMessageError:
             return
         
-        if sb_message is None:
+        if sb_message == None:
             return
+        
+        new_reaction_count = await self._find_num_reactions(messages)
 
-        # delete will also unpin
-        await sb_message.delete()
-        self._remove_sb_message(payload.message_id)
+        if new_reaction_count < self.base_threshold:
+            await sb_message.delete() # delete will also unpin
+            self._remove_sb_message(payload.message_id)
+            return
+        
+        if new_reaction_count < self.big_threshold and sb_message.pinned:
+            await sb_message.unpin()
+
+        await sb_message.edit(
+            content=f"{str(self.starboard_emoji)} {new_reaction_count} | #{recv_message.channel.name}"
+        )
 
 
 async def setup(bot: commands.Bot):

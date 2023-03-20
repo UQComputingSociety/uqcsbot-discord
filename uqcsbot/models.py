@@ -31,4 +31,5 @@ class Starboard(Base):
     __tablename__ = 'starboard'
 
     recv = Column("recv", BigInteger, primary_key=True, nullable=False)
+    recv_location = Column("recv_location", BigInteger, nullable=True, unique=False)
     sent = Column("sent", BigInteger, nullable=True, unique=True)
