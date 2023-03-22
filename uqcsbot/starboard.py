@@ -13,6 +13,8 @@ from uqcsbot import models
 
 class BlacklistedMessageError(Exception):
     pass
+class ReferenceDeletedError(Exception):
+    pass
 
 class Starboard(commands.Cog):
     CHANNEL_NAME = "starboard"
@@ -173,6 +175,9 @@ class Starboard(commands.Cog):
         db_session.close()
     
     def _create_sb_embed(self, recv: discord.Message) -> discord.Embed:
+        if recv.reference is not None and isinstance(recv.reference.resolved, discord.DeletedReferencedMessage):
+            raise ReferenceDeletedError()
+
         embed = discord.Embed(color=recv.author.top_role.color, description=recv.content)
         embed.set_author(name=recv.author.display_name, icon_url=recv.author.display_avatar.url)
         embed.set_footer(text=recv.created_at.astimezone(tz=self.BRISBANE_TZ).strftime('%b %d, %H:%M:%S'))
@@ -181,7 +186,7 @@ class Starboard(commands.Cog):
             embed.set_image(url = recv.attachments[0].url)
             # only takes the first attachment to avoid sending large numbers of images to starboard.
         
-        if recv.reference is not None and not isinstance(recv.reference, discord.DeletedReferencedMessage):
+        if recv.reference is not None and not isinstance(recv.reference.resolved, discord.DeletedReferencedMessage):
             replied = discord.Embed(
                 color=recv.reference.resolved.author.top_role.color,
                 description=recv.reference.resolved.content
@@ -197,15 +202,14 @@ class Starboard(commands.Cog):
             )
 
             return [replied, embed]
-        
         return [embed]
 
     @app_commands.command()
     @app_commands.default_permissions(manage_messages=True)
     async def cleanup_starboard(self, interaction: discord.Interaction):
-        """ Cleans up the last 100 messages from the starboard.
+        """ Cleans up the last 30 messages from the starboard.
         Removes any uqcsbot message that doesn't have a corresponding message id. """
-        sb_messages = await self.starboard_channel.history(limit=100)
+        sb_messages = await self.starboard_channel.history(limit=30)
         db_session = self.bot.create_db_session()
 
         await interaction.defer(thinking=True)
@@ -237,19 +241,27 @@ class Starboard(commands.Cog):
             else:
                 messages += [await self._query_sb_message(payload.message_id)]
                 recv_message, sb_message = messages
-        except BlacklistedMessageError:
+        except (discord.errors.NotFound, BlacklistedMessageError):
             return
         
         new_reaction_count = await self._find_num_reactions(messages)
 
         if new_reaction_count >= self.base_threshold and \
-                sb_message is None and recv_message.id not in self.base_blocked_messages:
-            new_sb_message = await self.starboard_channel.send(
-                content=f"{str(self.starboard_emoji)} {new_reaction_count} | #{recv_message.channel.name}",
-                embeds=self._create_sb_embed(recv_message)
-                # note that the embed is never edited, which means the content of the starboard post is fixed as
-                # soon as the 5th reaction is processed
-            )
+                sb_message is None and recv_message.id not in self.base_blocked_messages and recv_message.content != "":
+            try:
+                new_sb_message = await self.starboard_channel.send(
+                    content=f"{str(self.starboard_emoji)} {new_reaction_count} | #{recv_message.channel.name}",
+                    embeds=self._create_sb_embed(recv_message)
+                    # note that the embed is never edited, which means the content of the starboard post is fixed as
+                    # soon as the 5th reaction is processed
+                )
+            except ReferenceDeletedError:
+                db_session = self.bot.create_db_session()
+                db_session.add(models.Starboard(recv=recv_message.id, recv_location=recv_message.channel.id, sent=None))
+                db_session.commit()
+                db_session.close()
+                return
+            
             await new_sb_message.edit(
                 view=discord.ui.View.from_message(new_sb_message).add_item(discord.ui.Button(
                     label="Original Message",
@@ -295,7 +307,7 @@ class Starboard(commands.Cog):
             else:
                 messages += [await self._query_sb_message(payload.message_id)]
                 recv_message, sb_message = messages
-        except BlacklistedMessageError:
+        except (discord.errors.NotFound, BlacklistedMessageError):
             return
         
         if sb_message == None:
@@ -331,7 +343,7 @@ class Starboard(commands.Cog):
             else:
                 messages += [await self._query_sb_message(payload.message_id)]
                 recv_message, sb_message = messages
-        except BlacklistedMessageError:
+        except (discord.errors.NotFound, BlacklistedMessageError):
             return
         
         if sb_message == None:
@@ -370,7 +382,7 @@ class Starboard(commands.Cog):
             else:
                 messages += [await self._query_sb_message(payload.message_id)]
                 recv_message, sb_message = messages
-        except BlacklistedMessageError:
+        except (discord.errors.NotFound, BlacklistedMessageError):
             return
         
         if sb_message == None:
