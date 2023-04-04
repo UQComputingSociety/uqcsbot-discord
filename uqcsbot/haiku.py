@@ -61,12 +61,51 @@ class Haiku(commands.Cog):
 
 def _number_of_syllables_in_word(word):
     """
-    The number of vowel groups in a word, ignoring 'e' on the end of a word as it is usually silent.
+    Estimate the number of syllables in a word. Based off the algorithm from this website: https://eayd.in/?p=232
     """
-    vowel_groups = re.findall("[aAeEiIoOuUyY]+", word)
-    if word.endswith(("e", "E", "es", "ES")) and len(vowel_groups) > 1:
-        return len(vowel_groups) - 1
-    return len(vowel_groups)
+    word = re.sub("[^a-zA-Z]+", " ", word.lower()).strip()
+
+    prefixes_needing_extra_syllable = [
+        "serious", "crucial", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt"]
+    prefixes_needing_one_less_syllable = [
+        "fortunately", "unfortunately", "facebook", "aisle"]
+
+    if len(word) <= 3:
+        return 1
+
+    number_of_syllables = len(re.findall("[aeiouy]+", word))
+
+    if (
+        number_of_syllables > 1
+        and word.endswith(("es", "ed"))
+        and not word.endswith(("ted", "tes", "ses", "ied", "ies"))
+    ):
+        number_of_syllables -= 1
+    if (
+        word.endswith("e") and (
+            not word.endswith("le")
+            or word.endswith(("ale", "ele", "ile", "ole", "ule"))
+        )
+    ):
+        number_of_syllables -= 1
+
+    if word.startswith("mc"):
+        number_of_syllables += 1
+    if word.startswith(("tria", "trie", "trii", "trio", "triu", "bia", "bie", "bii", "bio", "biu")):
+        number_of_syllables += 1
+    if word.endswith(("ian", "ians")) and not word.endswith(("cian", "cians", "tian", "tians")):
+        number_of_syllables += 1
+    if word.startswith(("coapt", "coed", "coinci", "coop")):
+        number_of_syllables += 1
+    if word.startswith(("prea", "pree", "prei", "preo", "preu")) and not word.startswith("preach"):
+        number_of_syllables += 1
+
+    if word.startswith(tuple(prefixes_needing_extra_syllable)):
+        number_of_syllables += 1
+    if word.startswith(tuple(prefixes_needing_one_less_syllable)):
+        number_of_syllables -= 1
+
+    return number_of_syllables
 
 
 async def setup(bot: UQCSBot):
