@@ -11,7 +11,8 @@ class Haiku(commands.Cog):
     Trys to find Haiku messages in certain channels, and respond "Nice haiku" if it finds one
     """
 
-    ALLOWED_CHANNEL_NAMES = ["bot-testing", "yelling"]
+    ALLOWED_CHANNEL_NAMES = ["bot-testing",
+                             "yelling", "dating", "banter", "memes"]
     YELLING_CHANNEL_NAME = "yelling"
 
     def __init__(self, bot: UQCSBot):
@@ -65,11 +66,20 @@ def _number_of_syllables_in_word(word):
     """
     word = re.sub("[^a-zA-Z]+", " ", word.lower()).strip()
 
-    prefixes_needing_extra_syllable = [
-        "serious", "crucial", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt"]
-    prefixes_needing_one_less_syllable = [
-        "fortunately", "unfortunately", "facebook", "aisle"]
+    # Try to keep these to a minimum by writing new rules, especially the dictionary exceptions.
+    exceptions = {
+        "ok": 2
+        }
+    prefixes_needing_extra_syllable = (
+        "serious", "crucial", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt")
+    prefixes_needing_one_less_syllable = ("facebook", "aisle")
+    suffixes_to_remove = (
+        "s", "ful", "fully", "ness", "ment", "ship", "ism", "ist", "able", "ible", "ish", "less", "ly")
 
+    
+    if word in exceptions.keys():
+        return exceptions[word]
+        
     if len(word) <= 3:
         return 1
 
@@ -81,8 +91,15 @@ def _number_of_syllables_in_word(word):
         and not word.endswith(("ted", "tes", "ses", "ied", "ies"))
     ):
         number_of_syllables -= 1
+
+    for suffix in suffixes_to_remove:
+        if word.endswith(suffix):
+            word = word.removesuffix(suffix)
+
     if (
-        word.endswith("e") and (
+        word.endswith("e")
+        and not word.endswith(("ae", "ee", "ie", "oe", "ue"))
+        and (
             not word.endswith("le")
             or word.endswith(("ale", "ele", "ile", "ole", "ule"))
         )
@@ -93,16 +110,16 @@ def _number_of_syllables_in_word(word):
         number_of_syllables += 1
     if word.startswith(("tria", "trie", "trii", "trio", "triu", "bia", "bie", "bii", "bio", "biu")):
         number_of_syllables += 1
-    if word.endswith(("ian", "ians")) and not word.endswith(("cian", "cians", "tian", "tians")):
+    if word.endswith("ian") and not word.endswith(("cian", "tian")):
         number_of_syllables += 1
     if word.startswith(("coapt", "coed", "coinci", "coop")):
         number_of_syllables += 1
     if word.startswith(("prea", "pree", "prei", "preo", "preu")) and not word.startswith("preach"):
         number_of_syllables += 1
 
-    if word.startswith(tuple(prefixes_needing_extra_syllable)):
+    if word.startswith(prefixes_needing_extra_syllable):
         number_of_syllables += 1
-    if word.startswith(tuple(prefixes_needing_one_less_syllable)):
+    if word.startswith(prefixes_needing_one_less_syllable):
         number_of_syllables -= 1
 
     return number_of_syllables
