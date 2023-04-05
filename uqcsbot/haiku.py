@@ -33,38 +33,57 @@ class Haiku(commands.Cog):
         if message.author.bot:
             return
 
-        syllable_count = 0
-        lines = []
-        current_line = []
-        haiku_syllable_count = [5, 7, 5]
-        for word in message.content.split():
-            if len(lines) == 3:
-                return
-            current_line.append(word)
-            syllable_count += _number_of_syllables_in_word(word)
-            if syllable_count > haiku_syllable_count[len(lines)]:
-                return
-            if syllable_count == haiku_syllable_count[len(lines)]:
-                lines.append(" ".join(current_line))
-                current_line = []
-                syllable_count = 0
-
-        if len(lines) != 3:
+        haiku_lines = _find_haiku(message.content)
+        if not haiku_lines:
             return
 
-        lines = ["> " + line for line in lines]
-        haiku = "\n".join(lines)
+        haiku_lines = ["> " + line for line in haiku_lines]
+        haiku = "\n".join(haiku_lines)
         if message.channel == discord.utils.get(self.bot.get_all_channels(), name=self.YELLING_CHANNEL_NAME):
             await message.reply(f"Nice haiku:\n{haiku}".upper())
         else:
             await message.reply(f"Nice haiku:\n{haiku}")
 
 
+def _find_haiku(text):
+    syllable_count = 0
+    lines = []
+    current_line = []
+    haiku_syllable_count = [5, 7, 5]
+    for word in text.split():
+        if _number_of_syllables_in_word(word) == 0:
+            continue
+        if len(lines) == 3:
+            return False
+        
+        current_line.append(word)
+        syllable_count += _number_of_syllables_in_word(word)
+        if syllable_count > haiku_syllable_count[len(lines)]:
+            return False
+        if syllable_count == haiku_syllable_count[len(lines)]:
+            lines.append(" ".join(current_line))
+            current_line = []
+            syllable_count = 0
+
+    if len(lines) != 3:
+        return False
+    return lines
+
+
 def _number_of_syllables_in_word(word):
     """
     Estimate the number of syllables in a word. Based off the algorithm from this website: https://eayd.in/?p=232
     """
-    word = re.sub("[^a-zA-Z]+", " ", word.lower()).strip()
+
+    logging.warning(word)
+    word = word.lower()
+    # Get rid of emotes. Stolen from https://www.freecodecamp.org/news/how-to-use-regex-to-match-emoji-including-discord-emotes/
+    word = re.sub("<a?:.+?:\d+?>", " ", word)
+    word = re.sub("[^a-zA-Z]+", " ", word)
+    word = word.strip()
+    logging.warning(word)
+    if word == "":
+        return 0
 
     # Try to keep these to a minimum by writing new rules, especially the dictionary exceptions.
     exceptions = {
@@ -79,7 +98,7 @@ def _number_of_syllables_in_word(word):
     
     if word in exceptions.keys():
         return exceptions[word]
-        
+
     if len(word) <= 3:
         return 1
 
