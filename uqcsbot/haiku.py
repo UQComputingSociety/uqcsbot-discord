@@ -75,13 +75,12 @@ def _number_of_syllables_in_word(word):
     Estimate the number of syllables in a word. Based off the algorithm from this website: https://eayd.in/?p=232
     """
 
-    logging.warning(word)
+    
     word = word.lower()
     # Get rid of emotes. Stolen from https://www.freecodecamp.org/news/how-to-use-regex-to-match-emoji-including-discord-emotes/
     word = re.sub("<a?:.+?:\d+?>", " ", word)
     word = re.sub("[^a-zA-Z]+", " ", word)
     word = word.strip()
-    logging.warning(word)
     if word == "":
         return 0
 
@@ -93,7 +92,7 @@ def _number_of_syllables_in_word(word):
         "serious", "crucial", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt")
     prefixes_needing_one_less_syllable = ("facebook", "aisle")
     suffixes_to_remove = (
-        "s", "ful", "fully", "ness", "ment", "ship", "ism", "ist", "able", "ible", "ish", "less", "ly")
+        "s", "ful", "fully", "ness", "ment", "ship", "ism", "ist", "ish", "less", "ly")
 
     
     if word in exceptions.keys():
@@ -104,17 +103,16 @@ def _number_of_syllables_in_word(word):
 
     number_of_syllables = len(re.findall("[aeiouy]+", word))
 
+    for suffix in suffixes_to_remove:
+        if word.endswith(suffix):
+            word = word.removesuffix(suffix)
+
     if (
         number_of_syllables > 1
         and word.endswith(("es", "ed"))
         and not word.endswith(("ted", "tes", "ses", "ied", "ies"))
     ):
         number_of_syllables -= 1
-
-    for suffix in suffixes_to_remove:
-        if word.endswith(suffix):
-            word = word.removesuffix(suffix)
-
     if (
         word.endswith("e")
         and not word.endswith(("ae", "ee", "ie", "oe", "ue"))
@@ -140,7 +138,6 @@ def _number_of_syllables_in_word(word):
         number_of_syllables += 1
     if word.startswith(prefixes_needing_one_less_syllable):
         number_of_syllables -= 1
-
     return number_of_syllables
 
 
