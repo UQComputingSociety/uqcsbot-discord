@@ -1,4 +1,3 @@
-import logging
 import re
 import discord
 from discord.ext import commands
@@ -55,7 +54,7 @@ def _find_haiku(text):
             continue
         if len(lines) == 3:
             return False
-        
+
         current_line.append(word)
         syllable_count += _number_of_syllables_in_word(word)
         if syllable_count > haiku_syllable_count[len(lines)]:
@@ -75,10 +74,9 @@ def _number_of_syllables_in_word(word):
     Estimate the number of syllables in a word. Based off the algorithm from this website: https://eayd.in/?p=232
     """
 
-    
     word = word.lower()
     # Get rid of emotes. Stolen from https://www.freecodecamp.org/news/how-to-use-regex-to-match-emoji-including-discord-emotes/
-    word = re.sub("<a?:.+?:\d+?>", " ", word)
+    word = re.sub("<a?:.+?:[0-9]+?>", " ", word)
     word = re.sub("[^a-zA-Z]+", " ", word)
     word = word.strip()
     if word == "":
@@ -87,30 +85,33 @@ def _number_of_syllables_in_word(word):
     # Try to keep these to a minimum by writing new rules, especially the dictionary exceptions.
     exceptions = {
         "ok": 2
-        }
+    }
     prefixes_needing_extra_syllable = (
-        "serious", "crucial", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt")
+        "serious", "crucial", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt", "maybe")
     prefixes_needing_one_less_syllable = ("facebook", "aisle")
     suffixes_to_remove = (
-        "s", "ful", "fully", "ness", "ment", "ship", "ism", "ist", "ish", "less", "ly")
+        "ful", "fully", "ness", "ment", "ship", "ism", "ist", "ish", "less", "ly")
 
-    
     if word in exceptions.keys():
         return exceptions[word]
+
+    number_of_syllables = len(re.findall("[aeiouy]+", word))
 
     if len(word) <= 3:
         return 1
 
-    number_of_syllables = len(re.findall("[aeiouy]+", word))
-
     for suffix in suffixes_to_remove:
-        if word.endswith(suffix):
+        if word.endswith((suffix, suffix + "s")):
             word = word.removesuffix(suffix)
+            word = word.removesuffix(suffix + "s")
+    # Do it again, as if word is within suffixes_to_remove, we still need a syllable for the word
+    if len(word) <= 3:
+        return 1
 
     if (
         number_of_syllables > 1
-        and word.endswith(("es", "ed"))
-        and not word.endswith(("ted", "tes", "ses", "ied", "ies"))
+        and word.endswith("ed")
+        and not word.endswith("ted")
     ):
         number_of_syllables -= 1
     if (
