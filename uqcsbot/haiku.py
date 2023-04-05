@@ -151,13 +151,13 @@ def _number_of_syllables_in_word(word):
         )
     ):
         number_of_syllables -= 1
-    # Usually, the suffix "ious" is one syllable, but if it is preceeded by "b", "n", "p" or "r" it is two syllables. For example, "anxious" has 2 syllables, but "amphibious" has 4 syllables. Likewise, consider "harmonious", "copious", "glorious".
+    # Usually, the suffix "ious" is one syllable, but if it is preceeded by "b", "n", "p" or "r" it is two syllables. For example, "anxious" has 2 syllables, but "amphibious" has 4 syllables. Likewise, consider "harmonious", "copious" and "glorious".
     if word.endswith(("bious", "nious", "pious", "rious")):
         number_of_syllables += 1
-    # Usually, the suffix "ial" is one syllable, but if it is preceeded by "b", "d", "m", "n", "r", "v" or "x" it is two syllables. For example, "initial" has 3 syllables, but "microbial" has 3 syllables. Likewise, consider "radial", "polynomial", "millennial", "aerial", "trivial" and "axial".
+    # Usually, the suffix "ial" is one syllable, but if it is preceeded by "b", "d", "m", "n", "r", "v" or "x" it is two syllables. For example, "initial" has 3 syllables, but "microbial" has 4 syllables. Likewise, consider "radial", "polynomial", "millennial", "aerial", "trivial" and "axial".
     if word.endswith(("bial", "dial", "mial", "nial", "rial", "vial", "xial")):
         number_of_syllables += 1
-    # The suffix "ual" consists of two syllables such as "contextual". (Enter debate about "actual", "casual" and "usual"). We will assume both of these have 3 syllables).
+    # The suffix "ual" consists of two syllables such as "contextual". (Enter debate about "actual", "casual" and "usual". We will assume all of these have 3 syllables. Note that "actually" also has 3 syllables by this classification (which matches google's recommended pronunciation).)
     if word.endswith("ual"):
         number_of_syllables += 1
 
