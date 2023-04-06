@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 import requests
 from typing import NamedTuple, List, Tuple, Optional
+from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta
 from math import ceil
 
@@ -36,7 +37,7 @@ def string_to_date(date: str) -> datetime:
         Returns:
             Stringified date
     """
-    return datetime.strptime(date, DATE_FORMAT)
+    return datetime.strptime(date, DATE_FORMAT).replace(tzinfo=ZoneInfo("Australia/Brisbane"))
 
 
 def get_semester_times(markup: str) -> List[Semester]:
@@ -125,7 +126,7 @@ class WhatWeekIsIt(commands.Cog):
         await interaction.response.defer(thinking=True)
 
         if date == None:
-            check_date = datetime.now()
+            check_date = datetime.now(tz=ZoneInfo("Australia/Brisbane"))
         else:
             try:
                 check_date = string_to_date(date)
