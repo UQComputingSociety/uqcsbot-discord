@@ -31,8 +31,8 @@ class Reminders(Base):
     __tablename__ = 'reminders'
 
     id = Column("id", BigInteger, primary_key=True, nullable=False)
-    user_id = Column("user_id", Integer, nullable=False)
-    channel_id = Column("channel_id", Integer, nullable=True)
+    user_id = Column("user_id", BigInteger, nullable=False)
+    channel_id = Column("channel_id", BigInteger, nullable=True)
     time_created = Column("time_created", DateTime, nullable=False)
     message = Column("message", String, nullable=False)
     time = Column("time", Time, nullable=False)
