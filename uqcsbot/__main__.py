@@ -39,6 +39,7 @@ async def main():
             "advent",
             "basic", 
             "channels", 
+            "cowsay",
             "error_handler",
             "events", 
             "gaming", 
