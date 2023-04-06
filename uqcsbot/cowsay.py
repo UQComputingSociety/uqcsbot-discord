@@ -17,18 +17,20 @@ class Cowsay(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(
-        message="Input string",
-        mood="Cow mood",
-        tongue="Stick out tongue",
+        message="The message that the cow will say",
+        mood="The mood of the cow (optional)",
+        tongue="Whether the cow should show its tongue (optional, default to False)",
+        tux="Display the Linux Tux instead of the cow (optional, default to False)",
     )
     async def cowsay(self, interaction: discord.Interaction, 
             message: str, 
             mood: Optional[Literal['Borg', 'Dead', 'Greed', 'Paranoid', 'Stoned', 'Tired', 'Wired', 'Youthful']], 
-            tongue: Optional[bool] = False):
+            tongue: Optional[bool] = False,
+            tux: Optional[bool] = False) -> None:
         """
         Returns a cow saying the given message.
         """
-        await interaction.response.send_message(f"```{self.construct_bubble(message)}```")
+        await interaction.response.send_message(f"```{self.construct_say_bubble(message)}```")
 
     def word_wrap(self, message: str) -> List[str]:
         """
@@ -38,13 +40,13 @@ class Cowsay(commands.Cog):
         line = ""
         for word in message.split():
             if len(line) + len(word) > self._max_length:
-                lines.append(line.strip())
+                lines.append(line.rstrip())
                 line = ""
             line += word + " "
-        lines.append(line.strip())
+        lines.append(line.rstrip())
         return lines
 
-    def construct_bubble(self, message: str):
+    def construct_say_bubble(self, message: str):
         """
         Constructs a speech bubble around the given message.
         """
