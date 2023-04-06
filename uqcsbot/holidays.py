@@ -90,7 +90,7 @@ def get_holiday_page() -> bytes | None:
 class Holidays(commands.Cog):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
-        self.bot.schedule_task(self.holiday, trigger='cron', hour=16, minute=12, timezone='Australia/Brisbane')
+        self.bot.schedule_task(self.holiday, trigger='cron', hour=9, minute=0, timezone='Australia/Brisbane')
 
     async def holiday(self):
         """
