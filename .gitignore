@@ -129,4 +129,5 @@ dmypy.json
 .pyre/
 
 .vim
+*.db
 **/.DS_STORE

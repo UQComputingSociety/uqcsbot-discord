@@ -1,6 +1,6 @@
 # UQCSbot
 
-UQCSbot is our friendly chat bot used on the [UQCS Discord Server](https://discord.uqcs.org). For the UQCSbot used in our Slack team, see [UQCSbot-Slack](https://github.com/uqcomputing/uqcsbot).
+UQCSbot is our friendly chat bot used on the [UQCS Discord Server](https://discord.uqcs.org). For the UQCSbot used in our Slack team, see [UQCSbot-Slack](https://github.com/uqcomputing/uqcsbot-slack).
 
 ## Setup & Running Locally
 
@@ -10,15 +10,35 @@ UQCSbot uses [Poetry](https://python-poetry.org/) for dependency management. Onc
 poetry install
 ```
 
-Access to the UQCSbot testing tokens and server is provided through the #bot-testing channel on our Discord.
+### Environment Variables
 
-### Using Docker (Recommended)
+You'll need to define environment variables to be able to start the bot. The `.env.example` file contains a basis for what you can use as a `.env` file. You'll need to create an `.env` file with the required environment variables populated:
+
+* `DISCORD_BOT_TOKEN` for the Discord provided bot token.
+* `POSTGRES_URI_BOT` for the PostgreSQL connection string.
+
+It is recommended that you acquire your own Discord bot token for testing, details can be found in the [Discord Developer Docs](https://discord.com/developers/docs/getting-started#creating-an-app). Requests can be made to committee for bot testing tokens, but will only be approved on a case by case basis.
+
+More information for currently implemented environment variables can be found on [this wiki page](https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables).
+
+### Running the Bot
+
+Once you have a .env file, you can run the following command to start the bot:
+
+```sh
+poetry run botdev
+```
+
+To shutdown the bot, hit Ctrl+C
+
+<details>
+<summary><b>Alternative Instructions for Docker</b></summary>
+
+UQCSbot is deployed using [Docker](https://docker.com). If you're familiar with it or want to fully simulate the production environment, you can follow these instructions instead.
 
 If you're going to use Docker as your dev environment, make sure you have:
 * [Docker](https://docs.docker.com/engine/install/)
 * [Docker Compose](https://docs.docker.com/compose/install/)
-
-Ensure that you have the `.env` file with your allocated bot token and the default PostgeSQL connection string.
 
 To build and start Docker, you can run: (Note that depending on how Docker is configured, you may need to prepend `sudo`)
 ```
@@ -29,23 +49,7 @@ To shut down the Docker environment, run:
 ```
 docker-compose down
 ```
-
-### Without Docker
-
-You can also run the bot without Docker, however you currently require to have a PostgreSQL instance to connect to.
-
-Export the environment variables into your environment, then run:
-```
-poetry shell
-python -m uqcsbot
-```
-
-### Environment Variables
-
-* `DISCORD_BOT_TOKEN` for the Discord provided bot token.
-* `POSTGRES_URI_BOT` for the PostgreSQL connection string.
-
-The `.env.example` file contains a basis for what you can use as a .env file. (Used for Docker only)
+</details>
 
 ## Testing
 

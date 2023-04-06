@@ -1,13 +1,12 @@
+import discord
+from discord import app_commands
 import requests
-from collections import namedtuple
 from typing import NamedTuple, List, Tuple, Optional
 from datetime import datetime, timedelta
 from math import ceil
 
 from bs4 import BeautifulSoup
 from discord.ext import commands
-
-from uqcsbot.utils.command_utils import loading_status
 
 # Endpoint that contains a table of semester dates
 MARKUP_CALENDAR_URL: str = "https://systems-training.its.uq.edu.au/systems/student-systems/electronic-course-profile-system/design-or-edit-course-profile/academic-calendar-teaching-week"
@@ -115,29 +114,28 @@ class WhatWeekIsIt(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.command()
-    @loading_status
-    async def whatweekisit(self, ctx: commands.Context, *args):
+    @app_commands.command()
+    @app_commands.describe(date="Date to lookup in the format of %d/%m/%Y (defaults to today)")
+    async def whatweekisit(self, interaction: discord.Interaction, date: Optional[str]):
         """
-        `!whatweekisit [SPECIFIED_DATE]` - Sends information about which
-        semester, week and weekday it is on the specified date (in %d/%m/%Y) --
-        if there's no specified date, it takes it to be the current one.
+        Sends information about which semester, week and weekday it is.
+        If there's no specified date, it takes it to be the current one.
         """
-        if len(args) > 1:
-            await ctx.send("No more than one argument (specified date) is required")
-            return
-        elif len(args) == 1:
-            try:
-                check_date = string_to_date(args[0])
-            except ValueError:
-                await ctx.send(f"Specified date should be in format `{DATE_FORMAT}`")
-                return
-        else:
+
+        await interaction.response.defer(thinking=True)
+
+        if date == None:
             check_date = datetime.now()
+        else:
+            try:
+                check_date = string_to_date(date)
+            except ValueError:
+                await interaction.edit_original_response(content=f"Specified date should be in format `{DATE_FORMAT}`")
+                return
 
         calendar_page = requests.get(MARKUP_CALENDAR_URL)
         if calendar_page.status_code != requests.codes.ok:
-            await ctx.send("An error occurred, please try again.")
+            await interaction.edit_original_response(content="An error occurred, please try again.")
 
         semesters = get_semester_times(calendar_page.text)
 
@@ -150,13 +148,13 @@ class WhatWeekIsIt(commands.Cog):
 
             message = (
                 "The week we're in is:"
-                if len(args) == 0
-                else f"The week of {args[0]} is in:"
+                if date == None
+                else f"The week of {date} is in:"
             )
             message += f"\n> {weekday}, {week_name} of {semester_name}"
 
-        await ctx.send(message)
+        await interaction.edit_original_response(content=message)
 
 
-def setup(bot: commands.Bot):
-    bot.add_cog(WhatWeekIsIt(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(WhatWeekIsIt(bot))

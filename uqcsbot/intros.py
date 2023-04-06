@@ -1,9 +1,8 @@
-import logging
-
 import discord
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
+
 
 class Intros(commands.Cog):
     CHANNEL_NAME = 'intros'
@@ -20,5 +19,5 @@ class Intros(commands.Cog):
         await msg.add_reaction('👋')
 
 
-def setup(bot: commands.Bot):
-    bot.add_cog(Intros(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Intros(bot))

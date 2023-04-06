@@ -1,17 +1,19 @@
-from discord.ext import commands
-import discord
-from uqcsbot.bot import UQCSBot
-from typing import Optional
-
-from uqcsbot.utils.command_utils import loading_status
-
-from requests import get
-from xml.etree.ElementTree import fromstring
 from difflib import SequenceMatcher
 from html import unescape
-from urllib.request import urlopen
-from urllib.error import HTTPError
 from json import loads
+from typing import Optional
+from urllib.error import HTTPError
+from urllib.request import urlopen
+from xml.etree.ElementTree import fromstring
+
+import discord
+from discord import app_commands
+from discord.ext import commands
+from requests import get
+
+from uqcsbot.bot import UQCSBot
+from uqcsbot.utils.command_utils import loading_status
+
 
 class Gaming(commands.Cog):
     """
@@ -185,37 +187,39 @@ class Gaming(commands.Cog):
         embed.set_thumbnail(url=parameters.get('image'))
         return embed
 
-    @commands.command()
-    @loading_status
-    async def bgg(self, ctx: commands.Context, *board_game: str):
+    @app_commands.command()
+    @app_commands.describe(board_game="Board game to search for")
+    async def bgg(self, interaction: discord.Interaction, board_game: str):
         """
         Gets the details of the provided board game from Board Game Geek
         """
+        await interaction.response.defer(thinking=True)
 
-        identity = self.get_bgg_id(" ".join(board_game))
+        identity = self.get_bgg_id(board_game)
         if identity is None:
-            await ctx.send("Could not find board game with that name.")
+            await interaction.edit_original_response("Could not find board game with that name.")
             return
 
         parameters = self.get_board_game_parameters(identity)
         if parameters is None:
-            await ctx.send("Something has gone wrong.")
+            await interaction.edit_original_response("Something has gone wrong.")
             return
 
         embed = self.format_board_game_parameters(parameters)
-        await ctx.send(embed=embed)
+        await interaction.edit_original_response(embed=embed)
 
-    @commands.command()
-    @loading_status
-    async def scry(self, ctx: commands.Context, *card: str):
+    @app_commands.command()
+    @app_commands.describe(card="Card to search for")
+    async def scry(self, interaction: discord.Interaction, card: Optional[str]):
         """
         Returns the Magic: the Gathering card that matches (partially or
         fully) the given argument (or a random card if no argument given)
         """
+        await interaction.response.defer(thinking=True)
 
         # random card if no argument
         if card:
-            request = "https://api.scryfall.com/cards/named?fuzzy=" + "+".join(card)
+            request = "https://api.scryfall.com/cards/named?fuzzy=" + card.replace(" ", "+")
         else:
             request = "https://api.scryfall.com/cards/random"
 
@@ -227,22 +231,21 @@ class Gaming(commands.Cog):
             if e.code == 404:
                 fault = loads(e.read())
                 if fault.get('type') == "ambiguous":
-                    await ctx.send("Request 404'd; Multiple Possible Cards")
+                    await interaction.edit_original_response("Request 404'd; Multiple Possible Cards")
                 else:
-                    await ctx.send("Request 404'd; No Cards Found")
+                    await interaction.edit_original_response("Request 404'd; No Cards Found")
                 return
-            await ctx.send(str(e))
+            await interaction.edit_original_response(str(e))
             return
 
         card = loads(response.read())
         if 'image_uris' in card:
             # single faced cards
-            await ctx.send(card['image_uris']['png'])
+            await interaction.edit_original_response(content=card['image_uris']['png'])
         else:
             # double faced cards
-            for face in card['card_faces']:
-                await ctx.send(face['image_uris']['png'])
+            await interaction.edit_original_response(content="\n".join(face['image_uris']['png'] for face in card['card_faces']))
 
-def setup(bot: commands.Bot):
-    bot.add_cog(Gaming(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Gaming(bot))
 
