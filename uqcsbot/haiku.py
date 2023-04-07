@@ -98,8 +98,10 @@ def _number_of_syllables_in_word(word: str):
         "boreal", "cereal", "corneal", "ethereal", "montreal",
         # Words ending in "nt" due to contraction (after removing punctuation)
         "didn t", "doesn t", "isn t", "shouldn t", "couldn t", "wouldn t",
+        # Words ending in "nt" due to contraction (user forgetting punctuation)
+        "didnt", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt",
         # Words ending in "e" that is considered silent, when it is not.
-        "maybe")
+        "maybe", "cafe")
     prefixes_needing_one_less_syllable = (
         # Compound words with a silent "e" in the middle
         "facebook",
@@ -126,6 +128,10 @@ def _number_of_syllables_in_word(word: str):
         if word.endswith((suffix, suffix + "s")):
             word = word.removesuffix(suffix)
             word = word.removesuffix(suffix + "s")
+    # Before removing s, note that "s" adds a syllable to words ending in "ge", "se" such as "ages" and "sentences".
+    if word.endswith(("ces", "ges")):
+        number_of_syllables += 1
+    word = word.removesuffix("s")
 
     # Any exceptions to this need to be put in the exceptions dictionary
     if len(word) <= 3:
@@ -155,14 +161,17 @@ def _number_of_syllables_in_word(word: str):
         )
     ):
         number_of_syllables -= 1
-    # Usually, the suffix "ious" is one syllable, but if it is preceeded by "b", "n", "p" or "r" it is two syllables. For example, "anxious" has 2 syllables, but "amphibious" has 4 syllables. Likewise, consider "harmonious", "copious" and "glorious".
-    if word.endswith(("bious", "nious", "pious", "rious")):
+    # Usually, the suffix "ious" is one syllable, but if it is preceeded by "b", "n", "p" or "r" it is two syllables. For example, "anxious" has 2 syllables, but "amphibious" has 4 syllables. Likewise, consider "harmonious", "copious" and "glorious". Note "s" has already been removed.
+    if word.endswith(("biou", "niou", "piou", "riou")):
         number_of_syllables += 1
     # Usually, the suffix "ial" is one syllable, but if it is preceeded by "b", "d", "l", "m", "n", "r", "v" or "x" it is two syllables. For example, "initial" has 3 syllables, but "microbial" has 4 syllables. Likewise, consider "radial", "familial", "polynomial", "millennial", "aerial", "trivial" and "axial".
     if word.endswith(("bial", "dial", "lial", "mial", "nial", "rial", "vial", "xial")):
         number_of_syllables += 1
     # The suffix "ual" consists of two syllables such as "contextual". (Enter debate about "actual", "casual" and "usual". We will assume all of these have 3 syllables. Note that "actually" also has 3 syllables by this classification (which matches google's recommended pronunciation). We lso use the British pronunciation of "dual", which has 2 syllables.)
     if word.endswith("ual"):
+        number_of_syllables += 1
+    # The suffix "ing" adds another syllable, even if it is next to a vowel. For example "going" and "skiing" both have 2 syllables.
+    if word.endswith(("aing", "eing", "iing", "oing", "uing", "ying")):
         number_of_syllables += 1
 
     # PREFIXES

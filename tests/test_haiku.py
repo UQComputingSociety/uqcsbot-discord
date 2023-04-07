@@ -30,7 +30,10 @@ def test_number_of_syllables_in_word():
         "ethereal": 4,
         "montreal": 3,
         "real": 1,
+        "apple": 2,
+        "apples": 2,
         "whale": 1,
+        "whales": 1,
         "whole": 1,
         "anxious": 2,
         "amphibious": 4,
@@ -70,9 +73,21 @@ def test_number_of_syllables_in_word():
         "shouldn't": 2,
         "isn't": 2,
         "don't": 1,
+        "didnt": 2,
+        "doesnt": 2,
+        "wouldnt": 2,
+        "couldnt": 2,
+        "shouldnt": 2,
+        "isnt": 2,
+        "dont": 1,
         "contractions": 3,
         "are": 1,
         "because": 2,
+        "rules": 1,
+        "cages": 2,
+        "cafes": 2,
+        "going": 2,
+        "skiing": 2,
     }
     for (word, expected_syllable_count) in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
@@ -88,13 +103,19 @@ def test_find_haiku():
         "OK IT WORKS! MIGHT MIS-FIRE <:disapproval:1053481630037196931>  OCCASIONALLY, BUT EH... GOOD ENOUGH 😄",
         "OK IT WORKS! MIGHT MIS-FIRE<:disapproval:1053481630037196931>  OCCASIONALLY, BUT EH... GOOD ENOUGH 😄",
         "OK IT WORKS! 😄 MIGHT MIS-FIRE OCCASIONALLY, BUT EH... GOOD ENOUGH",
-        "YOU WRITE A MESSAGE AND IT TURNS OUT TO BE A HAIKU AND YOU WIN"
+        "YOU WRITE A MESSAGE AND IT TURNS OUT TO BE A HAIKU AND YOU WIN",
+        "contractions are hard because they break a lot of the syllabic rules",
+        "I'm going to write the lowest effort haiku imaginable",
+        "Yea, true. That's quite a good point that I had not quite thought of. Very true",
+        "ill have to become careful with my messages to not send haiku",
+        "fwiw you also have to have word breaks in the right places to make it 5/7/5",
+        "This is a haiku\n I just want to test the bot\n Didn't read the code"
     ]
     false_cases = [
         "This is not a haiku",
         "neither is this",
         "this is far too long to be a haiku, you should not accept this",
-        "when a haiku; kinda fits but has a word; at the end too longer"
+        "when a haiku; kinda fits but has a word; at the end too longer",
     ]
     for haiku in true_cases:
         assert _find_haiku(haiku)
