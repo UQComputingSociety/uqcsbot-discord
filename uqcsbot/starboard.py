@@ -61,11 +61,30 @@ class Starboard(commands.Cog):
         self.big_blocked_messages.remove(id)
     
     async def _blacklist_log(self, message: discord.Message, user: discord.Member, blacklist: bool):
+        """ Logs a blacklist/whitelist command to the modlog. """
         channels = self.bot.get_all_channels()
         modlog = discord.utils.get(channels, name="admin-alerts")
         state = "blacklisted" if blacklist else "whitelisted"
 
-        await modlog.send(f"{str(user)} {state} message {message.id} (link: {message.jump_url})")
+        embed = discord.Embed(color=message.author.top_role.color, description=message.content)
+        embed.set_author(name=message.author.display_name, icon_url=message.author.display_avatar.url)
+        embed.set_footer(text=message.created_at.astimezone(tz=self.BRISBANE_TZ).strftime('%b %d, %H:%M:%S'))
+
+        if len(message.attachments) > 0:
+            embed.set_image(url = message.attachments[0].url)
+            # only takes the first attachment to avoid sending large numbers of images to starboard.
+
+        log_item = await modlog.send(
+            f"{str(user)} {state} message {message.id}",
+            embeds=embed)
+        
+        await log_item.edit(
+                view=discord.ui.View.from_message(log_item).add_item(discord.ui.Button(
+                    label="Original Message",
+                    style=discord.ButtonStyle.link,
+                    url=message.jump_url
+                ))
+            )
     
     @app_commands.default_permissions(manage_messages=True)
     async def context_blacklist_sb_message(self, interaction: discord.Interaction, message: discord.Message):
@@ -204,6 +223,7 @@ class Starboard(commands.Cog):
         db_session.close()
     
     def _create_sb_embed(self, recv: discord.Message) -> discord.Embed:
+        """ Creates the starboard embed for a message, including author, colours, replies, etc. """
         if recv.reference is not None and isinstance(recv.reference.resolved, discord.DeletedReferencedMessage):
             # we raise this exception and auto-blacklist replies to deleted messages on the logic that those
             # messages were probably deleted for a reason
@@ -237,6 +257,8 @@ class Starboard(commands.Cog):
         return [embed]
 
     async def _get_message_pair(self, channel, message_id: int) -> List[discord.Message]:
+        """ Given some message ID, return the two Message objects relevant to it: 
+        the starboard message (or None) and the original message (or None) """
         message = await channel.fetch_message(message_id)
 
         if channel == self.starboard_channel:
