@@ -182,7 +182,6 @@ class Starboard(commands.Cog):
                     # message - the caller will handle that.
 
                     entry.recv_location = None
-                    entry.recv = None
                     db_session.commit()
         
         db_session.close()
