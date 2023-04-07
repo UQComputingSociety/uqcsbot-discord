@@ -76,7 +76,7 @@ class Starboard(commands.Cog):
 
         log_item = await modlog.send(
             f"{str(user)} {state} message {message.id}",
-            embeds=embed)
+            embeds=[embed])
         
         await log_item.edit(
                 view=discord.ui.View.from_message(log_item).add_item(discord.ui.Button(
