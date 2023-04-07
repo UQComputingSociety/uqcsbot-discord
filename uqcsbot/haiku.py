@@ -47,7 +47,12 @@ class Haiku(commands.Cog):
     @app_commands.command()
     @app_commands.describe(text="Syllable check for a given word")
     async def syllables(self, interaction: discord.Interaction, word: str):
-        await interaction.response.send_message(f"{word} has {_number_of_syllables_in_word(word)} syllables.")
+        if (" " not in word):
+            pluralisation = "syllables" if _number_of_syllables_in_word(word) != 1 else "syllable"
+
+            await interaction.response.send_message(f"{word} has {_number_of_syllables_in_word(word)} {pluralisation}.")
+        else:
+            await interaction.response.send_message("I can only check one word at a time!")
 
 
 def _find_haiku(text: str):
