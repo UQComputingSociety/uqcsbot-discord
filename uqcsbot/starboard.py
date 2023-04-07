@@ -279,11 +279,11 @@ class Starboard(commands.Cog):
         db_session = self.bot.create_db_session()
 
         # in case it takes a while, we need to defer the interaction so it doesn't die
-        await interaction.defer(thinking=True)
+        await interaction.response.defer(thinking=True)
 
         async for message in sb_messages:
             query = db_session.query(models.Starboard).filter(models.Starboard.sent == message.id).one_or_none()
-            if query is None and message.author.id == self.user.id:
+            if query is None and message.author.id == self.bot.user.id:
                 # only delete messages that uqcsbot itself sent
                 message.delete()
 
