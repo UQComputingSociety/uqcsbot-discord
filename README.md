@@ -17,7 +17,7 @@ You'll need to define environment variables to be able to start the bot. The `.e
 * `DISCORD_BOT_TOKEN` for the Discord provided bot token.
 * `POSTGRES_URI_BOT` for the PostgreSQL connection string.
 
-It is recommended that you acquire your own Discord bot token for testing, details can be found in the [Discord Developer Docs](https://discord.com/developers/docs/getting-started#creating-an-app). Requests can be made to committee for bot testing tokens, but will only be approved on a case by case basis.
+It is recommended that you acquire your own Discord bot token for testing, details can be found in the [Discord Developer Docs](https://discord.com/developers/docs/getting-started#creating-an-app). Make sure you also enable the Server Members Intent and Message Content Intent in your bot settings. Requests can be made to committee for bot testing tokens, but will only be approved on a case by case basis. 
 
 More information for currently implemented environment variables can be found on [this wiki page](https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables).
 
