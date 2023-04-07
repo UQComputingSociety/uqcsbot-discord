@@ -91,7 +91,7 @@ class Starboard(commands.Cog):
         db_session.close()
 
         await self._blacklist_log(message, interaction.user, blacklist=True)
-        await interaction.response.send_message(f"Blacklisted message {message.id}.")
+        await interaction.response.send_message(f"Blacklisted message {message.id}.", ephemeral=True)
 
     @app_commands.default_permissions(manage_messages=True)
     async def context_whitelist_sb_message(self, interaction: discord.Interaction, message: discord.Message):
@@ -111,7 +111,7 @@ class Starboard(commands.Cog):
         db_session.close()
 
         await self._blacklist_log(message.id, blacklist=False)
-        await interaction.response.send_message(f"Whitelisted message {message.id}.")
+        await interaction.response.send_message(f"Whitelisted message {message.id}.", ephemeral=True)
     
     async def _query_sb_message(self, recv: int) -> discord.Message:
         """ Get the starboard message corresponding to the recieved message. Returns None if no sb message exists.
