@@ -83,6 +83,10 @@ def _find_haiku(text: str):
     return lines
 
 
+def _number_of_vowel_groups(word: str):
+    return len(re.findall("[aeiouy]+", word))
+
+
 def _number_of_syllables_in_word(word: str):
     """
     Estimate the number of syllables in a word. Based off the algorithm from this website: https://eayd.in/?p=232
@@ -109,9 +113,11 @@ def _number_of_syllables_in_word(word: str):
         # Words ending in "eal" where "eal" consists of 2 syllables
         "boreal", "cereal", "corneal", "ethereal", "montreal",
         # Words ending in "nt" due to contraction (after removing punctuation)
-        "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt",
+        "didn t", "doesn t", "isn t", "shouldn t", "couldn t", "wouldn t",
+        # Words ending in "nt" due to contraction (user forgetting punctuation)
+        "didnt", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt",
         # Words ending in "e" that is considered silent, when it is not.
-        "maybe")
+        "maybe", "cafe")
     prefixes_needing_one_less_syllable = (
         # Compound words with a silent "e" in the middle
         "facebook",
@@ -125,26 +131,46 @@ def _number_of_syllables_in_word(word: str):
         "ville"
     )
     suffixes_to_remove = (
-        "ful", "fully", "ness", "ment", "ship", "ism", "ist", "ish", "less", "ly"
+        "ful", "fully", "ness", "ment", "ship", "ist", "ish", "less", "ly", "ing"
+    )
+    suffixes_to_remove_with_extra_syllable = (
+        # "ism" is two syllables
+        "ism",
     )
 
     if word in exceptions.keys():
         return exceptions[word]
 
-    number_of_syllables = len(re.findall("[aeiouy]+", word))
+    number_of_syllables = 0
 
-    # Remove suffixes so we can focus on the syllables of the root word
+    # Remove suffixes so we can focus on the syllables of the root word, but only if it is a true suffix (checked by tesing if there is another vowel without the suffix)
     for suffix in suffixes_to_remove:
-        if word.endswith((suffix, suffix + "s")):
-            word = word.removesuffix(suffix)
-            word = word.removesuffix(suffix + "s")
+        if (
+            word.endswith((suffix, suffix + "s"))
+            and _number_of_vowel_groups(word.removesuffix(suffix).removesuffix(suffix + "s")) >= 0
+        ):
+            word = word.removesuffix(suffix).removesuffix(suffix + "s")
+            number_of_syllables += _number_of_vowel_groups(suffix)
+    for suffix in suffixes_to_remove_with_extra_syllable:
+        if (
+            word.endswith((suffix, suffix + "s"))
+            and _number_of_vowel_groups(word.removesuffix(suffix).removesuffix(suffix + "s")) >= 0
+        ):
+            word = word.removesuffix(suffix).removesuffix(suffix + "s")
+            number_of_syllables += _number_of_vowel_groups(suffix)
+            number_of_syllables += 1
+
+    number_of_syllables += _number_of_vowel_groups(word)
+
+    # Before removing s, note that "s" adds a syllable to words ending in "ge", "se" such as "ages" and "sentences".
+    if word.endswith(("ces", "ges")):
+        number_of_syllables += 1
+    word = word.removesuffix("s")
 
     # Any exceptions to this need to be put in the exceptions dictionary
     if len(word) <= 3:
         # Root words of 3 letters or less tend to have only 1 syllable. Any extra vowel groups within the root word need to be disregarded. For example "ageless" turns into "age" which only has 1 syllable, so 3 - 2 + 1 = 2 syllables in total. Similarly "eyes" turns into "eye" has 2 - 2 + 1 = 1 syllables in total, and "manly" has 2 - 1 + 1 = 2 syllables in total.
-        number_of_vowel_groups_in_root_word = len(
-            re.findall("[aeiouy]+", word))
-        return number_of_syllables - number_of_vowel_groups_in_root_word + 1
+        return number_of_syllables - _number_of_vowel_groups(word) + 1
 
     # SUFFIXES
     # Words like "flipped" and "asked" don't have a syllable for "ed"
@@ -167,13 +193,13 @@ def _number_of_syllables_in_word(word: str):
         )
     ):
         number_of_syllables -= 1
-    # Usually, the suffix "ious" is one syllable, but if it is preceeded by "b", "n", "p" or "r" it is two syllables. For example, "anxious" has 2 syllables, but "amphibious" has 4 syllables. Likewise, consider "harmonious", "copious" and "glorious".
-    if word.endswith(("bious", "nious", "pious", "rious")):
+    # Usually, the suffix "ious" is one syllable, but if it is preceeded by "b", "n", "p" or "r" it is two syllables. For example, "anxious" has 2 syllables, but "amphibious" has 4 syllables. Likewise, consider "harmonious", "copious" and "glorious". Note: "s" has already been removed.
+    if word.endswith(("biou", "niou", "piou", "riou")):
         number_of_syllables += 1
     # Usually, the suffix "ial" is one syllable, but if it is preceeded by "b", "d", "l", "m", "n", "r", "v" or "x" it is two syllables. For example, "initial" has 3 syllables, but "microbial" has 4 syllables. Likewise, consider "radial", "familial", "polynomial", "millennial", "aerial", "trivial" and "axial".
     if word.endswith(("bial", "dial", "lial", "mial", "nial", "rial", "vial", "xial")):
         number_of_syllables += 1
-    # The suffix "ual" consists of two syllables such as "contextual". (Enter debate about "actual", "casual" and "usual". We will assume all of these have 3 syllables. Note that "actually" also has 3 syllables by this classification (which matches google's recommended pronunciation). We lso use the British pronunciation of "dual", which has 2 syllables.)
+    # The suffix "ual" consists of two syllables such as "contextual". (Enter debate about "actual", "casual" and "usual". We will assume all of these have 3 syllables. Note that "actually" also has 3 syllables by this classification (which matches google's recommended pronunciation). We also use the British pronunciation of "dual", which has 2 syllables.)
     if word.endswith("ual"):
         number_of_syllables += 1
 
