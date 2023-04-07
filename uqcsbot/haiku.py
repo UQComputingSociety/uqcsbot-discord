@@ -1,5 +1,6 @@
 import re
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
@@ -42,6 +43,11 @@ class Haiku(commands.Cog):
             await message.reply(f"Nice haiku:\n{haiku}".upper())
         else:
             await message.reply(f"Nice haiku:\n{haiku}")
+
+    @app_commands.command()
+    @app_commands.describe(text="Syllable check for a given word")
+    async def syllables(self, interaction: discord.Interaction, word: str):
+        await interaction.response.send_message(f"{word} has {_number_of_syllables_in_word(word)} syllables.")
 
 
 def _find_haiku(text: str):
