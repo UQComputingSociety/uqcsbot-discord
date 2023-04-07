@@ -129,7 +129,7 @@ class Starboard(commands.Cog):
             db_session.commit()
         db_session.close()
 
-        await self._blacklist_log(message.id, blacklist=False)
+        await self._blacklist_log(message, interaction.user, blacklist=False)
         await interaction.response.send_message(f"Whitelisted message {message.id}.", ephemeral=True)
     
     async def _query_sb_message(self, recv: int) -> discord.Message:
@@ -275,13 +275,13 @@ class Starboard(commands.Cog):
     async def cleanup_starboard(self, interaction: discord.Interaction):
         """ Cleans up the last 100 messages from the starboard.
         Removes any uqcsbot message that doesn't have a corresponding message id in the db, regardless of recv. """
-        sb_messages = await self.starboard_channel.history(limit=100)
+        sb_messages = self.starboard_channel.history(limit=100)
         db_session = self.bot.create_db_session()
 
         # in case it takes a while, we need to defer the interaction so it doesn't die
         await interaction.defer(thinking=True)
 
-        for message in sb_messages:
+        async for message in sb_messages:
             query = db_session.query(models.Starboard).filter(models.Starboard.sent == message.id).one_or_none()
             if query is None and message.author.id == self.user.id:
                 # only delete messages that uqcsbot itself sent
