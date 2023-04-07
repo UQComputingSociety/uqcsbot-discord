@@ -1,12 +1,11 @@
 import os
 from threading import Timer
 from typing import List
-from datetime import timezone
+from zoneinfo import ZoneInfo
 
 import discord
 from discord import app_commands
 from discord.ext import commands
-from pytz import timezone
 
 from uqcsbot import models
 # needs to be models and not just starboard because of namespacing with this class
@@ -19,7 +18,7 @@ class ReferenceDeletedError(Exception):
 class Starboard(commands.Cog):
     CHANNEL_NAME = "starboard"
     EMOJI_NAME = "starhaj"
-    BRISBANE_TZ = timezone('Australia/Brisbane')
+    BRISBANE_TZ = ZoneInfo("Australia/Brisbane")
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
