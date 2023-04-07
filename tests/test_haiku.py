@@ -56,7 +56,11 @@ def test_number_of_syllables_in_word():
         "politician": 4,
         "coincidence": 4,
         "preamble": 3,
-        "preempt": 2
+        "preempt": 2,
+        "dual": 2,
+        "eyes": 1,
+        "ageless": 2,
+        "manly": 2,
     }
     for (word, expected_syllable_count) in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
@@ -81,6 +85,6 @@ def test_find_haiku():
         "when a haiku; kinda fits but has a word; at the end too longer"
     ]
     for haiku in true_cases:
-        assert haiku
+        assert _find_haiku(haiku)
     for text in false_cases:
-        assert not haiku
+        assert not _find_haiku(text)

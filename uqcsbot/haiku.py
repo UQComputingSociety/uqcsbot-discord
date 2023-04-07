@@ -10,8 +10,8 @@ class Haiku(commands.Cog):
     Trys to find Haiku messages in certain channels, and respond "Nice haiku" if it finds one
     """
 
-    ALLOWED_CHANNEL_NAMES = ["bot-testing",
-                             "yelling", "dating", "banter", "memes"]
+    ALLOWED_CHANNEL_NAMES = ["banter", "bot-testing",
+                             "dating", "food", "general", "memes", "yelling"]
     YELLING_CHANNEL_NAME = "yelling"
 
     def __init__(self, bot: UQCSBot):
@@ -44,7 +44,7 @@ class Haiku(commands.Cog):
             await message.reply(f"Nice haiku:\n{haiku}")
 
 
-def _find_haiku(text):
+def _find_haiku(text: str):
     syllable_count = 0
     lines = []
     current_line = []
@@ -71,7 +71,7 @@ def _find_haiku(text):
     return lines
 
 
-def _number_of_syllables_in_word(word):
+def _number_of_syllables_in_word(word: str):
     """
     Estimate the number of syllables in a word. Based off the algorithm from this website: https://eayd.in/?p=232
     Also the tool https://www.dcode.fr/word-search-regexp is useful at finding words and counterexamples
@@ -126,9 +126,13 @@ def _number_of_syllables_in_word(word):
         if word.endswith((suffix, suffix + "s")):
             word = word.removesuffix(suffix)
             word = word.removesuffix(suffix + "s")
+
     # Any exceptions to this need to be put in the exceptions dictionary
     if len(word) <= 3:
-        return 1
+        # Root words of 3 letters or less tend to have only 1 syllable. Any extra vowel groups within the root word need to be disregarded. For example "ageless" turns into "age" which only has 1 syllable, so 3 - 2 + 1 = 2 syllables in total. Similarly "eyes" turns into "eye" has 2 - 2 + 1 = 1 syllables in total, and "manly" has 2 - 1 + 1 = 2 syllables in total.
+        number_of_vowel_groups_in_root_word = len(
+            re.findall("[aeiouy]+", word))
+        return number_of_syllables - number_of_vowel_groups_in_root_word + 1
 
     # SUFFIXES
     # Words like "flipped" and "asked" don't have a syllable for "ed"
@@ -154,10 +158,10 @@ def _number_of_syllables_in_word(word):
     # Usually, the suffix "ious" is one syllable, but if it is preceeded by "b", "n", "p" or "r" it is two syllables. For example, "anxious" has 2 syllables, but "amphibious" has 4 syllables. Likewise, consider "harmonious", "copious" and "glorious".
     if word.endswith(("bious", "nious", "pious", "rious")):
         number_of_syllables += 1
-    # Usually, the suffix "ial" is one syllable, but if it is preceeded by "b", "d", "m", "n", "r", "v" or "x" it is two syllables. For example, "initial" has 3 syllables, but "microbial" has 4 syllables. Likewise, consider "radial", "polynomial", "millennial", "aerial", "trivial" and "axial".
-    if word.endswith(("bial", "dial", "mial", "nial", "rial", "vial", "xial")):
+    # Usually, the suffix "ial" is one syllable, but if it is preceeded by "b", "d", "l", "m", "n", "r", "v" or "x" it is two syllables. For example, "initial" has 3 syllables, but "microbial" has 4 syllables. Likewise, consider "radial", "familial", "polynomial", "millennial", "aerial", "trivial" and "axial".
+    if word.endswith(("bial", "dial", "lial", "mial", "nial", "rial", "vial", "xial")):
         number_of_syllables += 1
-    # The suffix "ual" consists of two syllables such as "contextual". (Enter debate about "actual", "casual" and "usual". We will assume all of these have 3 syllables. Note that "actually" also has 3 syllables by this classification (which matches google's recommended pronunciation).)
+    # The suffix "ual" consists of two syllables such as "contextual". (Enter debate about "actual", "casual" and "usual". We will assume all of these have 3 syllables. Note that "actually" also has 3 syllables by this classification (which matches google's recommended pronunciation). We lso use the British pronunciation of "dual", which has 2 syllables.)
     if word.endswith("ual"):
         number_of_syllables += 1
 
