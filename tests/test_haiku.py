@@ -88,6 +88,8 @@ def test_number_of_syllables_in_word():
         "cafes": 2,
         "going": 2,
         "skiing": 2,
+        "ageism": 3,
+        "antidisestablishmentarianism": 12,
     }
     for (word, expected_syllable_count) in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
