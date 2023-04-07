@@ -60,31 +60,47 @@ class Starboard(commands.Cog):
         """ Callback to remove a message from the big-ratelimited list """
         self.big_blocked_messages.remove(id)
     
+    async def _blacklist_log(self, message: discord.Message, user: discord.Member, blacklist: bool):
+        channels = self.bot.get_all_channels()
+        modlog = discord.utils.get(channels, name="admin-alerts")
+        state = "blacklisted" if blacklist else "whitelisted"
+
+        await modlog.send(f"{str(user)} {state} message {message.id} (link: {message.jump_url})")
+    
     @app_commands.default_permissions(manage_messages=True)
     async def context_blacklist_sb_message(self, interaction: discord.Interaction, message: discord.Message):
         """ Blacklists a message from being starboarded. If the message is already starboarded, also deletes it. """
         db_session = self.bot.create_db_session()
+        # can't use the db query functions for this, they error out if a message hits the blacklist
         entry = db_session.query(models.Starboard).filter(models.Starboard.recv == message.id)
         query_val = entry.one_or_none()
 
         if query_val is not None:
             if query_val.sent is None:
+                # if the table has (recv, none) then it's already blacklisted.
                 return
 
+            # otherwise the table has (recv, something), we should delete the something and then make it (recv, none)
             await (await self.starboard_channel.fetch_message(query_val.sent)).delete()
             query_val.sent = None
         else:
+            # other-otherwise the table doesn't have recv, so we add (recv, none)
             db_session.add(models.Starboard(recv=message.id, recv_location=message.channel.id, sent=None))
 
         db_session.commit()
         db_session.close()
 
+        await self._blacklist_log(message, interaction.user, blacklist=True)
         await interaction.response.send_message(f"Blacklisted message {message.id}.")
 
     @app_commands.default_permissions(manage_messages=True)
     async def context_whitelist_sb_message(self, interaction: discord.Interaction, message: discord.Message):
-        """ Removes a message from the starboard blacklist. Doesn't perform an 'update' of the message. """
+        """ Removes a message from the starboard blacklist.
+            N.B. Doesn't perform an 'update' of the message. This may result in messages meeting the threshold
+            but not being starboarded if they don't get any more reacts. """
         db_session = self.bot.create_db_session()
+
+        # if we find a (recv, none) for this message, delete it. otherwise the message is already not blacklisted.
         entry = db_session.query(models.Starboard).filter(
             models.Starboard.recv == message.id,
             models.Starboard.sent == None
@@ -93,11 +109,13 @@ class Starboard(commands.Cog):
             entry.delete(synchronize_session=False)
             db_session.commit()
         db_session.close()
+
+        await self._blacklist_log(message.id, blacklist=False)
         await interaction.response.send_message(f"Whitelisted message {message.id}.")
     
     async def _query_sb_message(self, recv: int) -> discord.Message:
-        """ Get the starboard message corresponding to the recieved message.
-        Handles messages no longer existing and cleans up the DB accordingly. """
+        """ Get the starboard message corresponding to the recieved message. Returns None if no sb message exists.
+        Handles messages potentially being deleted and cleans up the DB accordingly. """
         db_session = self.bot.create_db_session()
         entry = db_session.query(models.Starboard).filter(models.Starboard.recv == recv)
         query_val = entry.one_or_none()
@@ -106,10 +124,13 @@ class Starboard(commands.Cog):
         if query_val is not None:
             try:
                 if query_val.sent is None:
+                    # (recv, none) is a blacklist entry
                     raise BlacklistedMessageError()
 
                 message = await self.starboard_channel.fetch_message(query_val.sent)
             except discord.errors.NotFound:
+                # if we can't find the sb message anymore, then it's been deleted and we return None
+                # but we also delete the SB entry to save future lookups.
                 entry.delete(synchronize_session=False)
                 db_session.commit()
             finally:
@@ -118,8 +139,8 @@ class Starboard(commands.Cog):
         return message
 
     async def _query_og_message(self, sent: int) -> discord.Message:
-        """ Get the og message corresponding to this starboard message.
-        Handles messages no longer existing. """
+        """ Get the og message corresponding to this starboard message. Returns None if the message has been deleted.
+        Handles messages no longer existing and cleans up the DB accordingly. """
         db_session = self.bot.create_db_session()
         entry = db_session.query(models.Starboard).filter(
             models.Starboard.sent == sent
@@ -131,10 +152,16 @@ class Starboard(commands.Cog):
                 try:
                     channel = self.bot.get_channel(entry.recv_location)
                     if channel is None:
+                        # for some reason get_channel doesn't handle errors the same as fetch_message
+                        # but we want to treat them the same anyway
                         raise discord.errors.NotFound()
                     
                     message = await channel.fetch_message(entry.recv)
                 except discord.errors.NotFound:
+                    # if we can't find the recv message anymore, then it's been deleted and we return None
+                    # however, SB messages can still generate :starhaj:'s, so we don't necessarily delete the
+                    # message - the caller will handle that.
+
                     entry.recv_location = None
                     entry.recv = None
                     db_session.commit()
@@ -142,18 +169,21 @@ class Starboard(commands.Cog):
         db_session.close()
         return message
     
-    async def _find_num_reactions(self, messages: List[discord.Message]) -> int:
+    async def _find_num_reactions(self, recv: discord.Message, sent: discord.Message) -> int:
         """ Find the total number of starboard_emoji reacts across this list of messages. """
         users = []
         authors = []
 
-        for message in messages:
+        for message in (recv, sent):
             if message is None:
                 continue
             
+            # store the message authors so we can discard their reacts later
             authors += [message.author.id]
             reaction = discord.utils.get(message.reactions, emoji=self.starboard_emoji)
             if reaction is not None:
+                # we use the user.id as a marker of the reaction so we can set() it and
+                # eliminate duplicates (only count one reaction per person)
                 users += [user.id async for user in reaction.users()]
 
         return len(set([user for user in users if user not in authors]))
@@ -175,6 +205,8 @@ class Starboard(commands.Cog):
     
     def _create_sb_embed(self, recv: discord.Message) -> discord.Embed:
         if recv.reference is not None and isinstance(recv.reference.resolved, discord.DeletedReferencedMessage):
+            # we raise this exception and auto-blacklist replies to deleted messages on the logic that those
+            # messages were probably deleted for a reason
             raise ReferenceDeletedError()
 
         embed = discord.Embed(color=recv.author.top_role.color, description=recv.content)
@@ -186,6 +218,7 @@ class Starboard(commands.Cog):
             # only takes the first attachment to avoid sending large numbers of images to starboard.
         
         if recv.reference is not None and not isinstance(recv.reference.resolved, discord.DeletedReferencedMessage):
+            # if the reference exists, add it. isinstance here prevents race conditions
             replied = discord.Embed(
                 color=recv.reference.resolved.author.top_role.color,
                 description=recv.reference.resolved.content
@@ -203,20 +236,35 @@ class Starboard(commands.Cog):
             return [replied, embed]
         return [embed]
 
+    async def _get_message_pair(self, channel, message_id: int) -> List[discord.Message]:
+        message = await channel.fetch_message(message_id)
+
+        if channel == self.starboard_channel:
+            sent = message
+            recv = await self._query_og_message(message_id)
+        else:
+            recv = message
+            sent = await self._query_sb_message(message_id)
+        
+        return [recv, sent]
+
     @app_commands.command()
     @app_commands.default_permissions(manage_messages=True)
     async def cleanup_starboard(self, interaction: discord.Interaction):
-        """ Cleans up the last 30 messages from the starboard.
-        Removes any uqcsbot message that doesn't have a corresponding message id. """
-        sb_messages = await self.starboard_channel.history(limit=30)
+        """ Cleans up the last 100 messages from the starboard.
+        Removes any uqcsbot message that doesn't have a corresponding message id in the db, regardless of recv. """
+        sb_messages = await self.starboard_channel.history(limit=100)
         db_session = self.bot.create_db_session()
 
+        # in case it takes a while, we need to defer the interaction so it doesn't die
         await interaction.defer(thinking=True)
 
         for message in sb_messages:
             query = db_session.query(models.Starboard).filter(models.Starboard.sent == message.id).one_or_none()
             if query is None and message.author.id == self.user.id:
+                # only delete messages that uqcsbot itself sent
                 message.delete()
+
         
         db_session.close()
         await interaction.followup.send("Finished cleaning up.")
@@ -233,18 +281,20 @@ class Starboard(commands.Cog):
         channel = self.bot.get_channel(payload.channel_id)
         
         try:
-            messages = [await channel.fetch_message(payload.message_id)]
-            if channel == self.starboard_channel:
-                messages += [await self._query_og_message(payload.message_id)]
-                sb_message, recv_message = messages
-            else:
-                messages += [await self._query_sb_message(payload.message_id)]
-                recv_message, sb_message = messages
+            recv_message, sb_message = await self._get_message_pair(channel, payload.message_id)
         except (discord.errors.NotFound, BlacklistedMessageError):
+            # if the message has already been deleted, or is blacklisted, we're done here
+            return
+
+        # delete starhaj self-reacts instantly
+        if recv_message.author.id == payload.user_id:
+            # payload.member is guaranteed to be available because we're adding and we're in a server
+            await recv_message.remove_reaction(payload.emoji, payload.member)
             return
         
-        new_reaction_count = await self._find_num_reactions(messages)
+        new_reaction_count = await self._find_num_reactions(recv_message, sb_message)
 
+        # if above threshold, not yet sent, not ratelimited, and message has some text to starboard
         if new_reaction_count >= self.base_threshold and \
                 sb_message is None and recv_message.id not in self.base_blocked_messages and recv_message.content != "":
             try:
@@ -252,7 +302,7 @@ class Starboard(commands.Cog):
                     content=f"{str(self.starboard_emoji)} {new_reaction_count} | #{recv_message.channel.name}",
                     embeds=self._create_sb_embed(recv_message)
                     # note that the embed is never edited, which means the content of the starboard post is fixed as
-                    # soon as the 5th reaction is processed
+                    # soon as the Nth reaction is processed
                 )
             except ReferenceDeletedError:
                 db_session = self.bot.create_db_session()
@@ -273,6 +323,9 @@ class Starboard(commands.Cog):
             
             self.base_blocked_messages += [recv_message.id]
             Timer(self.ratelimit, self._rm_base_ratelimit, [recv_message.id]).start()
+        # elif above threshold and sent and not ratelimited. note that this means a big-blocked message won't see
+        # message text updates for the duration of its ratelimit. in practice this is rare enough that i think we're
+        # all good.
         elif new_reaction_count > self.base_threshold and \
                 sb_message is not None and recv_message.id not in self.big_blocked_messages:
 
@@ -299,20 +352,15 @@ class Starboard(commands.Cog):
         channel = self.bot.get_channel(payload.channel_id)
         
         try:
-            messages = [await channel.fetch_message(payload.message_id)]
-            if channel == self.starboard_channel:
-                messages += [await self._query_og_message(payload.message_id)]
-                sb_message, recv_message = messages
-            else:
-                messages += [await self._query_sb_message(payload.message_id)]
-                recv_message, sb_message = messages
+            recv_message, sb_message = await self._get_message_pair(channel, payload.message_id)
         except (discord.errors.NotFound, BlacklistedMessageError):
+            # if the message has already been deleted, or is blacklisted, we're done here
             return
         
         if sb_message == None:
             return
         
-        new_reaction_count = await self._find_num_reactions(messages)
+        new_reaction_count = await self._find_num_reactions(recv_message, sb_message)
 
         if new_reaction_count < self.base_threshold:
             await sb_message.delete() # delete will also unpin
@@ -335,20 +383,15 @@ class Starboard(commands.Cog):
         
         channel = self.bot.get_channel(payload.channel_id)
         try:
-            messages = [await channel.fetch_message(payload.message_id)]
-            if channel == self.starboard_channel:
-                messages += [await self._query_og_message(payload.message_id)]
-                sb_message, recv_message = messages
-            else:
-                messages += [await self._query_sb_message(payload.message_id)]
-                recv_message, sb_message = messages
+            recv_message, sb_message = await self._get_message_pair(channel, payload.message_id)
         except (discord.errors.NotFound, BlacklistedMessageError):
+            # if the message has already been deleted, or is blacklisted, we're done here
             return
         
         if sb_message == None:
             return
         
-        new_reaction_count = await self._find_num_reactions(messages)
+        new_reaction_count = await self._find_num_reactions(recv_message, sb_message)
 
         if new_reaction_count < self.base_threshold:
             await sb_message.delete() # delete will also unpin
@@ -374,20 +417,15 @@ class Starboard(commands.Cog):
         
         channel = self.bot.get_channel(payload.channel_id)
         try:
-            messages = [await channel.fetch_message(payload.message_id)]
-            if channel == self.starboard_channel:
-                messages += [await self._query_og_message(payload.message_id)]
-                sb_message, recv_message = messages
-            else:
-                messages += [await self._query_sb_message(payload.message_id)]
-                recv_message, sb_message = messages
+            recv_message, sb_message = await self._get_message_pair(channel, payload.message_id)
         except (discord.errors.NotFound, BlacklistedMessageError):
+            # if the message has already been deleted, or is blacklisted, we're done here
             return
         
         if sb_message == None:
             return
         
-        new_reaction_count = await self._find_num_reactions(messages)
+        new_reaction_count = await self._find_num_reactions(recv_message, sb_message)
 
         if new_reaction_count < self.base_threshold:
             await sb_message.delete() # delete will also unpin
