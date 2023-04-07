@@ -197,6 +197,7 @@ class Starboard(commands.Cog):
                 continue
             
             # store the message authors so we can discard their reacts later
+            # grandfathering old messages where their reacts were not auto-deleted, also failsafes, etc
             authors += [message.author.id]
             reaction = discord.utils.get(message.reactions, emoji=self.starboard_emoji)
             if reaction is not None:
@@ -314,7 +315,7 @@ class Starboard(commands.Cog):
             return
 
         # delete starhaj self-reacts instantly
-        if recv_message.author.id == payload.user_id:
+        if recv_message is not None and recv_message.author.id == payload.user_id:
             # payload.member is guaranteed to be available because we're adding and we're in a server
             await recv_message.remove_reaction(payload.emoji, payload.member)
             return
