@@ -274,6 +274,11 @@ class Starboard(commands.Cog):
     async def cleanup_starboard(self, interaction: discord.Interaction):
         """ Cleans up the last 100 messages from the starboard.
         Removes any uqcsbot message that doesn't have a corresponding message id in the db, regardless of recv. """
+
+        if interaction.channel == self.starboard_channel:
+            await interaction.response.send_message("Can't cleanup from inside the starboard!", ephemeral=True)
+            return
+
         sb_messages = self.starboard_channel.history(limit=100)
         db_session = self.bot.create_db_session()
 
@@ -284,7 +289,8 @@ class Starboard(commands.Cog):
             query = db_session.query(models.Starboard).filter(models.Starboard.sent == message.id).one_or_none()
             if query is None and message.author.id == self.bot.user.id:
                 # only delete messages that uqcsbot itself sent
-                message.delete()
+                print("\n\ndeleting\n")
+                await message.delete()
 
         
         db_session.close()
