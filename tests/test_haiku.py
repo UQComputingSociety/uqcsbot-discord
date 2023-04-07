@@ -12,6 +12,8 @@ def test_number_of_syllables_in_word():
         "maybe": 2,
         "sentences": 3,
         "syllables": 3,
+        "syllable": 3,
+        "syllablic": 3,
         "help": 1,
         "😄": 0,
         "help😄": 1,
@@ -61,6 +63,16 @@ def test_number_of_syllables_in_word():
         "eyes": 1,
         "ageless": 2,
         "manly": 2,
+        "didn't": 2,
+        "doesn't": 2,
+        "wouldn't": 2,
+        "couldn't": 2,
+        "shouldn't": 2,
+        "isn't": 2,
+        "don't": 1,
+        "contractions": 3,
+        "are": 1,
+        "because": 2,
     }
     for (word, expected_syllable_count) in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count

@@ -97,7 +97,7 @@ def _number_of_syllables_in_word(word: str):
         # Words ending in "eal" where "eal" consists of 2 syllables
         "boreal", "cereal", "corneal", "ethereal", "montreal",
         # Words ending in "nt" due to contraction (after removing punctuation)
-        "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt",
+        "didn t", "doesn t", "isn t", "shouldn t", "couldn t", "wouldn t",
         # Words ending in "e" that is considered silent, when it is not.
         "maybe")
     prefixes_needing_one_less_syllable = (
