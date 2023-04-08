@@ -17,12 +17,16 @@ class BlacklistedMessageError(Exception):
 
 class SomethingsFucked(Exception):
     # never caught. used because i don't trust myself and i want it to be clear that something's wrong.
-    pass
+    def __init__(self, modlog: discord.TextChannel, message: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        modlog.send(f"Bad Starboard state: {message}")
+
 
 
 class Starboard(commands.Cog):
-    CHANNEL_NAME = "starboard"
+    SB_CHANNEL_NAME = "starboard"
     EMOJI_NAME = "starhaj"
+    MODLOG_CHANNEL_NAME = "admin-alerts"
     BRISBANE_TZ = ZoneInfo("Australia/Brisbane")
 
     def __init__(self, bot: commands.Bot):
@@ -60,7 +64,10 @@ class Starboard(commands.Cog):
         """
         self.starboard_emoji = discord.utils.get(self.bot.emojis, name=self.EMOJI_NAME)
         self.starboard_channel = discord.utils.get(
-            self.bot.get_all_channels(), name=self.CHANNEL_NAME
+            self.bot.get_all_channels(), name=self.SB_CHANNEL_NAME
+        )
+        self.modlog = discord.utils.get(
+            self.bot.get_all_channels(), name=self.MODLOG_CHANNEL_NAME
         )
 
     @app_commands.command()
@@ -90,7 +97,7 @@ class Starboard(commands.Cog):
             if query is None and message.author.id == self.bot.user.id:
                 # only delete messages that uqcsbot itself sent
                 await message.delete()
-            else:
+            elif message.author.id == self.bot.user.id:
                 try:
                     recieved_msg, starboard_msg = await self._lookup_from_id(
                         self.starboard_channel.id, message.id
@@ -112,8 +119,6 @@ class Starboard(commands.Cog):
         self, message: discord.Message, user: discord.Member, blacklist: bool
     ):
         """Logs a blacklist/whitelist command to the modlog."""
-        channels = self.bot.get_all_channels()
-        modlog = discord.utils.get(channels, name="admin-alerts")
         state = "blacklisted" if blacklist else "whitelisted"
 
         embed = discord.Embed(
@@ -128,7 +133,7 @@ class Starboard(commands.Cog):
             )
         )
 
-        log_item = await modlog.send(
+        log_item = await self.modlog.send(
             content=f"{str(user)} {state} message {message.id}", embeds=[embed]
         )
 
@@ -273,20 +278,23 @@ class Starboard(commands.Cog):
                 .one_or_none()
             )
 
-            if entry.recv_location is not None:
-                channel = self.bot.get_channel(entry.recv_location)
+            if entry is not None:
+                if entry.recv_location is not None:
+                    channel = self.bot.get_channel(entry.recv_location)
 
-                return (
-                    self._fetch_message_or_none(channel, entry.recv),
-                    self._fetch_message_or_none(self.starboard_channel, entry.sent),
-                )
+                    return (
+                        await self._fetch_message_or_none(channel, entry.recv),
+                        await self._fetch_message_or_none(self.starboard_channel, entry.sent),
+                    )
+                else:
+                    # if the recieved location is None, then the message won't exist either.
+                    # The only thing we can possibly return is a starboard message.
+                    return (
+                        None,
+                        await self._fetch_message_or_none(self.starboard_channel, entry.sent),
+                    )
             else:
-                # if the recieved location is None, then the message won't exist either.
-                # The only thing we can possibly return is a starboard message.
-                return (
-                    None,
-                    self._fetch_message_or_none(self.starboard_channel, entry.sent),
-                )
+                raise await SomethingsFucked(modlog=self.modlog, message="Couldn't find an DB entry for this starboard message!")
 
         else:
             # we're primarily looking up a starboard message.
@@ -296,20 +304,29 @@ class Starboard(commands.Cog):
                 .one_or_none()
             )
 
-            if entry.recv_location != channel_id:
-                # This also implies entry.recv_location is not None
-                raise SomethingsFucked(
-                    "Recieved message from different channel to DB lookup!"
+            if entry is not None:
+                if entry.recv_location != channel_id:
+                    # This also implies entry.recv_location is not None
+                    raise await SomethingsFucked(
+                        modlog=self.modlog,
+                        message="Recieved message from different channel to DB lookup!"
+                    )
+                elif entry.sent is None:
+                    raise BlacklistedMessageError()
+
+                channel = self.bot.get_channel(channel_id)
+
+                return (
+                    await self._fetch_message_or_none(channel, message_id),
+                    await self._fetch_message_or_none(self.starboard_channel, entry.sent),
                 )
-            elif entry.sent is None:
-                raise BlacklistedMessageError()
-
-            channel = self.bot.get_channel(channel_id)
-
-            return (
-                self._fetch_message_or_none(channel, entry.recv),
-                self._fetch_message_or_none(self.starboard_channel, entry.sent),
-            )
+            else:
+                channel = self.bot.get_channel(channel_id)
+                
+                return (
+                    await self._fetch_message_or_none(channel, message_id),
+                    None,
+                )
 
     async def _count_num_reacts(
         self, data: Tuple[discord.Message | None, discord.Message | None]
@@ -409,8 +426,8 @@ class Starboard(commands.Cog):
         ):
             # Above threshold, not blocked, not replying to deleted msg, no current starboard message? post it.
             new_sb_message = await self.starboard_channel.send(
-                content=self._generate_message_text(),
-                embeds=self._generate_message_embeds(),
+                content=self._generate_message_text(reaction_count, recieved_msg),
+                embeds=self._generate_message_embeds(recieved_msg),
             )
 
             await new_sb_message.edit(
@@ -424,7 +441,7 @@ class Starboard(commands.Cog):
             )
 
             # recieved_msg isn't None and we just sent the sb message, so it also shouldn't be None
-            self._starboard_db_add(recieved_msg, recieved_msg.channel, new_sb_message)
+            self._starboard_db_add(recieved_msg.id, recieved_msg.channel.id, new_sb_message.id)
 
             # start the base ratelimit
             self.base_blocked_messages += [recieved_msg.id]
