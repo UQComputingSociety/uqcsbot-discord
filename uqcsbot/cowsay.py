@@ -1,5 +1,5 @@
 
-from typing import Optional, Literal
+from typing import Optional, Literal, List 
 
 import discord
 from discord import app_commands
@@ -29,7 +29,7 @@ class Cowsay(commands.Cog):
 
     @app_commands.command(name="cowsay")
     @app_commands.describe(
-        message="The message that the cow will say",
+        message="The message that the cow will say (max 1000 chars)",
         mood="The mood of the cow (optional)",
         tongue="Whether the cow should show its tongue (optional, default to False)",
         tux="Display the Linux Tux instead of the cow. Tux doesn't show tongue. (optional, default to False)",
@@ -44,7 +44,7 @@ class Cowsay(commands.Cog):
         """
 
         # Check message length, if invalid send moo!
-        if len(message) == 0 or len(message) > 2000:
+        if len(message) == 0 or len(message) > 1000:
             await interaction.response.send_message("moo!")
             return
 
