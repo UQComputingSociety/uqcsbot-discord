@@ -109,7 +109,7 @@ class Cowsay(commands.Cog):
         return cow
 
     def draw_tux(self,
-            mood: Optional[Literal['Normal', 'Borg', 'Dead', 'Greed', 'Paranoid', 'Stoned', 'Tired', 'Wired', 'Youthful']] = 'Normal') -> str:
+            mood: Optional[CowsayMoodType] = 'Normal') -> str:
         
         """
         Returns tux ascii art with different eyes based on the mood.
