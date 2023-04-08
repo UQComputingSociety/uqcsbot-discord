@@ -296,7 +296,7 @@ class Starboard(commands.Cog):
     ) -> str:
         return (
             f"{str(self.starboard_emoji)} {reaction_count} | "
-            "{('#' + recieved_msg.channel.name) if recieved_msg is not None else 'OoOoO... ghost message!'}"
+            f"{('#' + recieved_msg.channel.name) if recieved_msg is not None else 'OoOoO... ghost message!'}"
         )
 
     def _generate_message_embeds(
@@ -323,7 +323,8 @@ class Starboard(commands.Cog):
         if recieved_msg.reference is not None and not isinstance(
             recieved_msg.reference.resolved, discord.DeletedReferencedMessage
         ):
-            # if the reference exists, add it. isinstance here tightens race conditions
+            # if the reference exists, add it. isinstance here just tightens race conditions; we check
+            # that messages aren't deleted before calling this anyway.
             replied = discord.Embed(
                 color=recieved_msg.reference.resolved.author.top_role.color,
                 description=recieved_msg.reference.resolved.content,
@@ -377,6 +378,7 @@ class Starboard(commands.Cog):
                 )
             )
 
+            # recieved_msg isn't None and we just sent the sb message, so it also shouldn't be None
             self._starboard_db_add(recieved_msg, recieved_msg.channel, new_sb_message)
 
             # start the base ratelimit
@@ -394,7 +396,7 @@ class Starboard(commands.Cog):
                 Timer(
                     self.ratelimit, self._rm_big_ratelimit, [starboard_msg.id]
                 ).start()
-            else:
+            elif starboard_msg.pinned:
                 await starboard_msg.unpin(
                     reason=f"Fell below starboard threshold ({self.big_threshold})."
                 )
