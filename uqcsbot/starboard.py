@@ -63,6 +63,51 @@ class Starboard(commands.Cog):
             self.bot.get_all_channels(), name=self.CHANNEL_NAME
         )
 
+    @app_commands.command()
+    @app_commands.default_permissions(manage_messages=True)
+    async def cleanup_starboard(self, interaction: discord.Interaction):
+        """Cleans up the last 100 messages from the starboard.
+        Removes any uqcsbot message that doesn't have a corresponding message id in the db, regardless of recv.
+        """
+
+        if interaction.channel == self.starboard_channel:
+            return await interaction.response.send_message(
+                "Can't cleanup from inside the starboard!", ephemeral=True
+            )
+
+        sb_messages = self.starboard_channel.history(limit=100)
+        db_session = self.bot.create_db_session()
+
+        # in case it takes a while, we need to defer the interaction so it doesn't die
+        await interaction.response.defer(thinking=True)
+
+        async for message in sb_messages:
+            query = (
+                db_session.query(models.Starboard)
+                .filter(models.Starboard.sent == message.id)
+                .one_or_none()
+            )
+            if query is None and message.author.id == self.bot.user.id:
+                # only delete messages that uqcsbot itself sent
+                await message.delete()
+            else:
+                try:
+                    recieved_msg, starboard_msg = await self._lookup_from_id(
+                        self.starboard_channel.id, message.id
+                    )
+                except BlacklistedMessageError:
+                    return
+
+                new_reaction_count = await self._count_num_reacts(
+                    (recieved_msg, starboard_msg)
+                )
+                await self._process_sb_updates(
+                    new_reaction_count, recieved_msg, starboard_msg
+                )
+
+        db_session.close()
+        await interaction.followup.send("Finished cleaning up.")
+
     async def _blacklist_log(
         self, message: discord.Message, user: discord.Member, blacklist: bool
     ):
