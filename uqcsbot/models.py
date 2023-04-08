@@ -44,6 +44,7 @@ class Starboard(Base):
     __tablename__ = 'starboard'
 
     # composite key on recv, sent.
+    
     # recv == null implies deleted recv message.
     # recv_location == null implies deleted recv channel. recv should also be null.
     # sent == null implies blacklisted recv message.
