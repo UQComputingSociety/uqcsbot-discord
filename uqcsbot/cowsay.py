@@ -1,6 +1,5 @@
-from random import choice
 
-from typing import List, NamedTuple, Optional, Union, Literal
+from typing import Optional, Literal
 
 import discord
 from discord import app_commands
@@ -8,6 +7,8 @@ from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
 
+# Type Alias for Cow Eyes 
+CowsayMoodType = Literal['Normal', 'Borg', 'Dead', 'Greed', 'Paranoid', 'Stoned', 'Tired', 'Wired', 'Youthful']
 
 class Cowsay(commands.Cog):
 
@@ -35,7 +36,7 @@ class Cowsay(commands.Cog):
     )
     async def cowsay_command(self, interaction: discord.Interaction, 
             message: str, 
-            mood: Optional[Literal['Normal', 'Borg', 'Dead', 'Greed', 'Paranoid', 'Stoned', 'Tired', 'Wired', 'Youthful']] = 'Normal', 
+            mood: Optional[CowsayMoodType] = 'Normal', 
             tongue: Optional[bool] = False,
             tux: Optional[bool] = False) -> None:
         """
@@ -88,7 +89,7 @@ class Cowsay(commands.Cog):
         return bubble
 
     def draw_cow(self, 
-            mood: Optional[Literal['Normal', 'Borg', 'Dead', 'Greed', 'Paranoid', 'Stoned', 'Tired', 'Wired', 'Youthful']] = 'Normal', 
+            mood: Optional[CowsayMoodType] = 'Normal', 
             tongue: Optional[bool] = False) -> str:
 
         """
