@@ -24,10 +24,6 @@ MONTH_NUMBER = {month.lower(): index for index, month in enumerate(month_abbr)}
 MAX_RECURRING_EVENTS = 3
 BRISBANE_TZ = timezone('Australia/Brisbane')
 
-# For testing server:
-# EVENTS_CHANNEL = 867246372670668810
-EVENTS_CHANNEL = 813378207696945172
-
 class EventFilter(object):
     def __init__(self, full=False, weeks=None, cap=None, month=None, is_valid=True):
         self.is_valid = is_valid
@@ -159,12 +155,14 @@ class Events(commands.Cog):
     """
         Display events 
     """
+    CHANNEL_NAME = "events"
+
     def __init__(self, bot: UQCSBot):
         self.bot = bot
         self.bot.schedule_task(self.scheduled_message, trigger='cron', hour=9, day_of_week="mon", timezone='Australia/Brisbane')
 
     async def scheduled_message(self):
-        await self.send_events(self.bot.get_channel(EVENTS_CHANNEL))
+        await self.send_events(discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME))
 
     @classmethod
     def _get_current_time(cls):

@@ -18,7 +18,7 @@ class UpTime(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        channel = discord.utils.get(self.bot.get_all_channels(), name=self.CHANNEL_NAME)
+        channel = discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME)
 
         if channel != None:
             await channel.send("I have rebooted!")

@@ -30,7 +30,7 @@ class Starboard(commands.Cog):
         them from the correct guild (cringer).
         """
         self.starboard_emoji = discord.utils.get(self.bot.emojis, name=self.EMOJI_NAME)
-        self.starboard_channel = discord.utils.get(self.bot.get_all_channels(), name=self.CHANNEL_NAME)
+        self.starboard_channel = discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME)
     
     def _rm_base_ratelimit(self, id: int):
         """ Callback to remove a message from the base-ratelimited list """

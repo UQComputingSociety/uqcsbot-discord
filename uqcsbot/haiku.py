@@ -22,7 +22,7 @@ class Haiku(commands.Cog):
     async def on_ready(self):
         # As channels aren't ready when __init__() is called
         self.allowed_channels = [
-            discord.utils.get(self.bot.get_all_channels(), name=channel_name)
+            discord.utils.get(self.bot.uqcs_server.channels, name=channel_name)
             for channel_name in self.ALLOWED_CHANNEL_NAMES
         ]
 
@@ -39,7 +39,7 @@ class Haiku(commands.Cog):
 
         haiku_lines = ["> " + line for line in haiku_lines]
         haiku = "\n".join(haiku_lines)
-        if message.channel == discord.utils.get(self.bot.get_all_channels(), name=self.YELLING_CHANNEL_NAME):
+        if message.channel == discord.utils.get(self.bot.uqcs_server.channels, name=self.YELLING_CHANNEL_NAME):
             await message.reply(f"Nice haiku:\n{haiku}".upper())
         else:
             await message.reply(f"Nice haiku:\n{haiku}")

@@ -10,9 +10,6 @@ from aiohttp import web
 class UQCSBot(commands.Bot):
     """ An extended bot client to add extra functionality. """
 
-    # Checks for an Azure specific environment variable, if it exists we're running as prod.
-    SERVER_ID = 813324385179271168 if os.environ.get("WEBSITE_SITE_NAME") != None else 836589565237264415
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._scheduler = AsyncIOScheduler()
@@ -48,7 +45,8 @@ class UQCSBot(commands.Bot):
         logging.info(f"Bot online and logged in: [Name=\"{self.user.name}\", ID={self.user.id}]")
         
         # Get the UQCS server object and store it centrally
-        self.uqcs_server = self.get_guild(self.SERVER_ID)
+        self.uqcs_server = self.get_guild(int(os.environ.get("SERVER_ID")))
+        logging.info(f"Active in the {self.uqcs_server} server.")
 
         # Sync the app comamand tree with servers.
         await self.tree.sync()

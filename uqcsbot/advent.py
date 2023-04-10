@@ -29,10 +29,6 @@ ADVENT_DAYS = list(range(1, 25 + 1))
 # Puzzles are unlocked at midnight EST.
 EST_TIMEZONE = timezone(timedelta(hours=-5))
 
-# Reminder channel ID (Usually #contests)
-REMINDER_CHANNEL = 813411377975918622
-# REMINDER_CHANNEL = 859723630433665045
-
 class SortMode(Enum):
     """Options for sorting the leaderboard."""
     PART_1 = "p1"
@@ -145,6 +141,7 @@ class Member:
         return sort_none_last(key)
 
 class Advent(commands.Cog):
+    CHANNEL_NAME = "contests"
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
@@ -358,11 +355,11 @@ class Advent(commands.Cog):
 
 
     async def reminder_fifteen_minutes(self):
-        await self.bot.get_channel(REMINDER_CHANNEL).send("Today's Advent of Code puzzle is released in 15 minutes.")
+        await discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME).send("Today's Advent of Code puzzle is released in 15 minutes.")
 
 
     async def reminder_released(self):
-        await self.bot.get_channel(REMINDER_CHANNEL).send("Today's Advent of Code puzzle has been released. Good luck!")
+        await discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME).send("Today's Advent of Code puzzle has been released. Good luck!")
 
     def _get_previous_winners(self, year: int):
         db_session = self.bot.create_db_session()

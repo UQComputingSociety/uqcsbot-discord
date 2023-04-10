@@ -46,8 +46,8 @@ class JobsBulletin(commands.Cog):
                 msg.author.id == self.bot.user.id or msg.channel.name != self.CHANNEL_NAME:
             return
 
-        jobs_bulletin = discord.utils.get(msg.guild.channels, name=self.CHANNEL_NAME)
-        jobs_discussion = discord.utils.get(msg.guild.channels, name=self.DISCUSSION_CHANNEL_NAME)
+        jobs_bulletin = discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME)
+        jobs_discussion = discord.utils.get(self.bot.uqcs_server.channels, name=self.DISCUSSION_CHANNEL_NAME)
 
         channel_message = (f"{msg.author.display_name} has posted a new job in {jobs_bulletin.mention}! :tada: \n"
                    f"Please ask any questions in {jobs_discussion.mention}"
