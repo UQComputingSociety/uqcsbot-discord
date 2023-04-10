@@ -22,7 +22,6 @@ class SomethingsFucked(Exception):
         modlog.send(f"Bad Starboard state: {message}")
 
 
-
 class Starboard(commands.Cog):
     SB_CHANNEL_NAME = "starboard"
     EMOJI_NAME = "starhaj"
@@ -284,17 +283,24 @@ class Starboard(commands.Cog):
 
                     return (
                         await self._fetch_message_or_none(channel, entry.recv),
-                        await self._fetch_message_or_none(self.starboard_channel, entry.sent),
+                        await self._fetch_message_or_none(
+                            self.starboard_channel, entry.sent
+                        ),
                     )
                 else:
                     # if the recieved location is None, then the message won't exist either.
                     # The only thing we can possibly return is a starboard message.
                     return (
                         None,
-                        await self._fetch_message_or_none(self.starboard_channel, entry.sent),
+                        await self._fetch_message_or_none(
+                            self.starboard_channel, entry.sent
+                        ),
                     )
             else:
-                raise await SomethingsFucked(modlog=self.modlog, message="Couldn't find an DB entry for this starboard message!")
+                raise SomethingsFucked(
+                    modlog=self.modlog,
+                    message="Couldn't find an DB entry for this starboard message!",
+                )
 
         else:
             # we're primarily looking up a starboard message.
@@ -307,9 +313,9 @@ class Starboard(commands.Cog):
             if entry is not None:
                 if entry.recv_location != channel_id:
                     # This also implies entry.recv_location is not None
-                    raise await SomethingsFucked(
+                    raise SomethingsFucked(
                         modlog=self.modlog,
-                        message="Recieved message from different channel to DB lookup!"
+                        message="Recieved message from different channel to DB lookup!",
                     )
                 elif entry.sent is None:
                     raise BlacklistedMessageError()
@@ -318,11 +324,13 @@ class Starboard(commands.Cog):
 
                 return (
                     await self._fetch_message_or_none(channel, message_id),
-                    await self._fetch_message_or_none(self.starboard_channel, entry.sent),
+                    await self._fetch_message_or_none(
+                        self.starboard_channel, entry.sent
+                    ),
                 )
             else:
                 channel = self.bot.get_channel(channel_id)
-                
+
                 return (
                     await self._fetch_message_or_none(channel, message_id),
                     None,
@@ -441,7 +449,9 @@ class Starboard(commands.Cog):
             )
 
             # recieved_msg isn't None and we just sent the sb message, so it also shouldn't be None
-            self._starboard_db_add(recieved_msg.id, recieved_msg.channel.id, new_sb_message.id)
+            self._starboard_db_add(
+                recieved_msg.id, recieved_msg.channel.id, new_sb_message.id
+            )
 
             # start the base ratelimit
             self.base_blocked_messages += [recieved_msg.id]
