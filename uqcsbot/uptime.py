@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+import os
 
 import discord
 from discord import app_commands
@@ -10,7 +11,9 @@ from uqcsbot.bot import UQCSBot
 
 
 class UpTime(commands.Cog):
-    CHANNEL_ID = 836243768411160606
+    # Checks for an Azure specific environment variable, if it exists we're running as prod.
+    CHANNEL_ID = 836243768411160606 if os.environ.get("WEBSITE_SITE_NAME") != None \
+        else 1041708952066461716
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
