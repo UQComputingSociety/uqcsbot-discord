@@ -1,6 +1,8 @@
 
 from typing import Optional, Literal, List 
 
+import re
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -48,6 +50,9 @@ class Cowsay(commands.Cog):
             await interaction.response.send_message("moo!")
             return
 
+        # Sanitise message for discord emotes
+        message = Cowsay.sanitise_emotes(message)
+
         # Construct the ascii art + message
         ascii_art = self.draw_cow(mood, tongue) if not tux else self.draw_tux(mood)
         await interaction.response.send_message(f"```{Cowsay.construct_say_bubble(message, CowsayWrapLength)}{ascii_art}```")
@@ -94,6 +99,23 @@ class Cowsay(commands.Cog):
         tux += f"    /'\_   _/`\ \n"
         tux += f"    \___)=(___/ \n"
         return tux
+
+    @staticmethod
+    def sanitise_emotes(message: str) -> str:
+        """
+        Replaces all emotes in the message with their emote name instead of
+        their id.
+        """
+
+        # Regex to match emotes.
+        emotes: List[str] = re.findall("<a?:\w+:\d+>", message)
+
+        # Replace each emote with its name.
+        for emote in emotes:
+            emote_name: str = emote.split(":")[1].strip()
+            message = message.replace(emote, f":{emote_name}:")
+        
+        return message
 
     @staticmethod
     def word_wrap(message: str, wrap: int) -> List[str]:
