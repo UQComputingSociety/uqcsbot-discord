@@ -9,12 +9,12 @@ from uqcsbot.bot import UQCSBot
 
 # Type Alias for Cow Eyes 
 CowsayMoodType = Literal['Normal', 'Borg', 'Dead', 'Greed', 'Paranoid', 'Stoned', 'Tired', 'Wired', 'Youthful']
+CowsayWrapLength = 40
 
 class Cowsay(commands.Cog):
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
-        self._max_length = 40
         self._cow_eyes = dict(
             Normal = 'oo',
             Borg = '==',
@@ -48,50 +48,9 @@ class Cowsay(commands.Cog):
             await interaction.response.send_message("moo!")
             return
 
+        # Construct the ascii art + message
         ascii_art = self.draw_cow(mood, tongue) if not tux else self.draw_tux(mood)
-        await interaction.response.send_message(f"```{self.construct_say_bubble(message)}{ascii_art}```")
-
-    def word_wrap(self, message: str) -> List[str]:
-        """
-        Word wraps the given message to a max length of 40 characters.
-        """
-        lines = []
-        line = ""
-        for word in message.split():
-            if len(line) + len(word) > self._max_length:
-                lines.append(line.rstrip())
-                line = ""
-            line += word + " "
-        lines.append(line.rstrip())
-        return lines
-
-    def construct_say_bubble(self, message: str) -> str:
-        """
-        Constructs a speech bubble around the given message.
-        """
-        
-        # Word wrap the message to max width.
-        lines = self.word_wrap(message)
-
-        # Get longest line
-        bubble_length = max([len(line) for line in lines])
-
-        # Build the body of the speech bubble.
-        bubble_body = ""
-        if len(lines) == 1:
-            bubble_body += f"< {lines[0]} >\n"
-        else:
-            bubble_body += f"/ {lines[0].ljust(bubble_length)} \\\n"
-            for line in lines[1:-1]:
-                bubble_body += f"| {line.ljust(bubble_length)} |\n"
-            bubble_body += f"\\ {lines[-1].ljust(bubble_length)} /\n"
-        
-        # Construct the speech bubble.
-        bubble = f" _{bubble_length * '_'}_ \n"
-        bubble += bubble_body
-        bubble += f" -{bubble_length * '-'}- \n"
-
-        return bubble
+        await interaction.response.send_message(f"```{Cowsay.construct_say_bubble(message, CowsayWrapLength)}{ascii_art}```")
 
     def draw_cow(self, 
             mood: Optional[CowsayMoodType] = 'Normal', 
@@ -135,6 +94,50 @@ class Cowsay(commands.Cog):
         tux += f"    /'\_   _/`\ \n"
         tux += f"    \___)=(___/ \n"
         return tux
+
+    @staticmethod
+    def word_wrap(message: str, wrap: int) -> List[str]:
+        """
+        Word wraps the given message to a max length of 40 characters.
+        """
+        lines = []
+        line = ""
+        for word in message.split():
+            if len(line) + len(word) > wrap:
+                lines.append(line.rstrip())
+                line = ""
+            line += word + " "
+        lines.append(line.rstrip())
+        return lines
+
+    @staticmethod
+    def construct_say_bubble(message: str, wrap: int) -> str:
+        """
+        Constructs a speech bubble around the given message.
+        """
+        
+        # Word wrap the message to max width.
+        lines = Cowsay.word_wrap(message, wrap)
+
+        # Get longest line
+        bubble_length = max([len(line) for line in lines])
+
+        # Build the body of the speech bubble.
+        bubble_body = ""
+        if len(lines) == 1:
+            bubble_body += f"< {lines[0]} >\n"
+        else:
+            bubble_body += f"/ {lines[0].ljust(bubble_length)} \\\n"
+            for line in lines[1:-1]:
+                bubble_body += f"| {line.ljust(bubble_length)} |\n"
+            bubble_body += f"\\ {lines[-1].ljust(bubble_length)} /\n"
+        
+        # Construct the speech bubble.
+        bubble = f" _{bubble_length * '_'}_ \n"
+        bubble += bubble_body
+        bubble += f" -{bubble_length * '-'}- \n"
+
+        return bubble
 
 async def setup(bot: UQCSBot):
     cog = Cowsay(bot)
