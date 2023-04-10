@@ -46,6 +46,7 @@ async def main():
             "intros", 
             "jobs_bulletin", 
             "latex", 
+            "member_counter",
             "starboard",
             "text", 
             "uptime",
