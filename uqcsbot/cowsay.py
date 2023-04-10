@@ -45,6 +45,9 @@ class Cowsay(commands.Cog):
         Returns a cow or tux saying the given message.
         """
 
+        # Strip whitespace from either side of the message
+        message = message.strip()
+
         # Check message length, if invalid send moo!
         if len(message) == 0 or len(message) > 1000:
             await interaction.response.send_message("moo!")
