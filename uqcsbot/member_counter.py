@@ -21,16 +21,21 @@ class MemberCounter(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        member_count_channels = [filter(
-            lambda channel: channel.name.startswith(self.MEMBER_COUNT_PREFIX),
-            self.bot.get_all_channels()
-        )]
-
+        member_count_channels = [
+            channel for channel in self.bot.get_all_channels()
+            if channel.name.startswith(self.MEMBER_COUNT_PREFIX)
+        ]
+        if len(member_count_channels) == 0:
+            logging.warning(
+                f"Found no channel starting with \"{self.MEMBER_COUNT_PREFIX}\". Could not determine which is the \"correct\" member count channel.")
+            self.member_count_channel = None # TODO maybe end this cog or something similar
+            return
         self.member_count_channel = member_count_channels[0]
         if len(member_count_channels) > 1:
             logging.warning(
                 f"Found many channels starting with \"{self.MEMBER_COUNT_PREFIX}\". Could not determine which is the \"correct\" member count channel.")
             self.member_count_channel = None # TODO maybe end this cog or something similar
+            return
 
         await self.attempt_update_member_count_channel_name()
 
@@ -70,6 +75,8 @@ class MemberCounter(commands.Cog):
 
     async def _update_member_count_channel_name(self):
         """ Update the "Member Count" channel name. May be rate limited. Use attempt_update_member_count_channel_name() for most circumstances. """
+        if not self.member_count_channel:
+            return
         await self.member_count_channel.edit(
             name=self.MEMBER_COUNT_PREFIX +
             str(self.bot.uqcs_server.member_count)
