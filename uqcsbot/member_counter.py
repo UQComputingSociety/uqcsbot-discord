@@ -23,7 +23,7 @@ class MemberCounter(commands.Cog):
     async def on_ready(self):
         member_count_channels = [filter(
             lambda channel: channel.name.startswith(self.MEMBER_COUNT_PREFIX),
-            self.bot.get_all_channels()
+            self.bot.uqcs_server.channels
         )]
 
         self.member_count_channel = member_count_channels[0]
