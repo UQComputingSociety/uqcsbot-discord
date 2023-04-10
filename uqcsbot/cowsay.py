@@ -46,7 +46,7 @@ class Cowsay(commands.Cog):
         """
 
         # Sanitise invalid characters from the message
-        message = sanitise_illegals(message)
+        message = Cowsay.sanitise_illegals(message)
 
         # Check message length, if invalid send moo!
         if len(message) == 0 or len(message) > 1000:
@@ -78,7 +78,7 @@ class Cowsay(commands.Cog):
         """
 
         # Sanitise invalid characters from the message
-        message = sanitise_illegals(message)
+        message = Cowsay.sanitise_illegals(message)
 
         # Check message length, if invalid send moo!
         if len(message) == 0 or len(message) > 1000:
@@ -191,6 +191,25 @@ class Cowsay(commands.Cog):
         while index < len(words):
             word: str = words[index]
             index += 1
+
+            if "\\n" in word:
+                parts: str = word.split("\\n", 1)
+                if parts[0] == "" and parts[1] == "":
+                    lines.append(line.rstrip())
+                    line = ""
+                    continue
+                elif parts[1] == "":
+                    lines.append((line + parts[0]).rstrip())
+                    line = ""
+                    continue
+                else:
+                    # Add the remainder back to words to process
+                    words.insert(index, parts[1])
+
+                    # Add the part to the current line and start a new line.
+                    lines.append((line + parts[0]).rstrip())
+                    line = ""
+                    continue
             
             # If the word is longer than the wrap length, cut it and add it to 
             # the list of words to be processed.
