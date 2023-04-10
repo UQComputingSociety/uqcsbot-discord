@@ -10,8 +10,6 @@ from discord.ext import commands
 
 class MemberCounter(commands.Cog):
     # Checks for an Azure specific environment variable, if it exists we're running as prod.
-    MEMBER_COUNT_CHANNEL_ID = 1094584746207617064 if os.environ.get("WEBSITE_SITE_NAME") != None \
-        else 1094584746207617064
     MEMBER_COUNT_PREFIX = "Member Count: "
     RATE_LIMIT = timedelta(minutes=5)
     NEW_MEMBER_TIME = timedelta(days=7)
@@ -23,11 +21,16 @@ class MemberCounter(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.member_count_channel = self.bot.get_channel(
-            self.MEMBER_COUNT_CHANNEL_ID)
-        if not self.member_count_channel:
+        member_count_channels = [filter(
+            lambda channel: channel.name.startswith(self.MEMBER_COUNT_PREFIX),
+            self.bot.get_all_channels()
+        )]
+
+        self.member_count_channel = member_count_channels[0]
+        if len(member_count_channels) > 1:
             logging.warning(
-                f"Could not find \"Member Count\" channel: {self.MEMBER_COUNT_CHANNEL_ID}")
+                f"Found many channels starting with \"{self.MEMBER_COUNT_PREFIX}\". Could not determine which is the \"correct\" member count channel.")
+            self.member_count_channel = None # TODO maybe end this cog or something similar
 
         await self.attempt_update_member_count_channel_name()
 
