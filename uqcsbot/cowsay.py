@@ -48,18 +48,25 @@ class Cowsay(commands.Cog):
         # Sanitise invalid characters from the message
         message = Cowsay.sanitise_illegals(message)
 
-        # Check message length, if invalid send moo!
-        if len(message) == 0 or len(message) > 1000:
-            await interaction.response.send_message("moo!")
-            return
-
         # Sanitise message for discord emotes
         message = Cowsay.sanitise_emotes(message)
+
+        # Check message length, if invalid send moo!
+        if len(message) == 0 or len(message) > 1000:
+            await interaction.response.send_message("moo?")
+            return
 
         # Construct the ascii art + message
         ascii_art = self.draw_cow(mood, tongue) if not tux else self.draw_tux(mood)
         bubble = Cowsay.construct_bubble(message, CowsayWrapLength)
-        await interaction.response.send_message(f"```{bubble}{ascii_art}```")
+
+        # Format the response and check if it's too long
+        response = f"```{bubble}{ascii_art}```"
+        if len(response) > 2000:
+            await interaction.response.send_message("moo!")
+            return
+
+        await interaction.response.send_message(response)
     
     @app_commands.command(name="cowthink")
     @app_commands.describe(
@@ -80,18 +87,25 @@ class Cowsay(commands.Cog):
         # Sanitise invalid characters from the message
         message = Cowsay.sanitise_illegals(message)
 
+        # Sanitise message for discord emotes
+        message = Cowsay.sanitise_emotes(message)
+
         # Check message length, if invalid send moo!
         if len(message) == 0 or len(message) > 1000:
             await interaction.response.send_message("moo?")
             return
 
-        # Sanitise message for discord emotes
-        message = Cowsay.sanitise_emotes(message)
-
         # Construct the ascii art + message
         ascii_art = self.draw_cow(mood, tongue, True) if not tux else self.draw_tux(mood, True)
         bubble = Cowsay.construct_bubble(message, CowsayWrapLength, True)
-        await interaction.response.send_message(f"```{bubble}{ascii_art}```")
+        
+        # Format the response and check if it's too long
+        response = f"```{bubble}{ascii_art}```"
+        if len(response) > 2000:
+            await interaction.response.send_message("moo!")
+            return
+
+        await interaction.response.send_message(response)
 
     def draw_cow(self, 
             mood: Optional[CowsayMoodType] = 'Normal', 
