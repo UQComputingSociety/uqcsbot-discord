@@ -6,7 +6,7 @@ authors = ["UQ Computing Society <contact@uqcs.org.au>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 "discord.py" = "^2.1.0"
 icalendar = "^4.1"
 "python-dateutil" = "^2.8"
