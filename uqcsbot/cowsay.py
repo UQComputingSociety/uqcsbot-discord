@@ -45,8 +45,8 @@ class Cowsay(commands.Cog):
         Returns a cow or tux saying the given message.
         """
 
-        # Strip whitespace from either side of the message
-        message = message.strip()
+        # Sanitise invalid characters from the message
+        message = sanitise_illegals(message)
 
         # Check message length, if invalid send moo!
         if len(message) == 0 or len(message) > 1000:
@@ -77,8 +77,8 @@ class Cowsay(commands.Cog):
         Returns a cow or tux thinking the given message.
         """
 
-        # Strip whitespace from either side of the message
-        message = message.strip()
+        # Sanitise invalid characters from the message
+        message = sanitise_illegals(message)
 
         # Check message length, if invalid send moo!
         if len(message) == 0 or len(message) > 1000:
@@ -145,6 +145,21 @@ class Cowsay(commands.Cog):
         tux += f"    /'\_   _/`\ \n"
         tux += f"    \___)=(___/ \n"
         return tux
+
+    @staticmethod
+    def sanitise_illegals(message: str) -> str:
+        """
+        Replaces all illegal characters in the message with their sanitised
+        equivalent.
+        """
+
+        # Strip whitespace from either side of the message
+        message = message.strip()
+
+        # replace code blocks with their sanitised equivalent
+        message = message.replace("```", "'''")
+        
+        return message
 
     @staticmethod
     def sanitise_emotes(message: str) -> str:
