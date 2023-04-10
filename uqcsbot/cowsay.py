@@ -100,13 +100,37 @@ class Cowsay(commands.Cog):
         """
         Word wraps the given message to a max length of 40 characters.
         """
-        lines = []
-        line = ""
-        for word in message.split():
+        lines: List[str] = []
+        line: str = ""
+        words: List[str] = message.split()
+        
+        index: int = 0
+        while index < len(words):
+            word: str = words[index]
+            index += 1
+            
+            # If the word is longer than the wrap length, cut it and add it to 
+            # the list of words to be processed.
+            if len(word) > wrap:
+                # Cut the word to the remaining space on the line.
+                cut_word: str = word[:(wrap - len(line))]
+
+                # Add the rest of the word to the list of words to be processed.
+                words.insert(index, word[len(cut_word):])
+                
+                # Add the cut word to the current line and start a new line.
+                lines.append((line + cut_word).rstrip())
+                line = ""
+                continue
+
+            # If the word is longer than the remaining space on the line, add
+            # the current line to the list of lines and start a new line.
             if len(line) + len(word) > wrap:
                 lines.append(line.rstrip())
                 line = ""
+
             line += word + " "
+
         lines.append(line.rstrip())
         return lines
 
