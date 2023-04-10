@@ -11,21 +11,19 @@ from uqcsbot.bot import UQCSBot
 
 
 class UpTime(commands.Cog):
-    # Checks for an Azure specific environment variable, if it exists we're running as prod.
-    CHANNEL_ID = 836243768411160606 if os.environ.get("WEBSITE_SITE_NAME") != None \
-        else 1041708952066461716
+    CHANNEL_NAME = "bot-testing"
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
 
     @commands.Cog.listener()
     async def on_ready(self):
-        channel = self.bot.get_channel(self.CHANNEL_ID)
+        channel = discord.utils.get(self.bot.get_all_channels(), name=self.CHANNEL_NAME)
 
         if channel != None:
             await channel.send("I have rebooted!")
         else:
-            logging.warning(f"bot-testing channel not found {self.CHANNEL_ID}") 
+            logging.warning(f"#{self.CHANNEL_NAME} not found") 
 
     @app_commands.command()
     async def uptime(self, interaction: discord.Interaction):
