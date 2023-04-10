@@ -192,18 +192,27 @@ class Cowsay(commands.Cog):
             word: str = words[index]
             index += 1
 
+            # As requested by the audience, you can manually break lines by
+            # adding "\n" anywhere in the message and it will be respected.
             if "\\n" in word:
                 parts: str = word.split("\\n", 1)
+
+                # The `\n` is by itself, so start a new line.
                 if parts[0] == "" and parts[1] == "":
                     lines.append(line.rstrip())
                     line = ""
                     continue
                 elif parts[1] == "":
+                    # The `\n` was at the end of the word, so add the current 
+                    # part to the current line and start a new line
                     lines.append((line + parts[0]).rstrip())
                     line = ""
                     continue
                 else:
-                    # Add the remainder back to words to process
+                    # The `\n` was in the middle of the word, or end. So add 
+                    # the first part to the current line and start a new line.
+                    # Then add the second part to the list of words to be 
+                    # processed.
                     words.insert(index, parts[1])
 
                     # Add the part to the current line and start a new line.
