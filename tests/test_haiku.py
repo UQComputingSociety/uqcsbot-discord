@@ -96,6 +96,11 @@ def test_number_of_syllables_in_word():
         "graduate": 3,
         "create": 2,
         "naive": 2,
+        "date": 1,
+        "crate": 1,
+        "resume": 3,
+        "equal": 2,
+        "unequal": 3,
     }
     for (word, expected_syllable_count) in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count

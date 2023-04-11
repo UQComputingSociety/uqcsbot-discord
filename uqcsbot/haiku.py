@@ -105,7 +105,7 @@ def _number_of_syllables_in_word(word: str):
         # Words ending in "nt" due to contraction (user forgetting punctuation)
         "didnt", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt",
         # Words ending in "e" that is considered silent, when it is not.
-        "maybe", "cafe", "naive")
+        "maybe", "cafe", "naive", "resume")
     prefixes_needing_one_less_syllable = (
         # Compound words with a silent "e" in the middle
         "facebook",
@@ -133,7 +133,7 @@ def _number_of_syllables_in_word(word: str):
 
     number_of_syllables = 0
 
-    # Remove suffixes so we can focus on the syllables of the root word, but only if it is a true suffix (checked by tesing if there is another vowel without the suffix)
+    # Remove suffixes so we can focus on the syllables of the root word, but only if it is a true suffix (checked by testing if there is another vowel without the suffix)
     for suffix in suffixes_to_remove:
         if (
             word.endswith((suffix, suffix + "s"))
@@ -195,8 +195,14 @@ def _number_of_syllables_in_word(word: str):
     # Usually, the suffix "ial" is one syllable, but if it is preceeded by "b", "d", "l", "m", "n", "r", "v" or "x" it is two syllables. For example, "initial" has 3 syllables, but "microbial" has 4 syllables. Likewise, consider "radial", "familial", "polynomial", "millennial", "aerial", "trivial" and "axial".
     if word.endswith(("bial", "dial", "lial", "mial", "nial", "rial", "vial", "xial")):
         number_of_syllables += 1
-    # The suffix "ual" consists of two syllables such as "contextual". (Enter debate about "actual", "casual" and "usual". We will assume all of these have 3 syllables. Note that "actually" also has 3 syllables by this classification (which matches google's recommended pronunciation). We also use the British pronunciation of "dual", which has 2 syllables.)
-    if word.endswith("ual"):
+    # The suffix "ual" consists of two syllables such as "contextual". (Enter debate about "actual", "casual" and "usual". We will assume all of these have 3 syllables. Note that "actually" also has 3 syllables by this classification (which matches google's recommended pronunciation). We also use the British pronunciation of "dual", which has 2 syllables.) We exclude "qual" for words such as "equal".
+    if (
+        word.endswith("ual")
+        and not word.endswith("qual")
+    ):
+        number_of_syllables += 1
+    # If not part of the "cian" or "tian" suffixes, "ian" often is pronounced as 2 syllables. For example, "Australian" (compared to "politician").
+    if word.endswith("ian") and not word.endswith(("cian", "tian")):
         number_of_syllables += 1
 
     # PREFIXES
@@ -205,9 +211,6 @@ def _number_of_syllables_in_word(word: str):
         number_of_syllables += 1
     # Account for the prefixes tri and bi, which for separate syllables from the following vowel. For example, "triangle" and "biology".
     if word.startswith(("tria", "trie", "trii", "trio", "triu", "bia", "bie", "bii", "bio", "biu")):
-        number_of_syllables += 1
-    # If not part of the "cian" or "tion" suffixes, "ian" often is pronounced as 2 syllables. For example, "Australian" (compared to "politician").
-    if word.endswith("ian") and not word.endswith(("cian", "tian")):
         number_of_syllables += 1
     # The prefix "co-" often forms a separate syllable to the following vowel, as in "coincidence". The longer prefixes are to ensure it is a prefix, not just a word starting with "co" such as "cooking" or "coup".
     if word.startswith(("coapt", "coed", "coinci", "coop")):
