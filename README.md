@@ -53,7 +53,16 @@ docker-compose down
 
 ## Testing
 
-Coming soon.
+Tests are stored in the `tests` folder and the tests for each file are prefixed with `test_`. Each test should `import pytest` and import the relevant functions from the given part of `uqcsbot`. Tests should mainly focus on cog-specific behaviours and should avoid interacting with discord (say, to detect if a message was sent; see issue [#2](https://github.com/UQComputingSociety/uqcsbot-discord/issues/2#issuecomment-1498967689)).
+
+To run all tests:
+```
+poetry run pytest
+```
+To run a particular test, say `test_whatweekisit.py`, run:
+```
+poetry run pytest tests\test_whatweekisit.py
+```
 
 ## Development Resources
 
