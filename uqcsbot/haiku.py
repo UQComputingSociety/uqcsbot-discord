@@ -93,7 +93,8 @@ def _number_of_syllables_in_word(word: str):
     exceptions = {
         # Abbreviations
         "ok": 2,
-        "bbq": 3
+        "bbq": 3,
+        "bsod": 4
     }
     prefixes_needing_extra_syllable = (
         # Words ending in "Xial" where "X" is not "b", "d", "m", "n", "r", "v" or "x", but "Xial" consists of 2 syllables
