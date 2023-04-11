@@ -162,7 +162,11 @@ class Events(commands.Cog):
         self.bot.schedule_task(self.scheduled_message, trigger='cron', hour=9, day_of_week="mon", timezone='Australia/Brisbane')
 
     async def scheduled_message(self):
-        await self.send_events(discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME))
+        channel = discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME)
+        if channel is not None:
+            await self.send_events(channel)
+        else:
+            logging.warning(f"Could not find required channel #{self.CHANNEL_NAME}")
 
     @classmethod
     def _get_current_time(cls):

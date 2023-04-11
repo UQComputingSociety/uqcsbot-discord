@@ -107,7 +107,7 @@ class Holidays(commands.Cog):
 
         general_channel = discord.utils.get(self.bot.uqcs_server.channels, name=GENERAL_CHANNEL)
         if general_channel is None:
-            logging.warning("General channel not found.")
+            logging.warning(f"Could not find required channel #{GENERAL_CHANNEL}")
             return
 
         if isinstance(general_channel, discord.TextChannel):

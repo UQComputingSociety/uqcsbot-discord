@@ -355,11 +355,19 @@ class Advent(commands.Cog):
 
 
     async def reminder_fifteen_minutes(self):
-        await discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME).send("Today's Advent of Code puzzle is released in 15 minutes.")
+        channel = discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME)
+        if channel is not None:
+            await channel.send("Today's Advent of Code puzzle is released in 15 minutes.")
+        else:
+            logging.warning(f"Could not find required channel #{self.CHANNEL_NAME}")
 
 
     async def reminder_released(self):
-        await discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME).send("Today's Advent of Code puzzle has been released. Good luck!")
+        channel = discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME)
+        if channel is not None:
+            await channel.send("Today's Advent of Code puzzle has been released. Good luck!")
+        else:
+            logging.warning(f"Could not find required channel #{self.CHANNEL_NAME}")
 
     def _get_previous_winners(self, year: int):
         db_session = self.bot.create_db_session()

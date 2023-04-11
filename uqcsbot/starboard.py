@@ -1,4 +1,5 @@
 import os
+import logging
 from typing import Optional
 from threading import Timer
 
@@ -31,6 +32,9 @@ class Starboard(commands.Cog):
         """
         self.starboard_emoji = discord.utils.get(self.bot.emojis, name=self.EMOJI_NAME)
         self.starboard_channel = discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME)
+
+        if self.starboard_emoji is None or self.starboard_channel is None:
+            logging.warning(f"Could not find required channel #{self.CHANNEL_NAME} or emoji {self.EMOJI_NAME}")
     
     def _rm_base_ratelimit(self, id: int):
         """ Callback to remove a message from the base-ratelimited list """

@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-import os
+import random
 
 import discord
 from discord import app_commands
@@ -20,10 +20,13 @@ class UpTime(commands.Cog):
     async def on_ready(self):
         channel = discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME)
 
-        if channel != None:
-            await channel.send("I have rebooted!")
+        if channel is not None:
+            if random.randint(1,100) == 1:
+                await channel.sent("Oopsie, I webooted uwu >_<")
+            else:
+                await channel.send("I have rebooted!")
         else:
-            logging.warning(f"#{self.CHANNEL_NAME} not found") 
+            logging.warning(f"Could not find required channel #{self.CHANNEL_NAME}") 
 
     @app_commands.command()
     async def uptime(self, interaction: discord.Interaction):

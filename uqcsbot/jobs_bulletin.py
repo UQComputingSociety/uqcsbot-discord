@@ -1,4 +1,5 @@
 import discord
+import logging
 from discord.ext import commands
 
 
@@ -48,6 +49,10 @@ class JobsBulletin(commands.Cog):
 
         jobs_bulletin = discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME)
         jobs_discussion = discord.utils.get(self.bot.uqcs_server.channels, name=self.DISCUSSION_CHANNEL_NAME)
+
+        if jobs_bulletin is None or jobs_discussion is None:
+            logging.warning(f"Could not find required channels #{self.CHANNEL_NAME} or #{self.DISCUSSION_CHANNEL_NAME}")
+            return
 
         channel_message = (f"{msg.author.display_name} has posted a new job in {jobs_bulletin.mention}! :tada: \n"
                    f"Please ask any questions in {jobs_discussion.mention}"

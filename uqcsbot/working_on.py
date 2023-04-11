@@ -1,3 +1,4 @@
+import logging
 from random import choice
 
 import discord
@@ -26,7 +27,10 @@ class WorkingOn(commands.Cog):
         
         general_channel = discord.utils.get(self.bot.uqcs_server.channels, name=GENERAL_CHANNEL)
 
-        await general_channel.send("\n".join(message), allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=False))
+        if general_channel is not None:
+            await general_channel.send("\n".join(message), allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=False))
+        else:
+            logging.warning(f"Could not find required channel #{GENERAL_CHANNEL}")
 
 async def setup(bot: UQCSBot):
     cog = WorkingOn(bot)
