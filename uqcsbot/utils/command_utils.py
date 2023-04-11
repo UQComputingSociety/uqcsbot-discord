@@ -4,6 +4,8 @@ from typing import Callable
 from discord.ext import commands
 
 LOADING_REACTS = ["⏰", "🕰️", "⏲️", "🕖", "🕔", "🕥"]
+HYPE_REACTS = ['blahaj', 'blobhajHeart', 'realheart', 'blobhajInnocent', 'keen',
+               'bigsippin', 'pog_of_greed', 'blobhajHearts']
 
 def loading_status(command_fn: Callable):
     @wraps(command_fn)  # Important to preserve name because `command` uses it
