@@ -101,6 +101,7 @@ def test_number_of_syllables_in_word():
         "resume": 3,
         "equal": 2,
         "unequal": 3,
+        "BSOD": 4,
     }
     for (word, expected_syllable_count) in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
