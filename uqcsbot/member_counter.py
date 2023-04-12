@@ -47,6 +47,7 @@ class MemberCounter(commands.Cog):
             interaction.guild.members
         )
         await interaction.response.send_message(f"There are currently {interaction.guild.member_count} members in the UQCS discord server, with {len([new_members])} joining in the last 7 days.")
+        await self.attempt_update_member_count_channel_name()
 
     @commands.Cog.listener()
     async def on_member_join(self, _):
