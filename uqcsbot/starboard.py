@@ -18,7 +18,7 @@ class BlacklistedMessageError(Exception):
 class SomethingsFucked(Exception):
     # never caught. used because i don't trust myself and i want it to be clear that something's wrong.
     def __init__(self, client: discord.Client, modlog: discord.TextChannel, message: str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(message, *args, **kwargs)
         client.loop.create_task(modlog.send(f"Bad Starboard state: {message}"))
 
 
@@ -57,9 +57,8 @@ class Starboard(commands.Cog):
     async def on_ready(self):
         """
         Really this should be in __init__ but this stuff doesn't exist until the bot is ready.
-        N.B. this does assume the bot only has access to one channel called "starboard" and one emoji called
-        "starhaj". If this assumption stops holding, we may need to move back to IDs (cringe) or ensure we only get
-        them from the correct guild (cringer).
+        N.B. this does assume the server only has one channel called "starboard" and one emoji called
+        "starhaj". If this assumption stops holding, we may need to move back to IDs (cringe)
         """
         self.starboard_emoji = discord.utils.get(self.bot.emojis, name=self.EMOJI_NAME)
         self.starboard_channel = discord.utils.get(
@@ -70,13 +69,18 @@ class Starboard(commands.Cog):
         )
 
     @app_commands.command()
-    @app_commands.default_permissions(manage_messages=True)
+    @app_commands.default_permissions(manage_server=True)
     async def cleanup_starboard(self, interaction: discord.Interaction):
         """Cleans up the last 100 messages from the starboard.
         Removes any uqcsbot message that doesn't have a corresponding message id in the db, regardless of recv.
+        Otherwise, causes a starboard update on the messages.
+
+        manage_server perms: for committee and infra use.
         """
 
         if interaction.channel == self.starboard_channel:
+            # because if you do it from in the starboard, it deletes its own interaction response
+            # and i cba making it not do that, so i'll just forbid doing it in starboard.
             return await interaction.response.send_message(
                 "Can't cleanup from inside the starboard!", ephemeral=True
             )
@@ -150,7 +154,10 @@ class Starboard(commands.Cog):
     async def context_blacklist_sb_message(
         self, interaction: discord.Interaction, message: discord.Message
     ):
-        """Blacklists a message from being starboarded. If the message is already starboarded, also deletes it."""
+        """Blacklists a message from being starboarded. If the message is already starboarded, also deletes it.
+        
+        manage_messages perms: committee-only.
+        """
         db_session = self.bot.create_db_session()
         # can't use the db query functions for this, they error out if a message hits the blacklist
         entry = db_session.query(models.Starboard).filter(
@@ -195,7 +202,9 @@ class Starboard(commands.Cog):
     ):
         """Removes a message from the starboard blacklist.
         N.B. Doesn't perform an 'update' of the message. This may result in messages meeting the threshold
-        but not being starboarded if they don't get any more reacts."""
+        but not being starboarded if they don't get any more reacts.
+        
+        manage_messages perms: committee-only"""
         db_session = self.bot.create_db_session()
 
         # if we find a (recv, none) for this message, delete it. otherwise the message is already not blacklisted.
@@ -299,7 +308,10 @@ class Starboard(commands.Cog):
             else:
                 raise SomethingsFucked(
                     modlog=self.modlog,
-                    message="Couldn't find an DB entry for this starboard message!",
+                    message=f"Couldn't find an DB entry for this starboard message ({message_id})!",
+                    # note that this will also trigger on Isaac's initial-starboard message (1076779482637144105).
+                    # quite honestly, this is the most comprehensible way for us to handle it; the bot will gracefully
+                    # crap out and the only notice will be the error in #admin-alerts.
                 )
 
         else:
@@ -312,10 +324,9 @@ class Starboard(commands.Cog):
 
             if entry is not None:
                 if entry.recv_location != channel_id:
-                    # This also implies entry.recv_location is not None
                     raise SomethingsFucked(
                         modlog=self.modlog,
-                        message="Recieved message from different channel to DB lookup!",
+                        message=f"Recieved message ({message_id}) from different channel to what the DB expects!",
                     )
                 elif entry.sent is None:
                     raise BlacklistedMessageError()
@@ -351,7 +362,7 @@ class Starboard(commands.Cog):
                 continue
 
             # store the message authors so we can discard their reacts later
-            # grandfathering old messages where their reacts were not auto-deleted, also failsafes, etc
+            # grandfathering old messages where their reacts were not auto-deleted, also failsafes are nice, etc
             authors += [message.author.id]
             reaction = discord.utils.get(message.reactions, emoji=self.starboard_emoji)
             if reaction is not None:
