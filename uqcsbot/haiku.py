@@ -27,9 +27,11 @@ class Haiku(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.channel not in self.allowed_channels:
-            return
-        if message.author.bot:
+        if (
+            message.channel not in self.allowed_channels
+            or message.author.bot
+            or "```" in message.content
+        ):
             return
 
         haiku_lines = _find_haiku(message.content)
