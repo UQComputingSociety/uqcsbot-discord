@@ -39,14 +39,20 @@ class MemberCounter(commands.Cog):
 
         await self.attempt_update_member_count_channel_name()
 
+    @app_commands.describe(force="Infra-only arg to force updates.")
     @app_commands.command(name="membercount")
-    async def member_count(self, interaction: discord.Interaction):
+    async def member_count(self, interaction: discord.Interaction, force: bool = False):
         """ Display the number of members """
         new_members = filter(
             lambda member: member.joined_at > datetime.now() - self.NEW_MEMBER_TIME,
             interaction.guild.members
         )
         await interaction.response.send_message(f"There are currently {interaction.guild.member_count} members in the UQCS discord server, with {len([new_members])} joining in the last 7 days.")
+
+        if interaction.user.guild_permissions.manage_guild and force:
+            # this is dodgy, but the alternative is to restart the bot
+            # if it gets caught in a loop of waiting for a broken rename
+            self.waiting_for_rename = False
         await self.attempt_update_member_count_channel_name()
 
     @commands.Cog.listener()
