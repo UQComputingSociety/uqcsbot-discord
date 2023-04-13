@@ -100,7 +100,9 @@ def _number_of_syllables_in_word(word: str):
         # Abbreviations
         "ok": 2,
         "bbq": 3,
-        "bsod": 4
+        "bsod": 4,
+        "uq": 2,
+        "uqcs": 4,
     }
 
     # PREFIXES
@@ -135,7 +137,7 @@ def _number_of_syllables_in_word(word: str):
         # These are exceptions to the usual rules. Treat as prefixes variations of the words such as "preacher" for "preach".
 
         # Compound words with a silent "e" in the middle
-        "facebook",
+        "facebook", "whitespace",
         # Words starting with "preX" where "X" is a vowel that aren't using "pre" as a prefix
         "preach",
         # Words that have been shortened in speech

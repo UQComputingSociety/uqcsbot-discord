@@ -105,6 +105,9 @@ def test_number_of_syllables_in_word():
         "beverage": 3,
         "superior": 4,
         "islet": 2,
+        "whitespace": 2,
+        "uq": 2,
+        "uqcs": 4,
     }
     for (word, expected_syllable_count) in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
