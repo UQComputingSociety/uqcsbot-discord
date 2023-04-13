@@ -1,8 +1,5 @@
 import pytest
-from uqcsbot.haiku import (
-    _number_of_syllables_in_word,
-    _find_haiku
-)
+from uqcsbot.haiku import _number_of_syllables_in_word, _find_haiku
 
 
 def test_number_of_syllables_in_word():
@@ -97,7 +94,7 @@ def test_number_of_syllables_in_word():
         "create": 2,
         "naive": 2,
     }
-    for (word, expected_syllable_count) in test_cases.items():
+    for word, expected_syllable_count in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
 
 
@@ -117,7 +114,7 @@ def test_find_haiku():
         "Yea, true. That's quite a good point that I had not quite thought of. Very true",
         "ill have to become careful with my messages to not send haiku",
         "fwiw you also have to have word breaks in the right places to make it 5/7/5",
-        "This is a haiku\n I just want to test the bot\n Didn't read the code"
+        "This is a haiku\n I just want to test the bot\n Didn't read the code",
     ]
     false_cases = [
         "This is not a haiku",
