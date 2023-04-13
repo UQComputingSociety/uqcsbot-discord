@@ -9,7 +9,6 @@ from discord.ext import commands
 
 
 class MemberCounter(commands.Cog):
-    # Checks for an Azure specific environment variable, if it exists we're running as prod.
     MEMBER_COUNT_PREFIX = "Member Count: "
     RATE_LIMIT = timedelta(minutes=5)
     NEW_MEMBER_TIME = timedelta(days=7)
@@ -22,7 +21,7 @@ class MemberCounter(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         member_count_channels = [
-            channel for channel in self.bot.get_all_channels()
+            channel for channel in self.bot.uqcs_server.channels
             if channel.name.startswith(self.MEMBER_COUNT_PREFIX)
         ]
         if len(member_count_channels) == 0:
