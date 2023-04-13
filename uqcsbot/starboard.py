@@ -17,9 +17,9 @@ class BlacklistedMessageError(Exception):
 
 class SomethingsFucked(Exception):
     # never caught. used because i don't trust myself and i want it to be clear that something's wrong.
-    def __init__(self, modlog: discord.TextChannel, message: str, *args, **kwargs):
+    def __init__(self, client: discord.Client, modlog: discord.TextChannel, message: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        modlog.send(f"Bad Starboard state: {message}")
+        client.loop.create_task(modlog.send(f"Bad Starboard state: {message}"))
 
 
 class Starboard(commands.Cog):
