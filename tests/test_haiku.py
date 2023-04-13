@@ -111,25 +111,25 @@ def test_number_of_syllables_in_word():
 
 
 def test_find_haiku():
-    # Many of these cases are from the discord itself (where the bot incorrectly failed before updates). Try to append the username when adding more test cases
+    # Many of these cases are from the discord itself (where the bot incorrectly failed before updates). Try to append the username when adding more test cases if the user agrees.
     true_cases = [
         "THOSE ARE THE EYES OF A MAN WHO SAW SATAN AND ASKED FOR HIS NUMBER",
-        "NOPE, RELIES ON END OF SENTANCES THEN? MAYBE; BUT NOW SHOULD BE FIXD",
-        "TEST AWAY STUDENTS; FIND SYLLABLES MISCOUNTED; LET ME FIX THE BUGS",
-        "I AM ALL OUT OF HAIKUS ON THIS FINE MORNING GOOD LUCK WITH YOUR TESTS",
-        "OK IT WORKS! MIGHT MIS-FIRE OCCASIONALLY, BUT EH... GOOD ENOUGH",
-        "OK IT WORKS! MIGHT MIS-FIRE <:disapproval:1053481630037196931>  OCCASIONALLY, BUT EH... GOOD ENOUGH 😄",
-        "OK IT WORKS! MIGHT MIS-FIRE<:disapproval:1053481630037196931>  OCCASIONALLY, BUT EH... GOOD ENOUGH 😄",
-        "OK IT WORKS! 😄 MIGHT MIS-FIRE OCCASIONALLY, BUT EH... GOOD ENOUGH",
-        "YOU WRITE A MESSAGE AND IT TURNS OUT TO BE A HAIKU AND YOU WIN",
-        "contractions are hard because they break a lot of the syllabic rules",
-        "I'm going to write the lowest effort haiku imaginable",
+        "NOPE, RELIES ON END OF SENTANCES THEN? MAYBE; BUT NOW SHOULD BE FIXD",  # indium#6908
+        "TEST AWAY STUDENTS; FIND SYLLABLES MISCOUNTED; LET ME FIX THE BUGS",  # indium#6908
+        "I AM ALL OUT OF HAIKUS ON THIS FINE MORNING GOOD LUCK WITH YOUR TESTS",  # </hax>#6701
+        "OK IT WORKS! MIGHT MIS-FIRE OCCASIONALLY, BUT EH... GOOD ENOUGH",  # indium#6908
+        "OK IT WORKS! MIGHT MIS-FIRE <:disapproval:1053481630037196931>  OCCASIONALLY, BUT EH... GOOD ENOUGH 😄",  # indium#6908
+        "OK IT WORKS! MIGHT MIS-FIRE<:disapproval:1053481630037196931>  OCCASIONALLY, BUT EH... GOOD ENOUGH 😄",  # indium#6908
+        "OK IT WORKS! 😄 MIGHT MIS-FIRE OCCASIONALLY, BUT EH... GOOD ENOUGH",  # indium#6908
+        "YOU WRITE A MESSAGE AND IT TURNS OUT TO BE A HAIKU AND YOU WIN",  # indium#6908
+        "contractions are hard because they break a lot of the syllabic rules",  # </hax>#6701
+        "I'm going to write the lowest effort haiku imaginable",  # NotRealAqua#6969
         "Yea, true. That's quite a good point that I had not quite thought of. Very true",
         "ill have to become careful with my messages to not send haiku",
-        "fwiw you also have to have word breaks in the right places to make it 5/7/5",
-        "This is a haiku\n I just want to test the bot\n Didn't read the code",
-        "hot chocolate is clearly the superior beverage though lol",
-        "pretty sure it's the immune system attacking beta islet cells",
+        "fwiw you also have to have word breaks in the right places to make it 5/7/5",  # </hax>#6701
+        "This is a haiku\n I just want to test the bot\n Didn't read the code",  # NotRealAqua#6969
+        "hot chocolate is clearly the superior beverage though lol",  # Madeline#8084
+        "pretty sure it's the immune system attacking beta islet cells",  # Madeline#8084
     ]
     false_cases = [
         "This is not a haiku",

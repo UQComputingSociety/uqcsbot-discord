@@ -239,20 +239,15 @@ def _number_of_syllables_in_word(word: str):
     ):
         number_of_syllables -= 1
 
-    print(f"{word} {number_of_syllables}")
     # Deal with exceptions from the given prefix and suffix lists
     if word.startswith(prefixes_needing_extra_syllable):
         number_of_syllables += 1
-    print(f"{word} {number_of_syllables}")
     if word.startswith(prefixes_needing_one_less_syllable):
         number_of_syllables -= 1
-    print(f"{word} {number_of_syllables}")
     if word.endswith(suffixes_needing_one_more_syllable):
         number_of_syllables += 1
-    print(f"{word} {number_of_syllables}")
     if word.endswith(suffixes_needing_one_less_syllable):
         number_of_syllables -= 1
-    print(f"{word} {number_of_syllables}")
 
     return number_of_syllables
 
