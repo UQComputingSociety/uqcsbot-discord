@@ -9,25 +9,39 @@ from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
 
-# Type Alias for Cow Eyes 
-CowsayMoodType = Literal['Normal', 'Borg', 'Dead', 'Greed', 'Paranoid', 'Stoned', 'Tired', 'Wired', 'Youthful']
+# Max length of the message to be displayed per line in the bubble.
 CowsayWrapLength = 40
+
+# Type Alias for Cow Eyes 
+CowsayMoodType = Literal[
+    "Normal",
+    "Borg",
+    "Dead",
+    "Greed",
+    "Paranoid",
+    "Stoned",
+    "Tired",
+    "Wired",
+    "Youthful",
+]
+
+# The cowsay eyes for each mood.
+CowsayEyes = dict(
+    Normal="oo",
+    Borg="==",
+    Dead="xx",
+    Greed="$$",
+    Paranoid="@@",
+    Stoned="**",
+    Tired="--",
+    Wired="OO",
+    Youthful="..",
+)
 
 class Cowsay(commands.Cog):
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
-        self._cow_eyes = dict(
-            Normal = 'oo',
-            Borg = '==',
-            Dead = 'xx',
-            Greed = '$$',
-            Paranoid = '@@',
-            Stoned = '**',
-            Tired = '--',
-            Wired = 'OO',
-            Youthful = '..'
-        )
 
     @app_commands.command(name="cowsay")
     @app_commands.describe(
@@ -36,11 +50,14 @@ class Cowsay(commands.Cog):
         tongue="Whether the cow should show its tongue (optional, default to False)",
         tux="Display the Linux Tux instead of the cow. Tux doesn't show tongue. (optional, default to False)",
     )
-    async def cowsay_command(self, interaction: discord.Interaction, 
-            message: str, 
-            mood: Optional[CowsayMoodType] = 'Normal', 
-            tongue: Optional[bool] = False,
-            tux: Optional[bool] = False) -> None:
+    async def cowsay_command(
+        self, 
+        interaction: discord.Interaction, 
+        message: str, 
+        mood: Optional[CowsayMoodType] = "Normal", 
+        tongue: Optional[bool] = False,
+        tux: Optional[bool] = False
+    ) -> None:
         """
         Returns a cow or tux saying the given message.
         """
@@ -75,11 +92,14 @@ class Cowsay(commands.Cog):
         tongue="Whether the cow should show its tongue (optional, default to False)",
         tux="Display the Linux Tux instead of the cow. Tux doesn't show tongue. (optional, default to False)",
     )
-    async def cowthink_command(self, interaction: discord.Interaction, 
-            message: str, 
-            mood: Optional[CowsayMoodType] = 'Normal', 
-            tongue: Optional[bool] = False,
-            tux: Optional[bool] = False) -> None:
+    async def cowthink_command(
+        self, 
+        interaction: discord.Interaction, 
+        message: str, 
+        mood: Optional[CowsayMoodType] = "Normal", 
+        tongue: Optional[bool] = False,
+        tux: Optional[bool] = False
+    ) -> None:
         """
         Returns a cow or tux thinking the given message.
         """
@@ -107,46 +127,59 @@ class Cowsay(commands.Cog):
 
         await interaction.response.send_message(response)
 
-    def draw_cow(self, 
-            mood: Optional[CowsayMoodType] = 'Normal', 
-            tongue: Optional[bool] = False,
-            thinking: bool = False) -> str:
-
+    def draw_cow(
+        self, 
+        mood: Optional[CowsayMoodType] = "Normal", 
+        tongue: Optional[bool] = False,
+        thinking: bool = False
+    ) -> str:
         """
         Returns cow ascii art with different eyes based on the mood and sticks
         out its tongue when requested.
         """
 
         # Set the tongue if the cow is dead or if the tongue is set to True.
-        tongue = 'U' if tongue or mood == 'Dead' else ' '
+        tongue = "U" if tongue or mood == "Dead" else " "
 
         # Set the bubble connection based on whether the cow is thinking or 
         # speaking.
-        bubble_connect = 'o' if thinking else '\\'
+        bubble_connect = "o" if thinking else "\\"
+
+        # Double check the mood is valid, default to normal if not.
+        if mood not in CowsayEyes:
+            mood = "Normal"
+
+        # Get the cow eyes.
+        cow_eyes = CowsayEyes[mood]
 
         # Draw the cow.
         cow  = f"        {bubble_connect}   ^__^\n"
-        cow += f"         {bubble_connect}  ({self._cow_eyes[mood]})\_______\n"
+        cow += f"         {bubble_connect}  ({cow_eyes})\_______\n"
         cow += f"            (__)\       )\/\ \n"
         cow += f"             {tongue}  ||----w |\n"
         cow += f"                ||     ||\n"
         return cow
 
-    def draw_tux(self,
-            mood: Optional[CowsayMoodType] = 'Normal',
-            thinking: bool = False) -> str:
-        
+    def draw_tux(
+        self,
+        mood: Optional[CowsayMoodType] = "Normal",
+        thinking: bool = False
+    ) -> str:
         """
         Returns tux ascii art with different eyes based on the mood.
         """
 
+        # Double check the mood is valid, default to normal if not.
+        if mood not in CowsayEyes:
+            mood = "Normal"
+
         # Get the tux eyes.
-        cow_eyes = self._cow_eyes[mood]
+        cow_eyes = CowsayEyes[mood]
         tux_eyes = f"{cow_eyes[0]}_{cow_eyes[1]}"
 
         # Set the bubble connection based on whether the tux is thinking or 
         # speaking.
-        bubble_connect = 'o' if thinking else '\\'
+        bubble_connect = "o" if thinking else "\\"
 
         # Draw the tux.
         tux  = f"   {bubble_connect} \n"
@@ -197,6 +230,7 @@ class Cowsay(commands.Cog):
         """
         Word wraps the given message to a max length of 40 characters.
         """
+
         lines: List[str] = []
         line: str = ""
         words: List[str] = message.split()
@@ -269,19 +303,19 @@ class Cowsay(commands.Cog):
         lines = Cowsay.word_wrap(message, wrap)
 
         # Get longest line
-        bubble_length = max([len(line) for line in lines])
+        width = max([len(line) for line in lines])
 
         # Build the body of the speech bubble.
-        bubble_body = ""
+        body = ""
         if thought:
-            bubble_body = Cowsay.construct_thought_bubble_body(lines, bubble_length) 
+            body = Cowsay.construct_thought_bubble_body(lines, width) 
         else:
-            bubble_body = Cowsay.construct_say_bubble_body(lines, bubble_length)
+            body = Cowsay.construct_say_bubble_body(lines, width)
 
         # Construct the speech bubble.
-        bubble = f" _{bubble_length * '_'}_ \n"
-        bubble += bubble_body
-        bubble += f" -{bubble_length * '-'}- \n"
+        bubble = f" _{width * '_'}_ \n"
+        bubble += body
+        bubble += f" -{width * '-'}- \n"
 
         return bubble
 
@@ -292,16 +326,16 @@ class Cowsay(commands.Cog):
         """
 
         # Build the body of the speech bubble.
-        bubble_body = ""
+        body = ""
         if len(lines) == 1:
-            bubble_body += f"< {lines[0]} >\n"
+            body += f"< {lines[0]} >\n"
         else:
-            bubble_body += f"/ {lines[0].ljust(length)} \\\n"
+            body += f"/ {lines[0].ljust(length)} \\\n"
             for line in lines[1:-1]:
-                bubble_body += f"| {line.ljust(length)} |\n"
-            bubble_body += f"\\ {lines[-1].ljust(length)} /\n"
+                body += f"| {line.ljust(length)} |\n"
+            body += f"\\ {lines[-1].ljust(length)} /\n"
         
-        return bubble_body
+        return body
         
     @staticmethod
     def construct_thought_bubble_body(lines: List[str], length: int) -> str:
@@ -310,11 +344,11 @@ class Cowsay(commands.Cog):
         """
 
         # Build the body of the speech bubble.
-        bubble_body = ""
+        body = ""
         for line in lines:
-            bubble_body += f"( {line.ljust(length)} )\n"
+            body += f"( {line.ljust(length)} )\n"
 
-        return bubble_body
+        return body
 
 async def setup(bot: UQCSBot):
     cog = Cowsay(bot)
