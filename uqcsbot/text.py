@@ -48,6 +48,8 @@ class Text(commands.Cog):
                     response = decoded_message.decode(encoding)
                 except UnicodeDecodeError as e:
                     response = e.reason
+                except LookupError:
+                    response = "Invalid encoding. A list of valid encodings can be found at <https://docs.python.org/3/library/codecs.html#standard-encodings>"
         else:
             try:
                 encoded_message = message.encode(encoding)
@@ -56,6 +58,8 @@ class Text(commands.Cog):
                 ])
             except UnicodeEncodeError as e:
                 response = e.reason
+            except LookupError:
+                response = "Invalid encoding. A list of valid encodings can be found at <https://docs.python.org/3/library/codecs.html#standard-encodings>"
 
         await interaction.response.send_message(response)
 
@@ -93,12 +97,16 @@ class Text(commands.Cog):
                 response = "Hexadecimal string contains partial byte."
             except UnicodeDecodeError as e:
                 response = e.reason
+            except LookupError:
+                response = "Invalid encoding. A list of valid encodings can be found at <https://docs.python.org/3/library/codecs.html#standard-encodings>"
         else:
             try:
                 encoded_message = message.encode(encoding)
                 response = encoded_message.hex()
             except UnicodeEncodeError as e:
                 response = e.reason
+            except LookupError:
+                response = "Invalid encoding. A list of valid encodings can be found at <https://docs.python.org/3/library/codecs.html#standard-encodings>"
 
         await interaction.response.send_message(response)
 
