@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timedelta
 import os
 import asyncio
+from zoneinfo import ZoneInfo
 
 import discord
 from discord import app_commands
@@ -42,11 +43,12 @@ class MemberCounter(commands.Cog):
     @app_commands.command(name="membercount")
     async def member_count(self, interaction: discord.Interaction, force: bool = False):
         """ Display the number of members """
-        new_members = filter(
-            lambda member: member.joined_at > datetime.now() - self.NEW_MEMBER_TIME,
-            interaction.guild.members
-        )
-        await interaction.response.send_message(f"There are currently {interaction.guild.member_count} members in the UQCS discord server, with {len([new_members])} joining in the last 7 days.")
+        new_members = [
+            member
+            for member in interaction.guild.members
+            if member.joined_at > datetime.now(tz=ZoneInfo("Australia/Brisbane")) - self.NEW_MEMBER_TIME
+        ]
+        await interaction.response.send_message(f"There are currently {interaction.guild.member_count} members in the UQCS discord server, with {len(new_members)} joining in the last 7 days.")
 
         if interaction.user.guild_permissions.manage_guild and force:
             # this is dodgy, but the alternative is to restart the bot
