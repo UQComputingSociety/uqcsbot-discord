@@ -14,7 +14,7 @@ class Text(commands.Cog):
             callback=self.zalgo_context,
         )
         self.bot.tree.add_command(self.zalgo_menu)
-        
+
         self.mock_menu = app_commands.ContextMenu(
             name="Mock",
             callback=self.mock_context,
@@ -42,14 +42,16 @@ class Text(commands.Cog):
             else:
                 response = ""
                 for i in range(0, len(string), 8):
-                    n = int(string[i:i+8], 2)
+                    n = int(string[i : i + 8], 2)
                     if n >= 128:
                         response = "Character out of ascii range (0-127)"
                         break
                     response += chr(n)
         else:
             response = ""
-            for c in message.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">"):
+            for c in (
+                message.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+            ):
                 n = ord(c)
                 if n >= 128:
                     response = "Character out of ascii range (0-127)"
@@ -59,8 +61,15 @@ class Text(commands.Cog):
         await interaction.response.send_message(response)
 
     @app_commands.command()
-    @app_commands.describe(message="Text to shift", distance="Distance to shift, defaults to 13")
-    async def caesar(self, interaction: discord.Interaction, message: str, distance: Optional[int] = 13):
+    @app_commands.describe(
+        message="Text to shift", distance="Distance to shift, defaults to 13"
+    )
+    async def caesar(
+        self,
+        interaction: discord.Interaction,
+        message: str,
+        distance: Optional[int] = 13,
+    ):
         """
         Performs caesar shift with a shift of N on given text.
         N defaults to 13 if not given.
@@ -82,57 +91,146 @@ class Text(commands.Cog):
         """
         Posts an httpcat image.
         """
-        if code in {100, 101, 200, 201, 202, 204, 206, 207, 300, 301, 302, 303, 304, 305, 307,
-                    400, 401, 402, 403, 404, 405, 406, 408, 409, 410, 411, 412, 413, 414, 415,
-                    416, 417, 418, 420, 421, 422, 423, 424, 425, 426, 429, 431, 444, 450, 451,
-                    500, 502, 503, 504, 506, 507, 508, 509, 510, 511, 599}:
+        if code in {
+            100,
+            101,
+            200,
+            201,
+            202,
+            204,
+            206,
+            207,
+            300,
+            301,
+            302,
+            303,
+            304,
+            305,
+            307,
+            400,
+            401,
+            402,
+            403,
+            404,
+            405,
+            406,
+            408,
+            409,
+            410,
+            411,
+            412,
+            413,
+            414,
+            415,
+            416,
+            417,
+            418,
+            420,
+            421,
+            422,
+            423,
+            424,
+            425,
+            426,
+            429,
+            431,
+            444,
+            450,
+            451,
+            500,
+            502,
+            503,
+            504,
+            506,
+            507,
+            508,
+            509,
+            510,
+            511,
+            599,
+        }:
             await interaction.response.send_message(f"https://http.cat/{code}")
         else:
             await interaction.response.send_message(f"HTTP cat {code} is not available")
-    
-    async def mock_context(self, interaction: discord.Interaction, message: discord.Message):
-        """ mOCkS tHis MEssAgE """
 
-        await interaction.response.send_message("".join(choice((c.upper(), c.lower())) for c in message.content))
+    async def mock_context(
+        self, interaction: discord.Interaction, message: discord.Message
+    ):
+        """mOCkS tHis MEssAgE"""
+
+        await interaction.response.send_message(
+            "".join(choice((c.upper(), c.lower())) for c in message.content)
+        )
 
     @app_commands.command(name="mock")
     @app_commands.describe(text="Text to mock")
     async def mock_command(self, interaction: discord.Interaction, text: str):
-        """ mOckS ThE pRovIdEd teXT. """
+        """mOckS ThE pRovIdEd teXT."""
 
-        await interaction.response.send_message("".join(choice((c.upper(), c.lower())) for c in text))
+        await interaction.response.send_message(
+            "".join(choice((c.upper(), c.lower())) for c in text)
+        )
 
-    async def scare_context(self, interaction: discord.Interaction, message: discord.Message):
+    async def scare_context(
+        self, interaction: discord.Interaction, message: discord.Message
+    ):
         """ "adds" "scare" "quotes" "to" "this" "message" """
 
-        await interaction.response.send_message(" ".join(f'"{w}"' for w in message.content.split(" ")))
+        await interaction.response.send_message(
+            " ".join(f'"{w}"' for w in message.content.split(" "))
+        )
 
     @app_commands.command(name="scare")
-    @app_commands.describe(text="Text to \"scare\"")
+    @app_commands.describe(text='Text to "scare"')
     async def scare_command(self, interaction: discord.Interaction, text: str):
         """
         "adds" "scary" "quotes" "around" "the" "provided" "text"
         """
 
-        await interaction.response.send_message(" ".join(f'"{w}"' for w in text.split(" ")))
-    
+        await interaction.response.send_message(
+            " ".join(f'"{w}"' for w in text.split(" "))
+        )
+
     def zalgo_common(self, message: str) -> str:
-        """ Zalgo-ifies a given string. """
-        horror = ('\u0315', '\u0358', '\u0328', '\u034f', '\u035f', '\u0337', '\u031b',
-                  '\u0321', '\u0334', '\u035c', '\u0360', '\u0361', '\u0340', '\u0322',
-                  '\u0335', '\u035d', '\u0362', '\u0341', '\u0327', '\u0336', '\u035e', '\u0338')
+        """Zalgo-ifies a given string."""
+        horror = (
+            "\u0315",
+            "\u0358",
+            "\u0328",
+            "\u034f",
+            "\u035f",
+            "\u0337",
+            "\u031b",
+            "\u0321",
+            "\u0334",
+            "\u035c",
+            "\u0360",
+            "\u0361",
+            "\u0340",
+            "\u0322",
+            "\u0335",
+            "\u035d",
+            "\u0362",
+            "\u0341",
+            "\u0327",
+            "\u0336",
+            "\u035e",
+            "\u0338",
+        )
         response = ""
         for c in " ".join(message):
             response += c
-            for i in range(randrange(7)//3):
+            for i in range(randrange(7) // 3):
                 response += choice(horror)
         return response
-    
-    async def zalgo_context(self, interaction: discord.Interaction, message: discord.Message):
+
+    async def zalgo_context(
+        self, interaction: discord.Interaction, message: discord.Message
+    ):
         "á ̵d ̵d s̨  ̨͟ z ̛a l g o  ̸ e͝ ͘f f̵͠ e͢ c̷ ̸t  ́ ̡͟t o ̶ ̀ t̶͞ h́ ̡i͢ s  m ́͟e̶ ̢s s̢ a͝ ̨g e͞"
-        
+
         await interaction.response.send_message(self.zalgo_common(message.content))
-        
+
     @app_commands.command(name="zalgo")
     @app_commands.describe(text="Input text")
     async def zalgo_command(self, interaction: discord.Interaction, text: str):
@@ -142,6 +240,6 @@ class Text(commands.Cog):
 
         await interaction.response.send_message(self.zalgo_common(text))
 
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Text(bot))
-

@@ -29,8 +29,10 @@ ADVENT_DAYS = list(range(1, 25 + 1))
 # Puzzles are unlocked at midnight EST.
 EST_TIMEZONE = timezone(timedelta(hours=-5))
 
+
 class SortMode(Enum):
     """Options for sorting the leaderboard."""
+
     PART_1 = "p1"
     PART_2 = "p2"
     DELTA = "delta"
@@ -42,9 +44,11 @@ class SortMode(Enum):
 
 
 # Map of sorting options to friendly name.
-SORT_LABELS = {SortMode.PART_1: "part 1 completion",
-               SortMode.PART_2: "part 2 completion",
-               SortMode.DELTA: "time delta"}
+SORT_LABELS = {
+    SortMode.PART_1: "part 1 completion",
+    SortMode.PART_2: "part 2 completion",
+    SortMode.DELTA: "time delta",
+}
 
 
 def sort_none_last(key):
@@ -64,8 +68,11 @@ Times = Dict[Star, Seconds]
 Delta = Optional[Seconds]
 # TODO: make these types more specific with TypedDict and Literal when possible.
 
+
 class Member:
-    def __init__(self, id: int, name: str, local: int, stars: int, global_: int) -> None:
+    def __init__(
+        self, id: int, name: str, local: int, stars: int, global_: int
+    ) -> None:
         self.id = id
         self.name = name
         self.local = local
@@ -80,14 +87,22 @@ class Member:
         self.day_delta: Delta = None
 
     @classmethod
-    def from_member_data(cls, data: Dict, year: int, day: Optional[int] = None) -> "Member":
+    def from_member_data(
+        cls, data: Dict, year: int, day: Optional[int] = None
+    ) -> "Member":
         """
         Constructs a Member from the API response.
 
         Times and delta are calculated for the given year and day.
         """
 
-        member = cls(data["id"], data["name"], data["local_score"], data["stars"], data["global_score"])
+        member = cls(
+            data["id"],
+            data["name"],
+            data["local_score"],
+            data["stars"],
+            data["global_score"],
+        )
 
         for d, day_data in data["completion_day_level"].items():
             d = int(d)
@@ -140,13 +155,29 @@ class Member:
 
         return sort_none_last(key)
 
+
 class Advent(commands.Cog):
     CHANNEL_NAME = "contests"
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
-        self.bot.schedule_task(self.reminder_released, trigger='cron', timezone='Australia/Brisbane', hour=15, day='1-25', month=12)
-        self.bot.schedule_task(self.reminder_fifteen_minutes, trigger='cron', timezone='Australia/Brisbane', hour=14, minute=45, day='1-25', month=12)
+        self.bot.schedule_task(
+            self.reminder_released,
+            trigger="cron",
+            timezone="Australia/Brisbane",
+            hour=15,
+            day="1-25",
+            month=12,
+        )
+        self.bot.schedule_task(
+            self.reminder_fifteen_minutes,
+            trigger="cron",
+            timezone="Australia/Brisbane",
+            hour=14,
+            minute=45,
+            day="1-25",
+            month=12,
+        )
 
     def star_char(self, num_stars: int):
         """
@@ -154,7 +185,6 @@ class Advent(commands.Cog):
         representation.
         """
         return " .*"[num_stars]
-
 
     def format_full_leaderboard(self, members: List[Member]) -> str:
         """
@@ -171,11 +201,11 @@ class Advent(commands.Cog):
             return f"{i:>3}) {m.local:>4} {stars} {m.name}"
 
         left = " " * (3 + 2 + 4 + 1)  # chars before stars start
-        header = (f"{left}         1111111111222222\n"
-                f"{left}1234567890123456789012345\n")
+        header = (
+            f"{left}         1111111111222222\n" f"{left}1234567890123456789012345\n"
+        )
 
         return header + "\n".join(format_member(i, m) for i, m in enumerate(members, 1))
-
 
     def format_global_leaderboard(self, members: List[Member]) -> str:
         """
@@ -191,7 +221,6 @@ class Advent(commands.Cog):
             return f"{i:>3}) {m.global_:>4} {m.name}"
 
         return "\n".join(format_member(i, m) for i, m in enumerate(members, 1))
-
 
     def format_day_leaderboard(self, members: List[Member]) -> str:
         """
@@ -224,9 +253,9 @@ class Advent(commands.Cog):
         header = "       Part 1   Part 2     Delta\n"
         return header + "\n".join(format_member(i, m) for i, m in enumerate(members, 1))
 
-
-    def format_advent_leaderboard(self, members: List[Member],
-                                is_day: bool, is_global: bool, sort: SortMode) -> str:
+    def format_advent_leaderboard(
+        self, members: List[Member], is_day: bool, is_global: bool, sort: SortMode
+    ) -> str:
         """
         Returns a leaderboard for the given members with the given options.
 
@@ -249,7 +278,6 @@ class Advent(commands.Cog):
         members.sort(key=Member.sort_key(SortMode.LOCAL))
         return self.format_full_leaderboard(members)
 
-
     def parse_arguments(self, argv: List[str]) -> Namespace:
         """
         Parses !advent arguments from the given list.
@@ -260,26 +288,52 @@ class Advent(commands.Cog):
         """
         parser = ArgumentParser("!advent", add_help=False)
 
-        parser.add_argument("day", type=int, default=0, nargs="?",
-                            help="Show leaderboard for specific day"
-                            + " (default: all days)")
-        parser.add_argument("-g", "--global", action="store_true", dest="global_",
-                            help="Show global points")
-        parser.add_argument("-y", "--year", type=int, default=datetime.now().year,
-                            help="Year of leaderboard (default: current year)")
-        parser.add_argument("-c", "--code", type=int, default=UQCS_LEADERBOARD,
-                            help="Leaderboard code (default: UQCS leaderboard)")
-        parser.add_argument("-s", "--sort", default=SortMode.PART_2, type=SortMode,
-                            choices=(SortMode.PART_1, SortMode.PART_2, SortMode.DELTA),
-                            help="Sorting method when displaying one day"
-                            + " (default: part 2 completion time)")
-        parser.add_argument("-h", "--help", action="store_true",
-                            help="Prints this help message")
+        parser.add_argument(
+            "day",
+            type=int,
+            default=0,
+            nargs="?",
+            help="Show leaderboard for specific day" + " (default: all days)",
+        )
+        parser.add_argument(
+            "-g",
+            "--global",
+            action="store_true",
+            dest="global_",
+            help="Show global points",
+        )
+        parser.add_argument(
+            "-y",
+            "--year",
+            type=int,
+            default=datetime.now().year,
+            help="Year of leaderboard (default: current year)",
+        )
+        parser.add_argument(
+            "-c",
+            "--code",
+            type=int,
+            default=UQCS_LEADERBOARD,
+            help="Leaderboard code (default: UQCS leaderboard)",
+        )
+        parser.add_argument(
+            "-s",
+            "--sort",
+            default=SortMode.PART_2,
+            type=SortMode,
+            choices=(SortMode.PART_1, SortMode.PART_2, SortMode.DELTA),
+            help="Sorting method when displaying one day"
+            + " (default: part 2 completion time)",
+        )
+        parser.add_argument(
+            "-h", "--help", action="store_true", help="Prints this help message"
+        )
 
         # used to propagate usage errors out.
         # somewhat hacky. typically, this should be done by subclassing ArgumentParser
         def usage_error(message, *args, **kwargs):
             raise ValueError(message)
+
         parser.error = usage_error  # type: ignore
 
         args = parser.parse_args(argv)
@@ -289,7 +343,6 @@ class Advent(commands.Cog):
 
         return args
 
-
     def get_leaderboard(self, year: int, code: int) -> Dict:
         """
         Returns a json dump of the leaderboard
@@ -297,7 +350,8 @@ class Advent(commands.Cog):
         try:
             response = requests.get(
                 LEADERBOARD_URL.format(year=year, code=code),
-                cookies={"session": SESSION_ID})
+                cookies={"session": SESSION_ID},
+            )
             return response.json()
         except ValueError as exception:  # json.JSONDecodeError
             # TODO: Handle the case when the response is ok but the contents
@@ -308,18 +362,17 @@ class Advent(commands.Cog):
             pass
         return None
 
-
     @commands.command()
     @loading_status
     async def advent(self, ctx: commands.Context, *args):
         """
-        Prints the Advent of Code private leaderboard for UQCS. 
-        
+        Prints the Advent of Code private leaderboard for UQCS.
+
         !advent --help for additional help.
         """
 
         try:
-            args = self.parse_arguments( args)
+            args = self.parse_arguments(args)
         except ValueError as error:
             await ctx.send(str(error))
             return
@@ -327,12 +380,16 @@ class Advent(commands.Cog):
         try:
             leaderboard = self.get_leaderboard(args.year, args.code)
         except ValueError:
-            await ctx.send("Error fetching leaderboard data. Check the leaderboard code, year, and day.")
+            await ctx.send(
+                "Error fetching leaderboard data. Check the leaderboard code, year, and day."
+            )
             raise
 
         try:
-            members = [Member.from_member_data(data, args.year, args.day)
-                    for data in leaderboard["members"].values()]
+            members = [
+                Member.from_member_data(data, args.year, args.day)
+                for data in leaderboard["members"].values()
+            ]
         except Exception:
             await ctx.send("Error parsing leaderboard data.")
             raise
@@ -345,27 +402,41 @@ class Advent(commands.Cog):
         # header message
         message = f":star: *Advent of Code Leaderboard {args.code}* :trophy:"
         if is_day:
-            message += f"\n:calendar: *Day {args.day}* (sorted by {SORT_LABELS[args.sort]})"
+            message += (
+                f"\n:calendar: *Day {args.day}* (sorted by {SORT_LABELS[args.sort]})"
+            )
         elif is_global:
             message += "\n:earth_asia: *Global Leaderboard Points*"
 
-
-        scoreboardFile = io.StringIO(self.format_advent_leaderboard(members, is_day, is_global, args.sort))
-        await ctx.send(file=discord.File(scoreboardFile, filename=f"advent_{args.code}_{args.year}_{args.day}.txt"))
-
+        scoreboardFile = io.StringIO(
+            self.format_advent_leaderboard(members, is_day, is_global, args.sort)
+        )
+        await ctx.send(
+            file=discord.File(
+                scoreboardFile,
+                filename=f"advent_{args.code}_{args.year}_{args.day}.txt",
+            )
+        )
 
     async def reminder_fifteen_minutes(self):
-        channel = discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME)
+        channel = discord.utils.get(
+            self.bot.uqcs_server.channels, name=self.CHANNEL_NAME
+        )
         if channel is not None:
-            await channel.send("Today's Advent of Code puzzle is released in 15 minutes.")
+            await channel.send(
+                "Today's Advent of Code puzzle is released in 15 minutes."
+            )
         else:
             logging.warning(f"Could not find required channel #{self.CHANNEL_NAME}")
 
-
     async def reminder_released(self):
-        channel = discord.utils.get(self.bot.uqcs_server.channels, name=self.CHANNEL_NAME)
+        channel = discord.utils.get(
+            self.bot.uqcs_server.channels, name=self.CHANNEL_NAME
+        )
         if channel is not None:
-            await channel.send("Today's Advent of Code puzzle has been released. Good luck!")
+            await channel.send(
+                "Today's Advent of Code puzzle has been released. Good luck!"
+            )
         else:
             logging.warning(f"Could not find required channel #{self.CHANNEL_NAME}")
 
@@ -401,10 +472,12 @@ class Advent(commands.Cog):
 
     @commands.command()
     @loading_status
-    async def advent_winners(self, ctx: commands.Context, start: int, end: int, numberOfWinners: int, *args):
+    async def advent_winners(
+        self, ctx: commands.Context, start: int, end: int, numberOfWinners: int, *args
+    ):
         """
-        Determines winners for the AOC competition. Winners must be drawn by a member of the committee. 
-        
+        Determines winners for the AOC competition. Winners must be drawn by a member of the committee.
+
         !advent --help for additional help.
         """
         if len([role for role in ctx.author.roles if role.name == "Committee"]) == 0:
@@ -412,7 +485,7 @@ class Advent(commands.Cog):
             return
 
         try:
-            args = self.parse_arguments( args)
+            args = self.parse_arguments(args)
         except ValueError as error:
             await ctx.send(str(error))
             return
@@ -420,29 +493,53 @@ class Advent(commands.Cog):
         try:
             leaderboard = self.get_leaderboard(args.year, args.code)
         except ValueError:
-            await ctx.send("Error fetching leaderboard data. Check the leaderboard code, year, and day.")
+            await ctx.send(
+                "Error fetching leaderboard data. Check the leaderboard code, year, and day."
+            )
             raise
 
         try:
-            members = [Member.from_member_data(data, args.year, args.day)
-                    for data in leaderboard["members"].values()]
+            members = [
+                Member.from_member_data(data, args.year, args.day)
+                for data in leaderboard["members"].values()
+            ]
         except Exception:
             await ctx.send("Error parsing leaderboard data.")
             raise
 
         previous_winners = self._get_previous_winners(args.year)
-        potential_winners = [member for member in members if int(member.id) not in previous_winners]
-        weights = [sum([1 for d in range(start, end + 1) if len(member.all_times[d]) > 0]) for member in potential_winners]
+        potential_winners = [
+            member for member in members if int(member.id) not in previous_winners
+        ]
+        weights = [
+            sum([1 for d in range(start, end + 1) if len(member.all_times[d]) > 0])
+            for member in potential_winners
+        ]
 
-        winners = self.random_choices_without_repition(potential_winners, weights, numberOfWinners)
-        
+        winners = self.random_choices_without_repition(
+            potential_winners, weights, numberOfWinners
+        )
+
         if winners == None:
-            await ctx.send(f"Insufficient participants to be able to draw {numberOfWinners} winners.")
+            await ctx.send(
+                f"Insufficient participants to be able to draw {numberOfWinners} winners."
+            )
             return
 
         self._add_winners(winners, args.year)
 
-        await ctx.send("And the winners are:\n" + "\n".join([winner.name if (winner.name != None) else "anonymous user #" + str(winner.id) for winner in winners]))
+        await ctx.send(
+            "And the winners are:\n"
+            + "\n".join(
+                [
+                    winner.name
+                    if (winner.name != None)
+                    else "anonymous user #" + str(winner.id)
+                    for winner in winners
+                ]
+            )
+        )
+
 
 async def setup(bot: UQCSBot):
     cog = Advent(bot)

@@ -11,8 +11,15 @@ class Haiku(commands.Cog):
     Trys to find Haiku messages in certain channels, and respond "Nice haiku" if it finds one
     """
 
-    ALLOWED_CHANNEL_NAMES = ["banter", "bot-testing",
-                             "dating", "food", "general", "memes", "yelling"]
+    ALLOWED_CHANNEL_NAMES = [
+        "banter",
+        "bot-testing",
+        "dating",
+        "food",
+        "general",
+        "memes",
+        "yelling",
+    ]
     YELLING_CHANNEL_NAME = "yelling"
 
     def __init__(self, bot: UQCSBot):
@@ -39,7 +46,9 @@ class Haiku(commands.Cog):
 
         haiku_lines = ["> " + line for line in haiku_lines]
         haiku = "\n".join(haiku_lines)
-        if message.channel == discord.utils.get(self.bot.uqcs_server.channels, name=self.YELLING_CHANNEL_NAME):
+        if message.channel == discord.utils.get(
+            self.bot.uqcs_server.channels, name=self.YELLING_CHANNEL_NAME
+        ):
             await message.reply(f"Nice haiku:\n{haiku}".upper())
         else:
             await message.reply(f"Nice haiku:\n{haiku}")
@@ -47,13 +56,19 @@ class Haiku(commands.Cog):
     @app_commands.command()
     @app_commands.describe(word="Word to syllable check")
     async def syllables(self, interaction: discord.Interaction, word: str):
-        """ Checks the number of syllables in a given word. """
-        if (" " not in word):
-            pluralisation = "syllables" if _number_of_syllables_in_word(word) != 1 else "syllable"
+        """Checks the number of syllables in a given word."""
+        if " " not in word:
+            pluralisation = (
+                "syllables" if _number_of_syllables_in_word(word) != 1 else "syllable"
+            )
 
-            await interaction.response.send_message(f"{word} has {_number_of_syllables_in_word(word)} {pluralisation}.")
+            await interaction.response.send_message(
+                f"{word} has {_number_of_syllables_in_word(word)} {pluralisation}."
+            )
         else:
-            await interaction.response.send_message("I can only check one word at a time!")
+            await interaction.response.send_message(
+                "I can only check one word at a time!"
+            )
 
 
 def _find_haiku(text: str):
@@ -105,24 +120,42 @@ def _number_of_syllables_in_word(word: str):
     exceptions = {
         # Abbreviations
         "ok": 2,
-        "bbq": 3
+        "bbq": 3,
     }
     prefixes_needing_extra_syllable = (
         # Words ending in "Xial" where "X" is not "b", "d", "m", "n", "r", "v" or "x", but "Xial" consists of 2 syllables
         "celestial",
         # Words ending in "eal" where "eal" consists of 2 syllables
-        "boreal", "cereal", "corneal", "ethereal", "montreal",
+        "boreal",
+        "cereal",
+        "corneal",
+        "ethereal",
+        "montreal",
         # Words ending in "nt" due to contraction (after removing punctuation)
-        "didn t", "doesn t", "isn t", "shouldn t", "couldn t", "wouldn t",
+        "didn t",
+        "doesn t",
+        "isn t",
+        "shouldn t",
+        "couldn t",
+        "wouldn t",
         # Words ending in "nt" due to contraction (user forgetting punctuation)
-        "didnt", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt",
+        "didnt",
+        "doesnt",
+        "isnt",
+        "shouldnt",
+        "couldnt",
+        "wouldnt",
         # Words ending in "e" that is considered silent, when it is not.
-        "maybe", "cafe", "naive")
+        "maybe",
+        "cafe",
+        "naive",
+    )
     prefixes_needing_one_less_syllable = (
         # Compound words with a silent "e" in the middle
         "facebook",
         # Words ending in "Xle" where "X" is a constant but with a silent "e" at the end
-        "aisle", "isle",
+        "aisle",
+        "isle",
         # Words starting with "preX" where "X" is a vowel that aren't using "pre" as a prefix
         "preach",
         # Words that have been shortened in speech
@@ -133,7 +166,16 @@ def _number_of_syllables_in_word(word: str):
         "ville"
     )
     suffixes_to_remove = (
-        "ful", "fully", "ness", "ment", "ship", "ist", "ish", "less", "ly", "ing"
+        "ful",
+        "fully",
+        "ness",
+        "ment",
+        "ship",
+        "ist",
+        "ish",
+        "less",
+        "ly",
+        "ing",
     )
     suffixes_to_remove_with_extra_syllable = (
         # "ism" is two syllables
@@ -149,14 +191,20 @@ def _number_of_syllables_in_word(word: str):
     for suffix in suffixes_to_remove:
         if (
             word.endswith((suffix, suffix + "s"))
-            and _number_of_vowel_groups(word.removesuffix(suffix).removesuffix(suffix + "s")) >= 0
+            and _number_of_vowel_groups(
+                word.removesuffix(suffix).removesuffix(suffix + "s")
+            )
+            >= 0
         ):
             word = word.removesuffix(suffix).removesuffix(suffix + "s")
             number_of_syllables += _number_of_vowel_groups(suffix)
     for suffix in suffixes_to_remove_with_extra_syllable:
         if (
             word.endswith((suffix, suffix + "s"))
-            and _number_of_vowel_groups(word.removesuffix(suffix).removesuffix(suffix + "s")) >= 0
+            and _number_of_vowel_groups(
+                word.removesuffix(suffix).removesuffix(suffix + "s")
+            )
+            >= 0
         ):
             word = word.removesuffix(suffix).removesuffix(suffix + "s")
             number_of_syllables += _number_of_vowel_groups(suffix)
@@ -184,21 +232,14 @@ def _number_of_syllables_in_word(word: str):
     ):
         number_of_syllables -= 1
     # Accounts for silent "e" at the ends of words
-    if (
-        word.endswith("e")
-        and not word.endswith(("ae", "ee", "ie", "oe", "ue"))
-    ):
+    if word.endswith("e") and not word.endswith(("ae", "ee", "ie", "oe", "ue")):
         number_of_syllables -= 1
     # Words ending in "le" such as "apple" often have a "le" syllable. But if we have a vowel then "le", "e" is often silent, such as "whale".
-    if (
-        word.endswith("le")
-        and not word.endswith(("ale", "ele", "ile", "ole", "ule"))
-    ):
+    if word.endswith("le") and not word.endswith(("ale", "ele", "ile", "ole", "ule")):
         number_of_syllables += 1
     # Words ending in "Xate" where X is a vowel, such as "graduate", often have "ate" as a separate syllable. The only exception is words ending in "quate" such as "adequate".
-    if (
-        word.endswith(("aate", "eate", "iate", "oate", "uate"))
-        and not word.endswith("quate")
+    if word.endswith(("aate", "eate", "iate", "oate", "uate")) and not word.endswith(
+        "quate"
     ):
         number_of_syllables += 1
     # Usually, the suffix "ious" is one syllable, but if it is preceeded by "b", "n", "p" or "r" it is two syllables. For example, "anxious" has 2 syllables, but "amphibious" has 4 syllables. Likewise, consider "harmonious", "copious" and "glorious". Note: "s" has already been removed.
@@ -216,7 +257,9 @@ def _number_of_syllables_in_word(word: str):
     if word.startswith("mc"):
         number_of_syllables += 1
     # Account for the prefixes tri and bi, which for separate syllables from the following vowel. For example, "triangle" and "biology".
-    if word.startswith(("tria", "trie", "trii", "trio", "triu", "bia", "bie", "bii", "bio", "biu")):
+    if word.startswith(
+        ("tria", "trie", "trii", "trio", "triu", "bia", "bie", "bii", "bio", "biu")
+    ):
         number_of_syllables += 1
     # If not part of the "cian" or "tion" suffixes, "ian" often is pronounced as 2 syllables. For example, "Australian" (compared to "politician").
     if word.endswith("ian") and not word.endswith(("cian", "tian")):

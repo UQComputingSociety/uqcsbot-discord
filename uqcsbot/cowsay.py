@@ -1,5 +1,4 @@
-
-from typing import Optional, Literal, List 
+from typing import Optional, Literal, List
 
 import discord
 from discord import app_commands
@@ -7,24 +6,34 @@ from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
 
-# Type Alias for Cow Eyes 
-CowsayMoodType = Literal['Normal', 'Borg', 'Dead', 'Greed', 'Paranoid', 'Stoned', 'Tired', 'Wired', 'Youthful']
+# Type Alias for Cow Eyes
+CowsayMoodType = Literal[
+    "Normal",
+    "Borg",
+    "Dead",
+    "Greed",
+    "Paranoid",
+    "Stoned",
+    "Tired",
+    "Wired",
+    "Youthful",
+]
+
 
 class Cowsay(commands.Cog):
-
     def __init__(self, bot: UQCSBot):
         self.bot = bot
         self._max_length = 40
         self._cow_eyes = dict(
-            Normal = 'oo',
-            Borg = '==',
-            Dead = 'xx',
-            Greed = '$$',
-            Paranoid = '@@',
-            Stoned = '**',
-            Tired = '--',
-            Wired = 'OO',
-            Youthful = '..'
+            Normal="oo",
+            Borg="==",
+            Dead="xx",
+            Greed="$$",
+            Paranoid="@@",
+            Stoned="**",
+            Tired="--",
+            Wired="OO",
+            Youthful="..",
         )
 
     @app_commands.command(name="cowsay")
@@ -34,11 +43,14 @@ class Cowsay(commands.Cog):
         tongue="Whether the cow should show its tongue (optional, default to False)",
         tux="Display the Linux Tux instead of the cow. Tux doesn't show tongue. (optional, default to False)",
     )
-    async def cowsay_command(self, interaction: discord.Interaction, 
-            message: str, 
-            mood: Optional[CowsayMoodType] = 'Normal', 
-            tongue: Optional[bool] = False,
-            tux: Optional[bool] = False) -> None:
+    async def cowsay_command(
+        self,
+        interaction: discord.Interaction,
+        message: str,
+        mood: Optional[CowsayMoodType] = "Normal",
+        tongue: Optional[bool] = False,
+        tux: Optional[bool] = False,
+    ) -> None:
         """
         Returns a cow or tux saying the given message.
         """
@@ -49,7 +61,9 @@ class Cowsay(commands.Cog):
             return
 
         ascii_art = self.draw_cow(mood, tongue) if not tux else self.draw_tux(mood)
-        await interaction.response.send_message(f"```{self.construct_say_bubble(message)}{ascii_art}```")
+        await interaction.response.send_message(
+            f"```{self.construct_say_bubble(message)}{ascii_art}```"
+        )
 
     def word_wrap(self, message: str) -> List[str]:
         """
@@ -69,7 +83,7 @@ class Cowsay(commands.Cog):
         """
         Constructs a speech bubble around the given message.
         """
-        
+
         # Word wrap the message to max width.
         lines = self.word_wrap(message)
 
@@ -85,7 +99,7 @@ class Cowsay(commands.Cog):
             for line in lines[1:-1]:
                 bubble_body += f"| {line.ljust(bubble_length)} |\n"
             bubble_body += f"\\ {lines[-1].ljust(bubble_length)} /\n"
-        
+
         # Construct the speech bubble.
         bubble = f" _{bubble_length * '_'}_ \n"
         bubble += bubble_body
@@ -93,29 +107,26 @@ class Cowsay(commands.Cog):
 
         return bubble
 
-    def draw_cow(self, 
-            mood: Optional[CowsayMoodType] = 'Normal', 
-            tongue: Optional[bool] = False) -> str:
-
+    def draw_cow(
+        self, mood: Optional[CowsayMoodType] = "Normal", tongue: Optional[bool] = False
+    ) -> str:
         """
         Returns cow ascii art with different eyes based on the mood and sticks
         out its tongue when requested.
         """
 
         # Set the tongue if the cow is dead or if the tongue is set to True.
-        tongue = 'U' if tongue or mood == 'Dead' else ' '
+        tongue = "U" if tongue or mood == "Dead" else " "
 
         # Draw the cow.
-        cow  = f"        \   ^__^\n"
+        cow = f"        \   ^__^\n"
         cow += f"         \  ({self._cow_eyes[mood]})\_______\n"
         cow += f"            (__)\       )\/\ \n"
         cow += f"             {tongue}  ||----w |\n"
         cow += f"                ||     ||\n"
         return cow
 
-    def draw_tux(self,
-            mood: Optional[CowsayMoodType] = 'Normal') -> str:
-        
+    def draw_tux(self, mood: Optional[CowsayMoodType] = "Normal") -> str:
         """
         Returns tux ascii art with different eyes based on the mood.
         """
@@ -125,7 +136,7 @@ class Cowsay(commands.Cog):
         tux_eyes = f"{cow_eyes[0]}_{cow_eyes[1]}"
 
         # Draw the tux.
-        tux  = f"   \ \n"
+        tux = f"   \ \n"
         tux += f"    \ \n"
         tux += f"        .--. \n"
         tux += f"       |{tux_eyes} | \n"
@@ -135,6 +146,7 @@ class Cowsay(commands.Cog):
         tux += f"    /'\_   _/`\ \n"
         tux += f"    \___)=(___/ \n"
         return tux
+
 
 async def setup(bot: UQCSBot):
     cog = Cowsay(bot)

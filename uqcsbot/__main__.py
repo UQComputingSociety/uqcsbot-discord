@@ -10,8 +10,8 @@ from uqcsbot.models import Base
 
 description = "The helpful and always listening, UQCSbot."
 
-async def main():
 
+async def main():
     logging.basicConfig(level=logging.INFO)
 
     intents = discord.Intents.default()
@@ -33,32 +33,37 @@ async def main():
     allowed_mentions = discord.AllowedMentions.none()
     allowed_mentions.replied_user = True
 
-    bot = UQCSBot(command_prefix="!", description=description, intents=intents, allowed_mentions=allowed_mentions)
+    bot = UQCSBot(
+        command_prefix="!",
+        description=description,
+        intents=intents,
+        allowed_mentions=allowed_mentions,
+    )
 
     cogs = [
-            "advent",
-            "basic", 
-            "channels", 
-            "cowsay",
-            "error_handler",
-            "events",
-            "gaming",
-            "haiku", 
-            "holidays",
-            "intros", 
-            "jobs_bulletin", 
-            "latex", 
-            "member_counter",
-            "remindme",
-            "starboard",
-            "text", 
-            "uptime",
-            "voteythumbs",
-            "whatsdue", 
-            "whatweekisit",
-            "working_on", 
-            "yelling" 
-            ]
+        "advent",
+        "basic",
+        "channels",
+        "cowsay",
+        "error_handler",
+        "events",
+        "gaming",
+        "haiku",
+        "holidays",
+        "intros",
+        "jobs_bulletin",
+        "latex",
+        "member_counter",
+        "remindme",
+        "starboard",
+        "text",
+        "uptime",
+        "voteythumbs",
+        "whatsdue",
+        "whatweekisit",
+        "working_on",
+        "yelling",
+    ]
     for cog in cogs:
         await bot.load_extension(f"uqcsbot.{cog}")
 
@@ -67,5 +72,6 @@ async def main():
     bot.set_db_engine(db_engine)
 
     await bot.start(DISCORD_TOKEN)
+
 
 asyncio.run(main())

@@ -7,8 +7,9 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 from aiohttp import web
 
+
 class UQCSBot(commands.Bot):
-    """ An extended bot client to add extra functionality. """
+    """An extended bot client to add extra functionality."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -16,11 +17,11 @@ class UQCSBot(commands.Bot):
         self.start_time = datetime.now()
 
     def schedule_task(self, func, *args, **kwargs):
-        """ Schedule a function to be run at a later time. A wrapper for apscheduler add_job. """
+        """Schedule a function to be run at a later time. A wrapper for apscheduler add_job."""
         self._scheduler.add_job(func, *args, **kwargs)
 
     def set_db_engine(self, db_engine: Engine):
-        """ Creates a sessionmaker from the provided database engine which can be called from commands. """
+        """Creates a sessionmaker from the provided database engine which can be called from commands."""
         self.create_db_session = sessionmaker(bind=db_engine)
 
     async def setup_hook(self):
@@ -33,17 +34,19 @@ class UQCSBot(commands.Bot):
             return web.Response(text="UQCSbot is running")
 
         app = web.Application()
-        app.router.add_get('/', handle)
+        app.router.add_get("/", handle)
         runner = web.AppRunner(app)
         await runner.setup()
-        self.site = web.TCPSite(runner, '0.0.0.0', 8080)
+        self.site = web.TCPSite(runner, "0.0.0.0", 8080)
         await self.site.start()
 
     async def on_ready(self):
-        """ Once the bot is loaded and has connected, run these commands first. """
+        """Once the bot is loaded and has connected, run these commands first."""
         self._scheduler.start()
-        logging.info(f"Bot online and logged in: [Name=\"{self.user.name}\", ID={self.user.id}]")
-        
+        logging.info(
+            f'Bot online and logged in: [Name="{self.user.name}", ID={self.user.id}]'
+        )
+
         # Get the UQCS server object and store it centrally
         self.uqcs_server = self.get_guild(int(os.environ.get("SERVER_ID")))
         logging.info(f"Active in the {self.uqcs_server} server.")

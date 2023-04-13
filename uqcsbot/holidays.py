@@ -31,8 +31,9 @@ class Holiday:
         now = datetime.now()
         return self.date.month == now.month and self.date.day == now.day
 
+
 def get_holiday() -> Holiday | None:
-    """ Gets the holiday for a given day. If there are multiple holidays, choose a random one. """
+    """Gets the holiday for a given day. If there are multiple holidays, choose a random one."""
     holiday_page = get_holiday_page()
     if holiday_page is None:
         return None
@@ -40,27 +41,34 @@ def get_holiday() -> Holiday | None:
     geek_holidays = get_holidays_from_csv()
     holidays = get_holidays_from_page(holiday_page)
 
-    holidays_today = [holiday for holiday in holidays + geek_holidays if holiday.is_today()]
+    holidays_today = [
+        holiday for holiday in holidays + geek_holidays if holiday.is_today()
+    ]
 
     return choice(holidays_today) if holidays_today else None
 
+
 def get_holidays_from_page(holiday_page) -> List[Holiday]:
-    """ Strips results from html page """
-    soup = BeautifulSoup(holiday_page, 'html.parser')
-    soup_holidays = (soup.find_all(class_="c0") + soup.find_all(class_="c1")
-                     + soup.find_all(class_="hl"))
+    """Strips results from html page"""
+    soup = BeautifulSoup(holiday_page, "html.parser")
+    soup_holidays = (
+        soup.find_all(class_="c0")
+        + soup.find_all(class_="c1")
+        + soup.find_all(class_="hl")
+    )
 
     holidays = []
 
     for soup_holiday in soup_holidays:
-        date_string = soup_holiday.find('th').get_text(strip=True)
-        description = soup_holiday.find('a').get_text(strip=True)
-        url = soup_holiday.find('a')['href']
-        date = datetime.strptime(date_string, '%d %b')
+        date_string = soup_holiday.find("th").get_text(strip=True)
+        description = soup_holiday.find("a").get_text(strip=True)
+        url = soup_holiday.find("a")["href"]
+        date = datetime.strptime(date_string, "%d %b")
         holiday = Holiday(date, description, url)
         holidays.append(holiday)
 
     return holidays
+
 
 def get_holidays_from_csv() -> List[Holiday]:
     """
@@ -76,6 +84,7 @@ def get_holidays_from_csv() -> List[Holiday]:
 
     return holidays
 
+
 def get_holiday_page() -> bytes | None:
     """
     Gets the holiday page HTML
@@ -87,10 +96,17 @@ def get_holiday_page() -> bytes | None:
         logging.warning(e.response.content)
     return None
 
+
 class Holidays(commands.Cog):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
-        self.bot.schedule_task(self.holiday, trigger='cron', hour=9, minute=0, timezone='Australia/Brisbane')
+        self.bot.schedule_task(
+            self.holiday,
+            trigger="cron",
+            hour=9,
+            minute=0,
+            timezone="Australia/Brisbane",
+        )
 
     async def holiday(self):
         """
@@ -105,16 +121,21 @@ class Holidays(commands.Cog):
             logging.warning("UQCS guild not found (?!).")
             return
 
-        general_channel = discord.utils.get(self.bot.uqcs_server.channels, name=GENERAL_CHANNEL)
+        general_channel = discord.utils.get(
+            self.bot.uqcs_server.channels, name=GENERAL_CHANNEL
+        )
         if general_channel is None:
             logging.warning(f"Could not find required channel #{GENERAL_CHANNEL}")
             return
 
         if isinstance(general_channel, discord.TextChannel):
-            message = await general_channel.send(HOLIDAY_MESSAGE.format(holiday.description))
+            message = await general_channel.send(
+                HOLIDAY_MESSAGE.format(holiday.description)
+            )
             emoji = discord.utils.get(self.bot.emojis, name=choice(HYPE_REACTS))
             if emoji is not None:
                 await message.add_reaction(emoji)
+
 
 async def setup(bot: UQCSBot):
     await bot.add_cog(Holidays(bot))
