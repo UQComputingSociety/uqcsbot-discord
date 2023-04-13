@@ -77,7 +77,8 @@ def _number_of_vowel_groups(word: str):
 
 def _number_of_syllables_in_word(word: str):
     """
-    Estimate the number of syllables in a word. Based off the algorithm from this website: https://eayd.in/?p=232
+    Estimate the number of syllables in a word.
+    Inspired off the algorithm from this website: https://eayd.in/?p=232
     Also the tool https://www.dcode.fr/word-search-regexp is useful at finding words and counterexamples
     """
 
@@ -96,7 +97,21 @@ def _number_of_syllables_in_word(word: str):
         "bbq": 3,
         "bsod": 4
     }
+
+    # PREFIXES
     prefixes_needing_extra_syllable = (
+        # As "mc" is pronounced as its own syllable
+        "mc",
+        # Account for the prefixes tri and bi, which for separate syllables from the following vowel. For example, "triangle" and "biology".
+        "tria", "trie", "trii", "trio", "triu", "bia", "bie", "bii", "bio", "biu",
+        # The prefix "co-" often forms a separate syllable to the following vowel, as in "coincidence". The longer prefixes are to ensure it is a prefix, not just a word starting with "co" such as "cooking" or "coup".
+        "coapt", "coed", "coinci", "coop",
+        # The prefix "pre" often forms a separate syllable to the following vowel, as in "preamble" or "preempt")
+        "prea", "pree", "prei", "preo", "preu",
+
+        # WORD-LIKE ENTRIES
+        # These are exceptions to the usual rules. Treat as prefixes variations of the words such as "cereal-box" for "cereal".
+
         # Words ending in "Xial" where "X" is not "b", "d", "m", "n", "r", "v" or "x", but "Xial" consists of 2 syllables
         "celestial",
         # Words ending in "eal" where "eal" consists of 2 syllables
@@ -106,28 +121,72 @@ def _number_of_syllables_in_word(word: str):
         # Words ending in "nt" due to contraction (user forgetting punctuation)
         "didnt", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt",
         # Words ending in "e" that is considered silent, when it is not.
-        "maybe", "cafe", "naive", "resume")
+        "maybe", "cafe", "naive", "resume", "recipe",
+    )
+
     prefixes_needing_one_less_syllable = (
+
+        # WORD-LIKE ENTRIES
+        # These are exceptions to the usual rules. Treat as prefixes variations of the words such as "preacher" for "preach".
+
         # Compound words with a silent "e" in the middle
         "facebook",
-        # Words ending in "Xle" where "X" is a constant but with a silent "e" at the end
-        "aisle", "isle",
         # Words starting with "preX" where "X" is a vowel that aren't using "pre" as a prefix
         "preach",
         # Words that have been shortened in speech
         "every",
+        # Words with vowel diphthongs that lead to two syllables
+        "poet",
     )
+
+    # SUFFIXES
+    suffixes_needing_one_more_syllable = (
+        # Words ending in "le" such as "apple" often have a "le" syllable. But if we have a vowel then "le", "e" is often silent, such as "whale".
+        "le",
+        # If not part of the "cian" or "tian" suffixes, "ian" often is pronounced as 2 syllables. For example, "Australian" (compared to "politician").
+        "ian",
+        # Usually, the suffix "ious" is one syllable, but if it is preceeded by "b", "n", "p" or "r" it is two syllables. For example, "anxious" has 2 syllables, but "amphibious" has 4 syllables. Likewise, consider "harmonious", "copious" and "glorious". Note: "s" has already been removed.
+        "biou", "niou", "piou", "riou",
+        # Usually, the suffix "ial" is one syllable, but if it is preceeded by "b", "d", "l", "m", "n", "r", "v" or "x" it is two syllables. For example, "initial" has 3 syllables, but "microbial" has 4 syllables. Likewise, consider "radial", "familial", "polynomial", "millennial", "aerial", "trivial" and "axial".
+        "bial", "dial", "lial", "mial", "nial", "rial", "vial", "xial",
+        # Words ending in "Xate" where X is a vowel, such as "graduate", often have "ate" as a separate syllable. The only exception is words ending in "quate" such as "adequate".
+        "aate", "eate", "iate", "oate", "uate",
+        # The suffix "ual" consists of two syllables such as "contextual". (Enter debate about "actual", "casual" and "usual". We will assume all of these have 3 syllables. Note that "actually" also has 3 syllables by this classification (which matches google's recommended pronunciation). We also use the British pronunciation of "dual", which has 2 syllables.) We exclude "qual" for words such as "equal".
+        "ual",
+        # The suffix "rior" contains two syllables in most words. For example "posterior" and "superior".
+        "rior",
+    )
+
     suffixes_needing_one_less_syllable = (
+        # Usually words ending in "le" have "le" as a syllable, but this does not occur if a vowel is before the "e", as the "e" acts to change the other vowels sound. For example, consider "whale", "clientele", "pile", "hole" and "capsule"
+        "ale", "ele", "ile", "ole", "ule",
+        # The "cian" or "tian" suffixes have "ian" pronounced as 1 syllables. For example, "politician" (compared to "Australian").
+        "cian", "tian",
+        # Words ending in "Xate" where X is a vowel where "Xate" is a single syllable, for example "adequate".
+        "quate",
+        # Words ending in "Xual" where "Xual" is 1 syllable, such as "equal"
+        "qual",
         # Words ending in "Xle" where "X" is a constant but with a silent "e" at the end
-        "ville"
+        "ville",
+
+        # WORD-LIKE ENTRIES
+        # These are exceptions to the usual rules.
+
+        # Words ending in "Xle" where "X" is a constant but with a silent "e" at the end
+        "aisle", "isle",
     )
+
+    # REMOVED SUFFIXES
+    # These are suffixes that may hide a root word and can be removed without changing the number of syllables in the root word
     suffixes_to_remove = (
-        "ful", "fully", "ness", "ment", "ship", "ist", "ish", "less", "ly", "ing"
+        "ful", "fully", "ness", "ment", "ship", "ist", "ish", "less", "ly", "ing",
     )
     suffixes_to_remove_with_extra_syllable = (
         # "ism" is two syllables
         "ism",
     )
+
+    # SYLLABLE COUNTING PROCESS
 
     if word in exceptions.keys():
         return exceptions[word]
@@ -163,7 +222,8 @@ def _number_of_syllables_in_word(word: str):
         # Root words of 3 letters or less tend to have only 1 syllable. Any extra vowel groups within the root word need to be disregarded. For example "ageless" turns into "age" which only has 1 syllable, so 3 - 2 + 1 = 2 syllables in total. Similarly "eyes" turns into "eye" has 2 - 2 + 1 = 1 syllables in total, and "manly" has 2 - 1 + 1 = 2 syllables in total.
         return number_of_syllables - _number_of_vowel_groups(word) + 1
 
-    # SUFFIXES
+    # GENERAL SUFFIX RULES
+    # Do not move these to the suffixes tuple, as they often are contained within larger suffixes (contained within the suffix tuple; at most one suffix tuple rule applies, so we should avoid overlap)
     # Words like "flipped" and "asked" don't have a syllable for "ed"
     if (
         number_of_syllables > 1
@@ -178,55 +238,21 @@ def _number_of_syllables_in_word(word: str):
         and not word.endswith(("ae", "ee", "ie", "oe", "ue"))
     ):
         number_of_syllables -= 1
-    # Words ending in "le" such as "apple" often have a "le" syllable. But if we have a vowel then "le", "e" is often silent, such as "whale".
-    if (
-        word.endswith("le")
-        and not word.endswith(("ale", "ele", "ile", "ole", "ule"))
-    ):
-        number_of_syllables += 1
-    # Words ending in "Xate" where X is a vowel, such as "graduate", often have "ate" as a separate syllable. The only exception is words ending in "quate" such as "adequate".
-    if (
-        word.endswith(("aate", "eate", "iate", "oate", "uate"))
-        and not word.endswith("quate")
-    ):
-        number_of_syllables += 1
-    # Usually, the suffix "ious" is one syllable, but if it is preceeded by "b", "n", "p" or "r" it is two syllables. For example, "anxious" has 2 syllables, but "amphibious" has 4 syllables. Likewise, consider "harmonious", "copious" and "glorious". Note: "s" has already been removed.
-    if word.endswith(("biou", "niou", "piou", "riou")):
-        number_of_syllables += 1
-    # Usually, the suffix "ial" is one syllable, but if it is preceeded by "b", "d", "l", "m", "n", "r", "v" or "x" it is two syllables. For example, "initial" has 3 syllables, but "microbial" has 4 syllables. Likewise, consider "radial", "familial", "polynomial", "millennial", "aerial", "trivial" and "axial".
-    if word.endswith(("bial", "dial", "lial", "mial", "nial", "rial", "vial", "xial")):
-        number_of_syllables += 1
-    # The suffix "ual" consists of two syllables such as "contextual". (Enter debate about "actual", "casual" and "usual". We will assume all of these have 3 syllables. Note that "actually" also has 3 syllables by this classification (which matches google's recommended pronunciation). We also use the British pronunciation of "dual", which has 2 syllables.) We exclude "qual" for words such as "equal".
-    if (
-        word.endswith("ual")
-        and not word.endswith("qual")
-    ):
-        number_of_syllables += 1
-    # If not part of the "cian" or "tian" suffixes, "ian" often is pronounced as 2 syllables. For example, "Australian" (compared to "politician").
-    if word.endswith("ian") and not word.endswith(("cian", "tian")):
-        number_of_syllables += 1
 
-    # PREFIXES
-    # As "mc" is pronounced as its own syllable
-    if word.startswith("mc"):
-        number_of_syllables += 1
-    # Account for the prefixes tri and bi, which for separate syllables from the following vowel. For example, "triangle" and "biology".
-    if word.startswith(("tria", "trie", "trii", "trio", "triu", "bia", "bie", "bii", "bio", "biu")):
-        number_of_syllables += 1
-    # The prefix "co-" often forms a separate syllable to the following vowel, as in "coincidence". The longer prefixes are to ensure it is a prefix, not just a word starting with "co" such as "cooking" or "coup".
-    if word.startswith(("coapt", "coed", "coinci", "coop")):
-        number_of_syllables += 1
-    # The prefix "pre" often forms a separate syllable to the following vowel, as in "preamble" or "preempt")
-    if word.startswith(("prea", "pree", "prei", "preo", "preu")):
-        number_of_syllables += 1
-
-    # Deal with exceptions
+    print(f"{word} {number_of_syllables}")
+    # Deal with exceptions from the given prefix and suffix lists
     if word.startswith(prefixes_needing_extra_syllable):
         number_of_syllables += 1
+    print(f"{word} {number_of_syllables}")
     if word.startswith(prefixes_needing_one_less_syllable):
         number_of_syllables -= 1
+    print(f"{word} {number_of_syllables}")
+    if word.endswith(suffixes_needing_one_more_syllable):
+        number_of_syllables += 1
+    print(f"{word} {number_of_syllables}")
     if word.endswith(suffixes_needing_one_less_syllable):
         number_of_syllables -= 1
+    print(f"{word} {number_of_syllables}")
 
     return number_of_syllables
 

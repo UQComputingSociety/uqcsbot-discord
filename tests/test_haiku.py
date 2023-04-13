@@ -102,12 +102,16 @@ def test_number_of_syllables_in_word():
         "equal": 2,
         "unequal": 3,
         "BSOD": 4,
+        "beverage": 3,
+        "superior": 4,
+        "islet": 2,
     }
     for (word, expected_syllable_count) in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
 
 
 def test_find_haiku():
+    # Many of these cases are from the discord itself (where the bot incorrectly failed before updates). Try to append the username when adding more test cases
     true_cases = [
         "THOSE ARE THE EYES OF A MAN WHO SAW SATAN AND ASKED FOR HIS NUMBER",
         "NOPE, RELIES ON END OF SENTANCES THEN? MAYBE; BUT NOW SHOULD BE FIXD",
@@ -123,7 +127,9 @@ def test_find_haiku():
         "Yea, true. That's quite a good point that I had not quite thought of. Very true",
         "ill have to become careful with my messages to not send haiku",
         "fwiw you also have to have word breaks in the right places to make it 5/7/5",
-        "This is a haiku\n I just want to test the bot\n Didn't read the code"
+        "This is a haiku\n I just want to test the bot\n Didn't read the code",
+        "hot chocolate is clearly the superior beverage though lol",
+        "pretty sure it's the immune system attacking beta islet cells",
     ]
     false_cases = [
         "This is not a haiku",
