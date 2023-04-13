@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+import os
 
 import discord
 from discord import app_commands
@@ -10,19 +11,19 @@ from uqcsbot.bot import UQCSBot
 
 
 class UpTime(commands.Cog):
-    CHANNEL_ID = 836243768411160606
+    CHANNEL_NAME = "bot-testing"
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
 
     @commands.Cog.listener()
     async def on_ready(self):
-        channel = self.bot.get_channel(self.CHANNEL_ID)
+        channel = discord.utils.get(self.bot.get_all_channels(), name=self.CHANNEL_NAME)
 
         if channel != None:
             await channel.send("I have rebooted!")
         else:
-            logging.warning(f"bot-testing channel not found {self.CHANNEL_ID}") 
+            logging.warning(f"#{self.CHANNEL_NAME} not found") 
 
     @app_commands.command()
     async def uptime(self, interaction: discord.Interaction):

@@ -17,7 +17,7 @@ You'll need to define environment variables to be able to start the bot. The `.e
 * `DISCORD_BOT_TOKEN` for the Discord provided bot token.
 * `POSTGRES_URI_BOT` for the PostgreSQL connection string.
 
-It is recommended that you acquire your own Discord bot token for testing, details can be found in the [Discord Developer Docs](https://discord.com/developers/docs/getting-started#creating-an-app). Requests can be made to committee for bot testing tokens, but will only be approved on a case by case basis.
+It is recommended that you acquire your own Discord bot token for testing, details can be found in the [Discord Developer Docs](https://discord.com/developers/docs/getting-started#creating-an-app). Make sure you also enable the Server Members Intent and Message Content Intent in your bot settings. Requests can be made to committee for bot testing tokens, but will only be approved on a case by case basis. 
 
 More information for currently implemented environment variables can be found on [this wiki page](https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables).
 
@@ -53,7 +53,16 @@ docker-compose down
 
 ## Testing
 
-Coming soon.
+Tests are stored in the `tests` folder and the tests for each file are prefixed with `test_`. Each test should `import pytest` and import the relevant functions from the given part of `uqcsbot`. Tests should mainly focus on cog-specific behaviours and should avoid interacting with discord (say, to detect if a message was sent; see issue [#2](https://github.com/UQComputingSociety/uqcsbot-discord/issues/2#issuecomment-1498967689)).
+
+To run all tests:
+```
+poetry run pytest
+```
+To run a particular test, say `test_whatweekisit.py`, run:
+```
+poetry run pytest tests\test_whatweekisit.py
+```
 
 ## Development Resources
 
