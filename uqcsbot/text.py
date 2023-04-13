@@ -7,6 +7,14 @@ from discord import app_commands
 from discord.ext import commands
 
 
+async def encoding_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    encodings = ["utf-8", "utf-16", "utf-32", "latin-1", "iso-8859-1", "ascii", "cp037", "cp437", "utf-7"]
+    return [
+        app_commands.Choice(name=encoding, value=encoding)
+        for encoding in encodings if current.lower() in encoding.lower()
+    ]
+
+
 class Text(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -30,6 +38,7 @@ class Text(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(message="Input string", encoding="Character encoding to use, defaults to UTF-8")
+    @app_commands.autocomplete(encoding=encoding_autocomplete)
     async def binify(self, interaction: discord.Interaction, message: str, encoding: Optional[str] = "utf-8"):
         """
         Converts a binary string to text or vice versa.
@@ -83,6 +92,7 @@ class Text(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(message="Input string", encoding="Character encoding to use, defaults to UTF-8")
+    @app_commands.autocomplete(encoding=encoding_autocomplete)
     async def hexify(self, interaction: discord.Interaction, message: str, encoding: Optional[str] = "utf-8"):
         """
         Converts a hexadecimal string to text or vice versa.
