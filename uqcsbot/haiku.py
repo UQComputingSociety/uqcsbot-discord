@@ -72,6 +72,9 @@ def _find_haiku(text: str):
 
 
 def _number_of_vowel_groups(word: str):
+    """
+    Find the number of vowel groups within a word. A vowel group string of consecutive vowels. Each vowel can only be part of one vowel group and distinct vowel groups must be separated by a non-vowel character. The letter "y" is included as a vowel.
+    """
     return len(re.findall("[aeiouy]+", word))
 
 
