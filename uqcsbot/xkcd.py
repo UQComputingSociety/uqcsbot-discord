@@ -59,7 +59,7 @@ class Xkcd(commands.Cog):
         # Create a custom embed for the xkcd comic
         message = discord.Embed()
         message.title = f"{xkcd_num}: {xkcd_title}"
-        message.description = xkcd_desc
+        message.description = f"||{xkcd_desc}||"
         message.url = f"{XKCD_BASE_URL}{xkcd_num}"
         message.set_image(url=xkcd_img)
         message.set_footer(text="xkcd.com")
