@@ -117,14 +117,16 @@ def _number_of_syllables_in_word(word: str):
         # Words ending in "nt" due to contraction (user forgetting punctuation)
         "didnt", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt",
         # Words ending in "e" that is considered silent, when it is not.
-        "maybe", "cafe")
+        "maybe", "cafe", "naive")
     prefixes_needing_one_less_syllable = (
         # Compound words with a silent "e" in the middle
         "facebook",
         # Words ending in "Xle" where "X" is a constant but with a silent "e" at the end
         "aisle", "isle",
         # Words starting with "preX" where "X" is a vowel that aren't using "pre" as a prefix
-        "preach"
+        "preach",
+        # Words that have been shortened in speech
+        "every",
     )
     suffixes_needing_one_less_syllable = (
         # Words ending in "Xle" where "X" is a constant but with a silent "e" at the end
@@ -185,14 +187,20 @@ def _number_of_syllables_in_word(word: str):
     if (
         word.endswith("e")
         and not word.endswith(("ae", "ee", "ie", "oe", "ue"))
-        and (
-            # Words ending in "le" such as "apple" often have a "le" syllable.
-            not word.endswith("le")
-            # But if we have a vowel then "le", "e" is often silent, such as "whale".
-            or word.endswith(("ale", "ele", "ile", "ole", "ule"))
-        )
     ):
         number_of_syllables -= 1
+    # Words ending in "le" such as "apple" often have a "le" syllable. But if we have a vowel then "le", "e" is often silent, such as "whale".
+    if (
+        word.endswith("le")
+        and not word.endswith(("ale", "ele", "ile", "ole", "ule"))
+    ):
+        number_of_syllables += 1
+    # Words ending in "Xate" where X is a vowel, such as "graduate", often have "ate" as a separate syllable. The only exception is words ending in "quate" such as "adequate".
+    if (
+        word.endswith(("aate", "eate", "iate", "oate", "uate"))
+        and not word.endswith("quate")
+    ):
+        number_of_syllables += 1
     # Usually, the suffix "ious" is one syllable, but if it is preceeded by "b", "n", "p" or "r" it is two syllables. For example, "anxious" has 2 syllables, but "amphibious" has 4 syllables. Likewise, consider "harmonious", "copious" and "glorious". Note: "s" has already been removed.
     if word.endswith(("biou", "niou", "piou", "riou")):
         number_of_syllables += 1
