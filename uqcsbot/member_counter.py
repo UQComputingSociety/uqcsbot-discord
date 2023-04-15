@@ -38,6 +38,11 @@ class MemberCounter(commands.Cog):
             self.member_count_channel = None # TODO maybe end this cog or something similar
             return
 
+        bot_member = self.bot.uqcs_server.get_member(self.bot.user.id)
+        permissions = self.member_count_channel.permissions_for(bot_member)
+        if not permissions.manage_channels:
+            logging.warning(
+                f"Bot does not have the permission to manage the #Member Count channel. The current permissions are {permissions}. The bot user is {bot_member}.")
         await self.attempt_update_member_count_channel_name()
 
     @app_commands.command(name="membercount")
