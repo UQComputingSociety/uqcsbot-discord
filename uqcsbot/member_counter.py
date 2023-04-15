@@ -48,7 +48,7 @@ class MemberCounter(commands.Cog):
             for member in interaction.guild.members
             if member.joined_at > datetime.now(tz=ZoneInfo("Australia/Brisbane")) - self.NEW_MEMBER_TIME
         ]
-        await interaction.response.send_message(f"There are currently {interaction.guild.member_count} members in the UQCS discord server, with {len(new_members)} joining in the last 7 days.")
+        await interaction.response.send_message(f"There are currently {interaction.guild.member_count} members in the UQ Computing Society discord, with {len(new_members)} joining in the last 7 days.")
 
     @commands.Cog.listener()
     async def on_member_join(self, _):
