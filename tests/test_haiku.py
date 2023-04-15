@@ -90,6 +90,12 @@ def test_number_of_syllables_in_word():
         "skiing": 2,
         "ageism": 3,
         "antidisestablishmentarianism": 12,
+        "every": 2,
+        "graduate": 3,
+        "differentiate": 5,
+        "graduate": 3,
+        "create": 2,
+        "naive": 2,
     }
     for (word, expected_syllable_count) in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
