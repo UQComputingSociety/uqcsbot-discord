@@ -133,6 +133,8 @@ def _number_of_syllables_in_word(word: str):
         "maybe", "cafe", "naive", "recipe",
         # Words that have "ee" pronounced as two syllables
         "career",
+        # Words that have "oe" pronounced as two syllables
+        "poet",
     )
     # These are prefixes that contain "illegal" characters what are replaced (such as "é")
     prefixes_needing_extra_syllable_before_illegal_replacement = (
@@ -156,8 +158,6 @@ def _number_of_syllables_in_word(word: str):
         "preach",
         # Words that have been shortened in speech
         "every",
-        # Words with vowel diphthongs that lead to two syllables
-        "poet",
     )
 
     # SUFFIXES
