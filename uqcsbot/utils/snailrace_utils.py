@@ -17,7 +17,11 @@ SNAILRACE_TRACK_LENGTH = 100
 SNAILRACE_MAX_STEP = 15
 SNAILRACE_MIN_STEP = 2
 
+# snailrace channels
+BLESSED_CHANNELS = ["general", "bot-testing", "banter", "games", "snail-race"]
+
 # Messages
+SNAILRACE_CHANNEL_ERR = "Sorry, but this command can only be used in the following channels: %s" % ", ".join(map(lambda x: "#%s" % x, BLESSED_CHANNELS))
 SNAILRACE_ENTRY_ERR = "There is currently a race going on! Please wait until the current race finishes."
 SNAILRACE_ENTRY_MSG = "The race is currently open for entry! Entry is open for the next %s seconds" % SNAILRACE_OPEN_TIME
 SNAILRACE_ENTRY_CLOSE = "Entry is now closed. Let's Race!"

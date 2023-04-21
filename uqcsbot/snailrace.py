@@ -6,6 +6,7 @@ from uqcsbot.bot import UQCSBot
 
 import uqcsbot.utils.snailrace_utils as snail
 
+
 # Trying out Discord buttons for Snail Race Interactions
 class SnailRaceView(discord.ui.View):
     def __init__(self, raceState: snail.SnailRaceState):
@@ -39,6 +40,11 @@ class SnailRace(commands.Cog):
     @app_commands.command(name="snailrace")
     async def open_race(self, interaction: discord.Interaction):
         """Open a new race for racers"""
+
+        # Check if the channel is blessed
+        if interaction.channel.name not in snail.BLESSED_CHANNELS:
+            await interaction.response.send_message(snail.SNAILRACE_CHANNEL_ERR)
+            return
 
         # Check if there is a race on
         if self.race.is_racing():
