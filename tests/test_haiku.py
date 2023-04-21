@@ -98,7 +98,7 @@ def test_number_of_syllables_in_word():
         "naive": 2,
         "date": 1,
         "crate": 1,
-        "resume": 3,
+        "resume": 2,
         "equal": 2,
         "unequal": 3,
         "BSOD": 4,
@@ -108,6 +108,19 @@ def test_number_of_syllables_in_word():
         "whitespace": 2,
         "uq": 2,
         "uqcs": 4,
+        "accompanied": 4,
+        "tried": 1,
+        "tries": 1,
+        "theyre": 1,
+        "café": 2,
+        "résumé": 3,
+        "pâté": 2,
+        "naïve": 2,
+        "varied": 2,
+        "career": 3,
+        "preach": 1,
+        "cried": 1,
+        "tèst": 1,
     }
     for (word, expected_syllable_count) in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
@@ -135,10 +148,11 @@ def test_find_haiku():
         "pretty sure it's the immune system attacking beta islet cells",  # Madeline#8084
     ]
     false_cases = [
-        "This is not a haiku",
-        "neither is this",
-        "this is far too long to be a haiku, you should not accept this",
-        "when a haiku; kinda fits but has a word; at the end too longer",
+        "This is not a haiku",  # indium#6908
+        "neither is this",  # indium#6908
+        "this is far too long to be a haiku, you should not accept this",  # indium#6908
+        "when a haiku; kinda fits but has a word; at the end too longer",  # indium#6908
+        "ive tried these as emergency \"feed me now\" meals and theyre so bland",  # villuna#6251
     ]
     for haiku in true_cases:
         assert _find_haiku(haiku)

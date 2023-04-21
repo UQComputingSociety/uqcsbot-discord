@@ -99,14 +99,6 @@ def _number_of_syllables_in_word(word: str):
     Also the tool https://www.dcode.fr/word-search-regexp is useful at finding words and counterexamples
     """
 
-    word = word.lower()
-    # Get rid of emotes. Stolen from https://www.freecodecamp.org/news/how-to-use-regex-to-match-emoji-including-discord-emotes/
-    word = re.sub("<a?:.+?:[0-9]+?>", " ", word)
-    word = re.sub("[^a-zA-Z]+", " ", word)
-    word = word.strip()
-    if word == "":
-        return 0
-
     # Try to keep these to a minimum by writing new rules, especially the dictionary exceptions.
     exceptions = {
         # Abbreviations
@@ -135,12 +127,19 @@ def _number_of_syllables_in_word(word: str):
         "celestial",
         # Words ending in "eal" where "eal" consists of 2 syllables
         "boreal", "cereal", "corneal", "ethereal", "montreal",
-        # Words ending in "nt" due to contraction (after removing punctuation)
-        "didn t", "doesn t", "isn t", "shouldn t", "couldn t", "wouldn t",
         # Words ending in "nt" due to contraction (user forgetting punctuation)
         "didnt", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt",
         # Words ending in "e" that is considered silent, when it is not.
-        "maybe", "cafe", "naive", "resume", "recipe",
+        "maybe", "cafe", "naive", "recipe",
+        # Words that have "ee" pronounced as two syllables
+        "career",
+    )
+    # These are prefixes that contain "illegal" characters what are replaced (such as "é")
+    prefixes_needing_extra_syllable_before_illegal_replacement = (
+        # Words ending in "n't" due to contraction
+        "didn't", "doesn't", "isn't", "shouldn't", "couldn't", "wouldn't",
+        # Words with accents making a usually silent vowel spoken
+        "pâté", "résumé",
     )
 
     prefixes_needing_one_less_syllable = (
@@ -150,6 +149,9 @@ def _number_of_syllables_in_word(word: str):
 
         # Compound words with a silent "e" in the middle
         "facebook", "whitespace",
+        # Words starting with "triX" where "X" is a vowel that aren't using "tri" as a prefix
+        # Note that "s" is removed for "tries, becoming "trie"
+        "tried", "trie", 
         # Words starting with "preX" where "X" is a vowel that aren't using "pre" as a prefix
         "preach",
         # Words that have been shortened in speech
@@ -207,11 +209,39 @@ def _number_of_syllables_in_word(word: str):
 
     # SYLLABLE COUNTING PROCESS
 
-    if word in exceptions.keys():
-        return exceptions[word]
-
     number_of_syllables = 0
 
+
+    word = word.lower()
+    # Get rid of emotes. Stolen from https://www.freecodecamp.org/news/how-to-use-regex-to-match-emoji-including-discord-emotes/
+    word = re.sub("<a?:.+?:[0-9]+?>", " ", word)
+
+    if word.startswith(prefixes_needing_extra_syllable_before_illegal_replacement):
+        number_of_syllables += 1
+
+    # Replace "illegals" (non-alphabetic characters)
+    accents = {
+        "à": "a", "á": "a", "â": "a", "ã": "a", "ä": "a", "å": "a", "æ": "ae",
+        "ç": "c",
+        "è": "e", "é": "e", "ê": "e", "ë": "e",
+        "ì": "i", "í": "i", "î": "i", "ï": "i",
+        "ñ": "n",
+        "ò": "o", "ó": "o", "ô": "o", "õ": "o", "ö": "o", "ø": "o", "œ": "oe",
+        "ù": "u", "ú": "u", "û": "u", "ü": "u",
+        "ý": "y", "ÿ": "y"
+    }
+    for i, letter in enumerate(word):
+        if letter in accents:
+            unaccented_letter = accents[letter]
+            # Note that unaccented letter may be more than one character (eg "æ" goes to "ae")
+            word = word[:i] + unaccented_letter + word[i+len(unaccented_letter):]
+    word = re.sub("[^a-z]+", " ", word)
+    word = word.strip()
+    if word == "":
+        return 0
+
+    if word in exceptions.keys():
+        return exceptions[word]
     # Remove suffixes so we can focus on the syllables of the root word, but only if it is a true suffix (checked by testing if there is another vowel without the suffix)
     for suffix in suffixes_to_remove:
         if (
@@ -248,7 +278,7 @@ def _number_of_syllables_in_word(word: str):
         number_of_syllables > 1
         and word.endswith("ed")
         # Accounts for verbs such as "acted" with hard "t". May need to be expanded upon in future
-        and not word.endswith("ted")
+        and not word.endswith(("ied", "ted"))
     ):
         number_of_syllables -= 1
     # Accounts for silent "e" at the ends of words
