@@ -138,6 +138,12 @@ def test_number_of_syllables_in_word():
         "house's": 2,
         "test's": 1,
         "rash's": 2,
+        "I": 1,
+        "less": 1,
+        "mess": 1,
+        "ship": 1,
+        "meant": 1,
+        "messes": 2,
     }
     for (word, expected_syllable_count) in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
@@ -163,7 +169,10 @@ def test_find_haiku():
         "This is a haiku\n I just want to test the bot\n Didn't read the code",  # NotRealAqua#6969
         "hot chocolate is clearly the superior beverage though lol",  # Madeline#8084
         "pretty sure it's the immune system attacking beta islet cells",  # Madeline#8084
-        #"wow I can't believe that it's haiku poetry day already guys",  # enchi#8880
+        "wow I can't believe that it's haiku poetry day already guys",  # enchi#8880
+        "Rhyme's overrated Haikus\n let you have some fun\n Plus they have good tune",  # NotRealAqua#6969
+        "I could tell you more\n But with less words or lots more\n And you would feel them",  # Anti-Matter#1740
+        "Random syllables?\n Perhaps we need more Lovecraft\n Really random tongue",
     ]
     false_cases = [
         "This is not a haiku",  # indium#6908

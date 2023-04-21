@@ -152,7 +152,7 @@ def _number_of_syllables_in_word(word: str):
         # These are exceptions to the usual rules. Treat as prefixes variations of the words such as "preacher" for "preach".
 
         # Compound words with a silent "e" in the middle
-        "facebook", "whitespace",
+        "facebook", "whitespace", "lovecraft",
         # Words starting with "triX" where "X" is a vowel that aren't using "tri" as a prefix
         # Note that "s" is removed for "tries, becoming "trie"
         "tried", "trie", 
@@ -257,14 +257,14 @@ def _number_of_syllables_in_word(word: str):
     for suffix in suffixes_to_remove:
         if (
             word.endswith((suffix, suffix + "s"))
-            and _number_of_vowel_groups(word.removesuffix(suffix).removesuffix(suffix + "s")) >= 0
+            and _number_of_vowel_groups(word.removesuffix(suffix).removesuffix(suffix + "s")) > 0
         ):
             word = word.removesuffix(suffix).removesuffix(suffix + "s")
             number_of_syllables += _number_of_vowel_groups(suffix)
     for suffix in suffixes_to_remove_with_extra_syllable:
         if (
             word.endswith((suffix, suffix + "s"))
-            and _number_of_vowel_groups(word.removesuffix(suffix).removesuffix(suffix + "s")) >= 0
+            and _number_of_vowel_groups(word.removesuffix(suffix).removesuffix(suffix + "s")) > 0
         ):
             word = word.removesuffix(suffix).removesuffix(suffix + "s")
             number_of_syllables += _number_of_vowel_groups(suffix)
