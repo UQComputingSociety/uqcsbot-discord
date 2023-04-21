@@ -151,8 +151,9 @@ def _number_of_syllables_in_word(word: str):
         # WORD-LIKE ENTRIES
         # These are exceptions to the usual rules. Treat as prefixes variations of the words such as "preacher" for "preach".
 
-        # Compound words with a silent "e" in the middle
-        "facebook", "whitespace", "lovecraft",
+        # Compound words with a silent "e" in the middle.
+        # Note that "something" with the suffix "ing" removed
+        "facebook", "whitespace", "lovecraft", "someth",
         # Words starting with "triX" where "X" is a vowel that aren't using "tri" as a prefix
         # Note that "s" is removed for "tries, becoming "trie"
         "tried", "trie", 
@@ -199,6 +200,8 @@ def _number_of_syllables_in_word(word: str):
 
         # Words ending in "Xle" where "X" is a constant but with a silent "e" at the end
         "aisle", "isle",
+        # Words containing "ue" at the end acting as a silent "e"
+        "tongue",
     )
 
     # REMOVED SUFFIXES

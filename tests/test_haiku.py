@@ -144,6 +144,9 @@ def test_number_of_syllables_in_word():
         "ship": 1,
         "meant": 1,
         "messes": 2,
+        "something": 2,
+        "thing": 1,
+        "bring": 1,
     }
     for (word, expected_syllable_count) in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
@@ -152,7 +155,7 @@ def test_number_of_syllables_in_word():
 def test_find_haiku():
     # Many of these cases are from the discord itself (where the bot incorrectly failed before updates). Try to append the username when adding more test cases if the user agrees.
     true_cases = [
-        "THOSE ARE THE EYES OF A MAN WHO SAW SATAN AND ASKED FOR HIS NUMBER",
+        "THOSE ARE THE EYES OF A MAN WHO SAW SATAN AND ASKED FOR HIS NUMBER",  # Anon.
         "NOPE, RELIES ON END OF SENTANCES THEN? MAYBE; BUT NOW SHOULD BE FIXD",  # indium#6908
         "TEST AWAY STUDENTS; FIND SYLLABLES MISCOUNTED; LET ME FIX THE BUGS",  # indium#6908
         "I AM ALL OUT OF HAIKUS ON THIS FINE MORNING GOOD LUCK WITH YOUR TESTS",  # </hax>#6701
@@ -173,6 +176,7 @@ def test_find_haiku():
         "Rhyme's overrated Haikus\n let you have some fun\n Plus they have good tune",  # NotRealAqua#6969
         "I could tell you more\n But with less words or lots more\n And you would feel them",  # Anti-Matter#1740
         "Random syllables?\n Perhaps we need more Lovecraft\n Really random tongue",
+        "something blah blah blah\n insert random words right here\n blah blah blah deez nuts",
     ]
     false_cases = [
         "This is not a haiku",  # indium#6908
@@ -180,6 +184,7 @@ def test_find_haiku():
         "this is far too long to be a haiku, you should not accept this",  # indium#6908
         "when a haiku; kinda fits but has a word; at the end too longer",  # indium#6908
         "ive tried these as emergency \"feed me now\" meals and theyre so bland",  # villuna#6251
+        "Lovecraft my dear\n The bot is well confused\n Stop confusing it",
     ]
     for haiku in true_cases:
         assert _find_haiku(haiku)
