@@ -1,4 +1,4 @@
-import discord, random
+import discord, random, datetime, asyncio
 
 # Racer Icon
 SNAILRACE_SNAIL_EMOJI = "🐌"
@@ -61,12 +61,21 @@ class SnailRacer:
 
 
 class SnailRaceState:
-    def __init__(self, start_racing):
-        self.start_racing = start_racing
-        
+    def __init__(self):
+        self.race_start_time = datetime.datetime.now()
         self.racing = False
+        
         self.racers = []
         self.open_interaction = None
+
+    def is_racing(self) -> bool:
+
+        # Calculate max race time with a 5 second bias
+        max_race_len = SNAILRACE_OPEN_TIME + (SNAILRACE_STEP_TIME * SNAILRACE_TRACK_LENGTH) + 5
+        if (datetime.datetime.now() - self.race_start_time).total_seconds() >= max_race_len:
+            self.close_race()
+
+        return self.racing
 
     def open_race(self, open_interaction: discord.Interaction):
         # Start the entry
@@ -89,4 +98,45 @@ class SnailRaceState:
         return True
     
     async def race_start(self):
-        await self.start_racing(self.open_interaction)
+        await self._start_racing(self.open_interaction)
+
+    async def _start_racing(self, interaction: discord.Interaction):
+        """
+        Start the race loop, this will be triggered after the entry has closed.
+        """
+
+        if not len(self.racers) > 0:
+            await interaction.channel.send(SNAILRACE_NO_START)
+            self.close_race()
+            return
+
+        # Write the first message to the channel which will be edited later
+        race_msg = await interaction.channel.send("BANG!")
+
+        # Loop until all racers have finished
+        while not all(r.position >= SNAILRACE_TRACK_LENGTH for r in self.racers):
+            for r in self.racers:
+                r.step()
+           
+            # Build the board and edit the race message with the new board
+            board = str(SNAILRACE_BOARD % "\n".join(str(r) for r in self.racers))
+            race_msg = await race_msg.edit(content=board)
+
+            # Wait a second before the next step
+            await asyncio.sleep(SNAILRACE_STEP_TIME)
+        
+        # Find who won
+        min_steps = SNAILRACE_MIN_STEP *SNAILRACE_TRACK_LENGTH
+        for r in self.racers:
+            if r.step_number < min_steps:
+                min_steps = r.step_number
+
+        # Compile all the winners
+        winners = ""
+        for r in self.racers:
+            if r.step_number == min_steps:
+                winners += r.member.mention + " "
+    
+        # Conclude the race and send the winner
+        await interaction.channel.send(SNAILRACE_WINNER % winners)
+        self.close_race()
