@@ -133,6 +133,8 @@ def _number_of_syllables_in_word(word: str):
         "maybe", "cafe", "naive", "recipe",
         # Words that have "ee" pronounced as two syllables
         "career",
+        # Words that have "ie" pronounced as two syllables
+        "audience",
         # Words that have "oe" pronounced as two syllables
         "poet",
     )
@@ -176,6 +178,8 @@ def _number_of_syllables_in_word(word: str):
         "ual",
         # The suffix "rior" contains two syllables in most words. For example "posterior" and "superior".
         "rior",
+        # The suffix "phe" is pronounced as a syllable, for example "apostrophe".
+        "phe",
     )
 
     suffixes_needing_one_less_syllable = (
@@ -235,6 +239,13 @@ def _number_of_syllables_in_word(word: str):
             unaccented_letter = accents[letter]
             # Note that unaccented letter may be more than one character (eg "æ" goes to "ae")
             word = word[:i] + unaccented_letter + word[i+len(unaccented_letter):]
+    # Words ending in "'s" are similar to pluralising a word. If the word ends in "ch", "s" or "sh" then we add "es", otherwise we just add "s"
+    if word.endswith("'s"):
+        word = word.removesuffix("'s")
+        if word.endswith(("ch", "s", "sh")):
+            word += "es"
+        else:
+            word += "s"
     word = re.sub("[^a-z]+", " ", word)
     word = word.strip()
     if word == "":
@@ -261,8 +272,9 @@ def _number_of_syllables_in_word(word: str):
 
     number_of_syllables += _number_of_vowel_groups(word)
 
-    # Before removing s, note that "s" adds a syllable to words ending in "ge", "se" such as "ages" and "sentences".
-    if word.endswith(("ces", "ges")):
+    # Before removing s, note that "s" adds a syllable to words ending in "ce", "ge", "se", "ches" or "shes" such as "sentences", "ages", "houses", "batches" and "hashes"
+    # Note that this does not include all words ending in "thes", as we have words like "breathes"
+    if word.endswith(("ces", "ges", "ses", "ches", "shes")):
         number_of_syllables += 1
     word = word.removesuffix("s")
 

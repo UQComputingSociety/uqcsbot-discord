@@ -123,6 +123,21 @@ def test_number_of_syllables_in_word():
         "tèst": 1,
         "poet": 2,
         "poetry": 3,
+        "apostrophe": 4,
+        "catastrophe": 4,
+        "houses": 2,
+        "beaches": 2,
+        "batches": 2,
+        "caches": 2,
+        "clothes": 1,
+        "breathes": 1,
+        "class's": 2,
+        "classes": 2,
+        "that's": 1,
+        "beach's": 2,
+        "house's": 2,
+        "test's": 1,
+        "rash's": 2,
     }
     for (word, expected_syllable_count) in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
