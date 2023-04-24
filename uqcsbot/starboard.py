@@ -16,7 +16,7 @@ class BlacklistedMessageError(Exception):
 
 
 class SomethingsFucked(Exception):
-    # never caught. used because i don't trust myself and i want it to be clear that something's wrong.
+    # never caught. used for bad db states, which should never occur, but just in case, y'know?
     def __init__(self, client: discord.Client, modlog: discord.TextChannel, message: str, *args, **kwargs):
         super().__init__(message, *args, **kwargs)
         client.loop.create_task(modlog.send(f"Bad Starboard state: {message}"))
@@ -69,13 +69,13 @@ class Starboard(commands.Cog):
         )
 
     @app_commands.command()
-    @app_commands.default_permissions(manage_server=True)
+    @app_commands.default_permissions(manage_guild=True)
     async def cleanup_starboard(self, interaction: discord.Interaction):
         """Cleans up the last 100 messages from the starboard.
         Removes any uqcsbot message that doesn't have a corresponding message id in the db, regardless of recv.
         Otherwise, causes a starboard update on the messages.
 
-        manage_server perms: for committee and infra use.
+        manage_guild perms: for committee and infra use.
         """
 
         if interaction.channel == self.starboard_channel:
@@ -176,7 +176,7 @@ class Starboard(commands.Cog):
                     await self.starboard_channel.fetch_message(query_val.sent)
                 ).delete()
             except discord.NotFound():
-                # if the message has already been deleted without a DB update, fetch may error out
+                # if the message has already been deleted without a DB update, fetch may error out, but we don't care
                 pass
 
             query_val.sent = None
@@ -469,7 +469,7 @@ class Starboard(commands.Cog):
             Timer(self.ratelimit, self._rm_base_ratelimit, [recieved_msg.id]).start()
         elif reaction_count >= self.base_threshold and starboard_msg is not None:
             # Above threshold, existing message? update it.
-            if reaction_count >= self.big_threshold:
+            if reaction_count >= self.big_threshold and starboard_msg.id not in self.big_blocked_messages:
                 await starboard_msg.pin(
                     reason=f"Reached {self.big_threshold} starboard reactions."
                 )
@@ -479,7 +479,7 @@ class Starboard(commands.Cog):
                 Timer(
                     self.ratelimit, self._rm_big_ratelimit, [starboard_msg.id]
                 ).start()
-            elif starboard_msg.pinned:
+            elif starboard_msg.pinned and starboard_msg.id not in self.big_blocked_messages:
                 await starboard_msg.unpin(
                     reason=f"Fell below starboard threshold ({self.big_threshold})."
                 )
