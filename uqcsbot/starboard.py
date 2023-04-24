@@ -17,7 +17,14 @@ class BlacklistedMessageError(Exception):
 
 class SomethingsFucked(Exception):
     # never caught. used for bad db states, which should never occur, but just in case, y'know?
-    def __init__(self, client: discord.Client, modlog: discord.TextChannel, message: str, *args, **kwargs):
+    def __init__(
+        self,
+        client: discord.Client,
+        modlog: discord.TextChannel,
+        message: str,
+        *args,
+        **kwargs,
+    ):
         super().__init__(message, *args, **kwargs)
         client.loop.create_task(modlog.send(f"Bad Starboard state: {message}"))
 
@@ -155,7 +162,7 @@ class Starboard(commands.Cog):
         self, interaction: discord.Interaction, message: discord.Message
     ):
         """Blacklists a message from being starboarded. If the message is already starboarded, also deletes it.
-        
+
         manage_messages perms: committee-only.
         """
         db_session = self.bot.create_db_session()
@@ -203,7 +210,7 @@ class Starboard(commands.Cog):
         """Removes a message from the starboard blacklist.
         N.B. Doesn't perform an 'update' of the message. This may result in messages meeting the threshold
         but not being starboarded if they don't get any more reacts.
-        
+
         manage_messages perms: committee-only"""
         db_session = self.bot.create_db_session()
 
@@ -469,7 +476,10 @@ class Starboard(commands.Cog):
             Timer(self.ratelimit, self._rm_base_ratelimit, [recieved_msg.id]).start()
         elif reaction_count >= self.base_threshold and starboard_msg is not None:
             # Above threshold, existing message? update it.
-            if reaction_count >= self.big_threshold and starboard_msg.id not in self.big_blocked_messages:
+            if (
+                reaction_count >= self.big_threshold
+                and starboard_msg.id not in self.big_blocked_messages
+            ):
                 await starboard_msg.pin(
                     reason=f"Reached {self.big_threshold} starboard reactions."
                 )
@@ -479,7 +489,10 @@ class Starboard(commands.Cog):
                 Timer(
                     self.ratelimit, self._rm_big_ratelimit, [starboard_msg.id]
                 ).start()
-            elif starboard_msg.pinned and starboard_msg.id not in self.big_blocked_messages:
+            elif (
+                starboard_msg.pinned
+                and starboard_msg.id not in self.big_blocked_messages
+            ):
                 await starboard_msg.unpin(
                     reason=f"Fell below starboard threshold ({self.big_threshold})."
                 )
