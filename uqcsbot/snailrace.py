@@ -25,8 +25,14 @@ class SnailRaceView(discord.ui.View):
 
     @ui.button(label="Enter Race", style=discord.ButtonStyle.primary)
     async def button_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if self.raceState.add_racer(interaction.user):
+        action = self.raceState.add_racer(interaction.user)
+
+        if action == snail.SnailRaceJoinAdded:
             await interaction.response.send_message(snail.SNAILRACE_JOIN % interaction.user.mention)
+            return
+        
+        if action == snail.SnailRaceJoinRaceFull:
+            await interaction.response.send_message(snail.SNAILRACE_FULL % interaction.user.mention)
             return
         
         await interaction.response.send_message(snail.SNAILRACE_ALREADY_JOINED % interaction.user.mention)
@@ -40,11 +46,6 @@ class SnailRace(commands.Cog):
     @app_commands.command(name="snailrace")
     async def open_race(self, interaction: discord.Interaction):
         """Open a new race for racers"""
-
-        # Check if the channel is blessed
-        if interaction.channel.name not in snail.BLESSED_CHANNELS:
-            await interaction.response.send_message(snail.SNAILRACE_CHANNEL_ERR)
-            return
 
         # Check if there is a race on
         if self.race.is_racing():

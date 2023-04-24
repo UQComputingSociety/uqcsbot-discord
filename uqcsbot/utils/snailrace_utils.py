@@ -6,6 +6,7 @@ SNAILRACE_SNAIL_EMOJI = "🐌"
 # Entry opening time
 SNAILRACE_OPEN_TIME = 10
 SNAILRACE_STEP_TIME = 1
+SNAILRACE_MAX_ENTRANCE = 12
 
 # The number of characters in the track
 SNAILRACE_TRACK_LENGTH_CHARS = 15
@@ -17,19 +18,22 @@ SNAILRACE_TRACK_LENGTH = 100
 SNAILRACE_MAX_STEP = 15
 SNAILRACE_MIN_STEP = 2
 
-# snailrace channels
-BLESSED_CHANNELS = ["general", "bot-testing", "banter", "games", "snail-race"]
-
 # Messages
-SNAILRACE_CHANNEL_ERR = "Sorry, but this command can only be used in the following channels: %s" % ", ".join(map(lambda x: "#%s" % x, BLESSED_CHANNELS))
 SNAILRACE_ENTRY_ERR = "There is currently a race going on! Please wait until the current race finishes."
 SNAILRACE_ENTRY_MSG = "The race is currently open for entry! Entry is open for the next %s seconds" % SNAILRACE_OPEN_TIME
 SNAILRACE_ENTRY_CLOSE = "Entry is now closed. Let's Race!"
 SNAILRACE_JOIN = "%s has Joined the Race!"
 SNAILRACE_ALREADY_JOINED = "%s is already apart of the race."
+SNAILRACE_FULL = "The race is full. Sorry %s!"
 SNAILRACE_BOARD = "And they're off...\n```\n%s\n```"
-SNAILRACE_WINNER = "The race has finished! %s has won!"
 SNAILRACE_NO_START = "Sorry, but there aren't enough racers to start the race!"
+SNAILRACE_WINNER = "The race has finished! %s has won!"
+SNAILRACE_WINNER_TIE = "The race has finished! It's a tie between %s!"
+
+SnailRaceJoinType = 0 | 1 | 2
+SnailRaceJoinAdded = 0
+SnailRaceJoinAlreadyJoined = 1
+SnailRaceJoinRaceFull = 2
 
 class SnailRacer:
     def __init__(self, member: discord.Member, racer_id: int):
@@ -60,6 +64,10 @@ class SnailRacer:
         track[:index] = ["."] * index
         track[index] = SNAILRACE_SNAIL_EMOJI
         track_str = "".join(track)
+
+        # Check if at the end of the track
+        if self.position >= SNAILRACE_TRACK_LENGTH:
+            return f"{str(self.racer_id).rjust(3)} |{track_str}| {self.member.display_name} 🏁"
 
         return f"{str(self.racer_id).rjust(3)} |{track_str}| {self.member.display_name}"
 
@@ -92,14 +100,18 @@ class SnailRaceState:
         self.racers = []
         self.open_interaction = None
 
-    def add_racer(self, racer: discord.Member) -> bool:
+    def add_racer(self, racer: discord.Member) -> SnailRaceJoinType:
         # Filter Unique Racers
         for r in self.racers:
             if r.member.id == racer.id:
-                return False
+                return SnailRaceJoinAlreadyJoined
+
+        # Check if there are too many racers
+        if len(self.racers) >= SNAILRACE_MAX_ENTRANCE:
+            return SnailRaceJoinRaceFull
 
         self.racers.append(SnailRacer(racer, len(self.racers) + 1))
-        return True
+        return SnailRaceJoinAdded
     
     async def race_start(self):
         await self._start_racing(self.open_interaction)
@@ -130,17 +142,13 @@ class SnailRaceState:
             await asyncio.sleep(SNAILRACE_STEP_TIME)
         
         # Find who won
-        min_steps = SNAILRACE_MIN_STEP *SNAILRACE_TRACK_LENGTH
-        for r in self.racers:
-            if r.step_number < min_steps:
-                min_steps = r.step_number
+        min_steps = min(r.step_number for r in self.racers)
+        winners = list(map(lambda r: r.member.mention, filter(lambda r: r.step_number == min_steps, self.racers)))
 
-        # Compile all the winners
-        winners = ""
-        for r in self.racers:
-            if r.step_number == min_steps:
-                winners += r.member.mention + " "
-    
         # Conclude the race and send the winner
-        await interaction.channel.send(SNAILRACE_WINNER % winners)
+        if len(winners) == 1:
+            await interaction.channel.send(SNAILRACE_WINNER % winners[0])
+        else: 
+            await interaction.channel.send(SNAILRACE_WINNER_TIE % ", ".join(winners))
+
         self.close_race()
