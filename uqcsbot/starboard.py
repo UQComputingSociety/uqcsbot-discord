@@ -8,25 +8,12 @@ from discord import app_commands
 from discord.ext import commands
 
 from uqcsbot import models
+from uqcsbot.utils.err_log_utils import FatalErrorWithLog
 
 
 class BlacklistedMessageError(Exception):
     # always caught. used to differentiate "starboard message doesn't exist" and "starboard message is blacklisted"
     pass
-
-
-class SomethingsFucked(Exception):
-    # never caught. used for bad db states, which should never occur, but just in case, y'know?
-    def __init__(
-        self,
-        client: discord.Client,
-        modlog: discord.TextChannel,
-        message: str,
-        *args,
-        **kwargs,
-    ):
-        super().__init__(message, *args, **kwargs)
-        client.loop.create_task(modlog.send(f"Bad Starboard state: {message}"))
 
 
 class Starboard(commands.Cog):
@@ -325,9 +312,9 @@ class Starboard(commands.Cog):
                     # like breaking lookups in other servers.
                     return
 
-                raise SomethingsFucked(
-                    modlog=self.modlog,
-                    message=f"Couldn't find an DB entry for this starboard message ({message_id})!",
+                raise FatalErrorWithLog(
+                    client=self.bot,
+                    message=f"Starboard state error: Couldn't find an DB entry for this starboard message ({message_id})!",
                 )
 
         else:
@@ -340,9 +327,9 @@ class Starboard(commands.Cog):
 
             if entry is not None:
                 if entry.recv_location != channel_id:
-                    raise SomethingsFucked(
-                        modlog=self.modlog,
-                        message=f"Recieved message ({message_id}) from different channel to what the DB expects!",
+                    raise FatalErrorWithLog(
+                        client=self.bot,
+                        message=f"Starboard state error: Recieved message ({message_id}) from different channel to what the DB expects!",
                     )
                 elif entry.sent is None:
                     raise BlacklistedMessageError()
