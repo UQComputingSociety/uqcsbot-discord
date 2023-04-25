@@ -62,9 +62,12 @@ class JobsBulletin(commands.Cog):
             self.bot.uqcs_server.channels, name=self.DISCUSSION_CHANNEL_NAME
         )
 
-        if jobs_bulletin is None or jobs_discussion is None:
+        if jobs_bulletin is None:
+            logging.warning(f"Could not find required channel #{self.CHANNEL_NAME}.")
+            return
+        if jobs_discussion is None:
             logging.warning(
-                f"Could not find required channels #{self.CHANNEL_NAME} or #{self.DISCUSSION_CHANNEL_NAME}"
+                f"Could not find required channel #{self.DISCUSSION_CHANNEL_NAME}."
             )
             return
 
