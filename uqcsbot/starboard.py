@@ -41,18 +41,16 @@ class Starboard(commands.Cog):
         self.big_threshold = int(os.environ.get("SB_BIG_THRESHOLD"))
         self.ratelimit = int(os.environ.get("SB_RATELIMIT"))
 
-        self.base_blocked_messages = (
-            []
-        )  # messages that are temp blocked from being resent to the starboard
-        self.big_blocked_messages = (
-            []
-        )  # messages that are temp blocked from being re-pinned in the starboard
+        # messages that are temp blocked from being resent to the starboard
+        self.base_blocked_messages = []
+        # messages that are temp blocked from being repinned in the starboard
+        self.big_blocked_messages = []
 
-        self.whitelist_menu = app_commands.ContextMenu(
-            name="Starboard Whitelist",
-            callback=self.context_whitelist_sb_message,
+        self.unblacklist_menu = app_commands.ContextMenu(
+            name="Starboard unblacklist",
+            callback=self.context_unblacklist_sb_message,
         )
-        self.bot.tree.add_command(self.whitelist_menu)
+        self.bot.tree.add_command(self.unblacklist_menu)
 
         self.blacklist_menu = app_commands.ContextMenu(
             name="Starboard Blacklist",
@@ -113,7 +111,8 @@ class Starboard(commands.Cog):
                         self.starboard_channel.id, message.id
                     )
                 except BlacklistedMessageError:
-                    return
+                    if starboard_msg is not None:
+                        await starboard_msg.delete()
 
                 new_reaction_count = await self._count_num_reacts(
                     (recieved_msg, starboard_msg)
@@ -128,8 +127,8 @@ class Starboard(commands.Cog):
     async def _blacklist_log(
         self, message: discord.Message, user: discord.Member, blacklist: bool
     ):
-        """Logs a blacklist/whitelist command to the modlog."""
-        state = "blacklisted" if blacklist else "whitelisted"
+        """Logs the use of a blacklist/unblacklist command to the modlog."""
+        state = "blacklisted" if blacklist else "unblacklisted"
 
         embed = discord.Embed(
             color=message.author.top_role.color, description=message.content
@@ -175,7 +174,9 @@ class Starboard(commands.Cog):
         if query_val is not None:
             if query_val.sent is None:
                 # if the table has (recv, none) then it's already blacklisted.
-                return
+                return await interaction.response.send_message(
+                    "Message already blacklisted!", ephemeral=True
+                )
 
             # otherwise the table has (recv, something), we should delete the something and then make it (recv, none)
             try:
@@ -204,7 +205,7 @@ class Starboard(commands.Cog):
         )
 
     @app_commands.default_permissions(manage_messages=True)
-    async def context_whitelist_sb_message(
+    async def context_unblacklist_sb_message(
         self, interaction: discord.Interaction, message: discord.Message
     ):
         """Removes a message from the starboard blacklist.
@@ -221,11 +222,16 @@ class Starboard(commands.Cog):
         if entry.one_or_none() is not None:
             entry.delete(synchronize_session=False)
             db_session.commit()
-        db_session.close()
+            db_session.close()
+        else:
+            db_session.close()
+            return await interaction.response.send_message(
+                "Message already unblacklisted!", ephemeral=True
+            )
 
         await self._blacklist_log(message, interaction.user, blacklist=False)
         await interaction.response.send_message(
-            f"Whitelisted message {message.id}.", ephemeral=True
+            f"unblacklisted message {message.id}.", ephemeral=True
         )
 
     def _rm_base_ratelimit(self, id: int) -> None:
@@ -313,12 +319,15 @@ class Starboard(commands.Cog):
                         ),
                     )
             else:
+                if message_id == 1076779482637144105:
+                    # This is Isaac's initial-starboard message. I know, IDs are bad. BUT
+                    # consider that this doesn't cause any of the usual ID-related issues
+                    # like breaking lookups in other servers.
+                    return
+
                 raise SomethingsFucked(
                     modlog=self.modlog,
                     message=f"Couldn't find an DB entry for this starboard message ({message_id})!",
-                    # note that this will also trigger on Isaac's initial-starboard message (1076779482637144105).
-                    # quite honestly, this is the most comprehensible way for us to handle it; the bot will gracefully
-                    # crap out and the only notice will be the error in #admin-alerts.
                 )
 
         else:
