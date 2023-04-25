@@ -103,7 +103,6 @@ def _number_of_syllables_in_word(word: str):
     exceptions = {
         # Abbreviations
         "ok": 2,
-        "bbq": 3,
         "bsod": 4,
         "uq": 2,
         "uqcs": 4,
@@ -119,6 +118,8 @@ def _number_of_syllables_in_word(word: str):
         "coapt", "coed", "coinci", "coop",
         # The prefix "pre" often forms a separate syllable to the following vowel, as in "preamble" or "preempt")
         "prea", "pree", "prei", "preo", "preu",
+        # The prefix "sci" often forms a separate syllable to the following vowel, as in "science" or "sciatic" 
+        "scia", "scie", "scii", "scio", "sciu",
 
         # WORD-LIKE ENTRIES
         # These are exceptions to the usual rules. Treat as prefixes variations of the words such as "cereal-box" for "cereal".
@@ -130,13 +131,28 @@ def _number_of_syllables_in_word(word: str):
         # Words ending in "nt" due to contraction (user forgetting punctuation)
         "didnt", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt",
         # Words ending in "e" that is considered silent, when it is not.
-        "maybe", "cafe", "naive", "recipe",
+        "maybe", "cafe", "naive", "recipe", "abalone", "marscapone", "epitome",
+        # Words starting with "real", "read", "reap", "rear", "reed", "reel", "reign" (see prefixes_needing_one_less_syllable) that use "re" as a prefix
+        # Note that "realit" covers all words with root "reality"
+        "realign", "realit", "reallocat", "readdres", "readjust", "reapp", "rearm", "rearrang", "rearrest", "reeducat", "reelect", "reignit", 
         # Words that have "ee" pronounced as two syllables
         "career",
         # Words that have "ie" pronounced as two syllables
-        "audience",
+        "audience", "plier", "societ", "quiet",
+        # Words that have "ia" pronounced as two syllables
+        "pliant",
         # Words that have "oe" pronounced as two syllables
         "poet",
+        # Words that have "oi" pronounced as two syllables
+        "heroic",
+        # Words that have "oo" pronounced as two syllables
+        "zoology",
+        # Words that have "ue" pronounced as two syllables
+        "silhouett",
+        # Words that have "yo" pronounced as two syllables
+        "everyone",
+        # Words ending in "ed" that use "ed" as a syllable
+        "biped", "daybed", "naked", "parallelepiped", "wretched",
     )
     # These are prefixes that contain "illegal" characters what are replaced (such as "é")
     prefixes_needing_extra_syllable_before_illegal_replacement = (
@@ -153,7 +169,7 @@ def _number_of_syllables_in_word(word: str):
 
         # Compound words with a silent "e" in the middle.
         # Note that "something" with the suffix "ing" removed
-        "facebook", "whitespace", "lovecraft", "someth",
+        "facebook", "forefather", "lovecraft", "someth", "therefore", "whitespace", "timezone",
         # Words starting with "triX" where "X" is a vowel that aren't using "tri" as a prefix
         # Note that "s" is removed for "tries, becoming "trie"
         "tried", "trie", 
@@ -161,6 +177,10 @@ def _number_of_syllables_in_word(word: str):
         "preach",
         # Words that have been shortened in speech
         "every",
+        # Words that start with "reX" where "X" is a vowel that aren't using "re" as a prefix
+        "reach", "read", "reagan", "real", "realm", "ream", "reap", "rear", "reason", "reebok", "reed", "reef", "reek", "reel", "reich", "reign", "reindeer", "reovirus", "reuben", "reuter",
+        # Words ending in "Xing" where "X" is a vowel that use "Xing" as a single syllable
+        "boing",
     )
 
     # SUFFIXES
@@ -207,10 +227,12 @@ def _number_of_syllables_in_word(word: str):
     # REMOVED SUFFIXES
     # These are suffixes that may hide a root word and can be removed without changing the number of syllables in the root word
     suffixes_to_remove = (
-        "ful", "fully", "ness", "ment", "ship", "ist", "ish", "less", "ly", "ing",
+        "ful", "fully", "ness", "ment", "ship", "ist", "ish", "less", "ly", "ing", "ising", "isation", "izing", "ization", "istic", "istically", "able", "ably", "ible", "ibly",
+    )
+    suffixes_to_remove_with_one_less_syllable = (
+        "ise", "ize", "ised", "ized",
     )
     suffixes_to_remove_with_extra_syllable = (
-        # "ism" is two syllables
         "ism",
     )
 
@@ -256,6 +278,11 @@ def _number_of_syllables_in_word(word: str):
 
     if word in exceptions.keys():
         return exceptions[word]
+
+    # Deals with abbreviations with no vowels
+    if _number_of_vowel_groups(word) == 0:
+        return len(word.replace(" ", ""))
+
     # Remove suffixes so we can focus on the syllables of the root word, but only if it is a true suffix (checked by testing if there is another vowel without the suffix)
     for suffix in suffixes_to_remove:
         if (
@@ -264,6 +291,14 @@ def _number_of_syllables_in_word(word: str):
         ):
             word = word.removesuffix(suffix).removesuffix(suffix + "s")
             number_of_syllables += _number_of_vowel_groups(suffix)
+    for suffix in suffixes_to_remove_with_one_less_syllable:
+        if (
+            word.endswith((suffix, suffix + "s"))
+            and _number_of_vowel_groups(word.removesuffix(suffix).removesuffix(suffix + "s")) > 0
+        ):
+            word = word.removesuffix(suffix).removesuffix(suffix + "s")
+            number_of_syllables += _number_of_vowel_groups(suffix)
+            number_of_syllables -= 1
     for suffix in suffixes_to_remove_with_extra_syllable:
         if (
             word.endswith((suffix, suffix + "s"))
@@ -287,13 +322,13 @@ def _number_of_syllables_in_word(word: str):
         return number_of_syllables - _number_of_vowel_groups(word) + 1
 
     # GENERAL SUFFIX RULES
-    # Do not move these to the suffixes tuple, as they often are contained within larger suffixes (contained within the suffix tuple; at most one suffix tuple rule applies, so we should avoid overlap)
+    # Do not move these to the suffixes tuples, as they often are contained within larger suffixes (contained within the suffix tuple; at most one suffix tuple rule applies, so we should avoid overlap)
     # Words like "flipped" and "asked" don't have a syllable for "ed"
     if (
         number_of_syllables > 1
         and word.endswith("ed")
-        # Accounts for verbs such as "acted" with hard "t". May need to be expanded upon in future
-        and not word.endswith(("ied", "ted"))
+        # Accounts for verbs such as "acted" with hard "t" or "amended" with "d"
+        and not word.endswith(("aed", "eed", "ied", "oed", "ued", "ted", "ded"))
     ):
         number_of_syllables -= 1
     # Accounts for silent "e" at the ends of words
@@ -302,6 +337,14 @@ def _number_of_syllables_in_word(word: str):
         and not word.endswith(("ae", "ee", "ie", "oe", "ue"))
     ):
         number_of_syllables -= 1
+
+    # GENERAL PREFIX RULES
+    # Do not move these to the prefix tuples, as these are more complex and are often are contained within larger suffixes (contained within the suffix tuple; at most one suffix tuple rule applies, so we should avoid overlap)
+
+    # When "X" is a vowel, "reX" is often pronounced as two syllables (as "re" is used as a prefix).
+    # Note that despite there being many exceptions, this approach was taken so that made up words (such as "reAppify") still work as intended
+    if word.startswith(("rea", "ree", "rei", "reo", "reu")):
+        number_of_syllables += 1
 
     # Deal with exceptions from the given prefix and suffix lists
     if word.startswith(prefixes_needing_extra_syllable):
