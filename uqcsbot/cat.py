@@ -24,8 +24,8 @@ class Cat(commands.Cog):
         blue = "\u001b[0;34m"
 
         order = deque([pink, red, yellow, green, cyan, blue])
-        #sometimes shifts colour order to start at red or yellow
-        shift = randrange(0, 3)
+        #randomly shifts starting colout
+        shift = randrange(0, 5)
         for i in range(shift):
             order.append(order.popleft())
 
