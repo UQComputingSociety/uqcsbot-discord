@@ -21,9 +21,9 @@ SNAILRACE_MIN_STEP = 2
 # Messages
 SNAILRACE_ENTRY_ERR = "There is currently a race going on! Please wait until the current race finishes."
 SNAILRACE_ENTRY_MSG = "The race is currently open for entry! Entry is open for the next %s seconds" % SNAILRACE_OPEN_TIME
-SNAILRACE_ENTRY_CLOSE = "Entry is now closed. Let's Race!"
-SNAILRACE_JOIN = "%s has Joined the Race!"
-SNAILRACE_ALREADY_JOINED = "%s is already apart of the race."
+SNAILRACE_ENTRY_CLOSE = "Entry is now closed. Let's race!"
+SNAILRACE_JOIN = "%s has joined the race!"
+SNAILRACE_ALREADY_JOINED = "%s is already a part of the race."
 SNAILRACE_FULL = "The race is full. Sorry %s!"
 SNAILRACE_BOARD = "And they're off...\n```\n%s\n```"
 SNAILRACE_NO_START = "Sorry, but there aren't enough racers to start the race!"
