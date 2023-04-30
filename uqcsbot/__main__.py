@@ -50,6 +50,7 @@ async def main():
             "latex", 
             "member_counter",
             "remindme",
+            "snailrace",
             "starboard",
             "text", 
             "uptime",
