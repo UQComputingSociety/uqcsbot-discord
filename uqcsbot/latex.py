@@ -15,7 +15,7 @@ class Latex(commands.Cog):
         if len(input) == 0:
             return
 
-        url = f"http://latex.codecogs.com/gif.latex?\\bg_white&space;{quote(input)}"
+        url = f"https://latex.codecogs.com/png.image?%5Cdpi%7B200%7D%5Cbg%7B36393f%7D%5Cfg%7Bwhite%7D{quote(input)}"
 
         await interaction.response.send_message(
             f"LaTeX render for \"{input}\"\n{url}",

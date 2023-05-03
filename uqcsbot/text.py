@@ -1,9 +1,18 @@
 from random import choice, randrange
+from string import hexdigits
 from typing import Optional
 
 import discord
 from discord import app_commands
 from discord.ext import commands
+
+
+async def encoding_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    encodings = ["utf-8", "utf-16", "utf-32", "latin-1", "iso-8859-1", "ascii", "cp037", "cp437", "utf-7"]
+    return [
+        app_commands.Choice(name=encoding, value=encoding)
+        for encoding in encodings if current.lower() in encoding.lower()
+    ]
 
 
 class Text(commands.Cog):
@@ -28,33 +37,38 @@ class Text(commands.Cog):
         self.bot.tree.add_command(self.scare_menu)
 
     @app_commands.command()
-    @app_commands.describe(message="Input string")
-    async def binify(self, interaction: discord.Interaction, message: str):
+    @app_commands.describe(message="Input string", encoding="Character encoding to use, defaults to UTF-8")
+    @app_commands.autocomplete(encoding=encoding_autocomplete)
+    async def binify(self, interaction: discord.Interaction, message: str, encoding: Optional[str] = "utf-8"):
         """
-        Converts a binary string to an ascii string or vice versa.
+        Converts a binary string to text or vice versa.
         """
         if not message:
             response = "Please include string to convert."
-        elif set(message).issubset(["0", "1", " "]) and len(message) > 2:
-            string = message
-            if len(string) % 8 != 0:
+        elif set(message).issubset(["0", "1"]) and len(message) > 2:
+            if len(message) % 8 != 0:
                 response = "Binary string contains partial byte."
             else:
-                response = ""
-                for i in range(0, len(string), 8):
-                    n = int(string[i:i+8], 2)
-                    if n >= 128:
-                        response = "Character out of ascii range (0-127)"
-                        break
-                    response += chr(n)
+                decoded_message = bytearray()
+                for i in range(0, len(message), 8):
+                    n = int(message[i:i+8], 2)
+                    decoded_message.append(n)
+                try:
+                    response = decoded_message.decode(encoding)
+                except UnicodeDecodeError as e:
+                    response = e.reason
+                except LookupError:
+                    response = "Invalid encoding. A list of valid encodings can be found at <https://docs.python.org/3/library/codecs.html#standard-encodings>"
         else:
-            response = ""
-            for c in message.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">"):
-                n = ord(c)
-                if n >= 128:
-                    response = "Character out of ascii range (0-127)"
-                    break
-                response += f"{n:08b}"
+            try:
+                encoded_message = message.encode(encoding)
+                response = ''.join([
+                    f"{byte:08b}" for byte in encoded_message
+                ])
+            except UnicodeEncodeError as e:
+                response = e.reason
+            except LookupError:
+                response = "Invalid encoding. A list of valid encodings can be found at <https://docs.python.org/3/library/codecs.html#standard-encodings>"
 
         await interaction.response.send_message(response)
 
@@ -75,6 +89,36 @@ class Text(commands.Cog):
                 result += c
 
         await interaction.response.send_message(result)
+
+    @app_commands.command()
+    @app_commands.describe(message="Input string", encoding="Character encoding to use, defaults to UTF-8")
+    @app_commands.autocomplete(encoding=encoding_autocomplete)
+    async def hexify(self, interaction: discord.Interaction, message: str, encoding: Optional[str] = "utf-8"):
+        """
+        Converts a hexadecimal string to text or vice versa.
+        """
+        if not message:
+            response = "Please include string to convert."
+        elif all(c in hexdigits for c in message) and len(message) > 2:
+            try:
+                decoded_message = bytes.fromhex(message)
+                response = decoded_message.decode(encoding)
+            except ValueError:
+                response = "Hexadecimal string contains partial byte."
+            except UnicodeDecodeError as e:
+                response = e.reason
+            except LookupError:
+                response = "Invalid encoding. A list of valid encodings can be found at <https://docs.python.org/3/library/codecs.html#standard-encodings>"
+        else:
+            try:
+                encoded_message = message.encode(encoding)
+                response = encoded_message.hex()
+            except UnicodeEncodeError as e:
+                response = e.reason
+            except LookupError:
+                response = "Invalid encoding. A list of valid encodings can be found at <https://docs.python.org/3/library/codecs.html#standard-encodings>"
+
+        await interaction.response.send_message(response)
 
     @app_commands.command()
     @app_commands.describe(code="HTTP code")
