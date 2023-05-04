@@ -4,7 +4,7 @@ from datetime import datetime
 
 import discord
 from aiomcrcon import Client, IncorrectPasswordError, RCONConnectionError
-from discord import app_commands, Colour
+from discord import Member, app_commands, Colour
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
@@ -47,7 +47,7 @@ class Minecraft(commands.Cog):
         """ Adds a username to the whitelist for the UQCS server. """
         db_session = self.bot.create_db_session()
         query = db_session.query(MCWhitelist).filter(MCWhitelist.discord_id == interaction.user.id)
-        is_user_admin = interaction.user.guild_permissions.manage_guild
+        is_user_admin = isinstance(interaction.user, Member) and interaction.user.guild_permissions.manage_guild
 
         # If the user has already whitelisted someone, and they aren't an admin deny it.
         if not is_user_admin and query.count() > 0:
