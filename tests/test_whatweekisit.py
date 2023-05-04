@@ -18,7 +18,7 @@ FIXTURE_DIR = os.path.join(
 
 @pytest.mark.datafiles(os.path.join(FIXTURE_DIR, "test_whatweekisit.html"))
 def test_get_semester_times_from_file(datafiles):
-    with open(os.path.join(datafiles, "test_whatweekisit.html"), "r") as f:
+    with open(os.path.join(datafiles, "test_whatweekisit.html"), "r", encoding='utf-8') as f:
         hardcoded_file = f.read()
 
     # We can manually look at the HTML document to see if this is accurate
@@ -38,7 +38,7 @@ def test_get_semester_times_from_file(datafiles):
 
 @pytest.mark.datafiles(os.path.join(FIXTURE_DIR, "test_whatweekisit.html"))
 def test_get_semester_week_from_file(datafiles):
-    with open(os.path.join(datafiles, "test_whatweekisit.html"), "r") as f:
+    with open(os.path.join(datafiles, "test_whatweekisit.html"), "r", encoding='utf-8') as f:
         hardcoded_file = f.read()
 
     # Get semesters so we can then get the week from it

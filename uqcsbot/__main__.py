@@ -48,8 +48,10 @@ async def main():
             "intros", 
             "jobs_bulletin", 
             "latex", 
+            "member_counter",
             "minecraft",
             "remindme",
+            "snailrace",
             "starboard",
             "text", 
             "uptime",
@@ -57,6 +59,7 @@ async def main():
             "whatsdue", 
             "whatweekisit",
             "working_on", 
+            "xkcd",
             "yelling" 
             ]
     for cog in cogs:
