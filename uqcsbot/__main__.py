@@ -38,6 +38,7 @@ async def main():
     cogs = [
             "advent",
             "basic", 
+            "cat",
             "channels", 
             "cowsay",
             "error_handler",
@@ -45,6 +46,7 @@ async def main():
             "gaming",
             "haiku", 
             "holidays",
+            "hoogle",
             "intros", 
             "jobs_bulletin", 
             "latex", 
