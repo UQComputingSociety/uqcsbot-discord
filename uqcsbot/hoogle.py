@@ -8,13 +8,14 @@ import requests
 import json
 import html
 import re
+import urllib.parse
 
 class Hoogle(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
     
     def get_endpoint(self, type_sig: str) -> str:
-        unescaped = html.unescape(type_sig)
+        unescaped = html.unescape(type_sig) # for converting special chars
         return "https://www.haskell.org/hoogle/?mode=json&hoogle=" + unescaped + "&start=0&count=10"
     
     def get_hoogle_page(self, type_sig: str) -> str:
@@ -22,6 +23,7 @@ class Hoogle(commands.Cog):
 
     def pretty_hoogle_result(self, result: dict) -> str:
         url = result['url']
+        # convert url special chars to readable form
         type_sig = re.sub('<[^<]+?>', '', result['item']).replace('&gt;', '>').replace('&#39;', "'")
 
         return f"`{type_sig}` [link]({url})"
@@ -36,7 +38,8 @@ class Hoogle(commands.Cog):
         # Note: verbose feature not implemented as it may exceed discord's message length limit
         await interaction.response.defer(thinking=True)
 
-        endpoint_url = self.get_endpoint(search)
+        escaped_search = urllib.parse.quote_plus(search) # for escaping spaces
+        endpoint_url = self.get_endpoint(escaped_search)
         http_response = requests.get(endpoint_url)
 
         if http_response.status_code != requests.codes.ok:
@@ -53,7 +56,7 @@ class Hoogle(commands.Cog):
 
         embed = discord.Embed(
             title = search,
-            url = self.get_hoogle_page(search),
+            url = self.get_hoogle_page(escaped_search),
             description = message,
             color = 0x800080 # Haskell purple
         )
