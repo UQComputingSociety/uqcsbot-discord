@@ -17,7 +17,6 @@ APScheduler = "^3.10"
 SQLAlchemy = {version = "^1.4.40", extras = ["postgresql_psycopg2binary"]}
 humanize = "^4.3"
 aiohttp = "^3.8"
-emoji = "^2.2.0"
 aio-mc-rcon = "^3.2.0"
 
 [tool.poetry.dev-dependencies]

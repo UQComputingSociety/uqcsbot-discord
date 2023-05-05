@@ -13,18 +13,8 @@ from sqlalchemy import (
 Base = declarative_base()
 
 
-class Channel(Base):
-    __tablename__ = "channels"
-
-    id = Column("id", BigInteger, primary_key=True, nullable=False)
-    name = Column("name", String, nullable=False)
-    joinable = Column("joinable", Boolean)
-    emoji = Column("emoji", String, nullable=False)
-
-    def __repr__(self):
-        return f"Channel({self.id}, {self.name}, {self.joinable}, {self.emoji})"
-
-
+# Used for linking a message to a bot function.
+# Previously used for the channel cog, currently unused.
 class Message(Base):
     __tablename__ = "messages"
 

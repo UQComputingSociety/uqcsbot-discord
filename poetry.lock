@@ -411,20 +411,6 @@ test = ["coverage[toml]", "pytest", "pytest-asyncio", "pytest-cov", "pytest-mock
 voice = ["PyNaCl (>=1.3.0,<1.6)"]
 
 [[package]]
-name = "emoji"
-version = "2.2.0"
-description = "Emoji for Python"
-category = "main"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-files = [
-    {file = "emoji-2.2.0.tar.gz", hash = "sha256:a2986c21e4aba6b9870df40ef487a17be863cb7778dcf1c01e25917b7cd210bb"},
-]
-
-[package.extras]
-dev = ["coverage", "coveralls", "pytest"]
-
-[[package]]
 name = "exceptiongroup"
 version = "1.1.1"
 description = "Backport of PEP 654 (exception groups)"
@@ -1262,4 +1248,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "0d3349e1d859bdc48abeb737a1af56ff186d613fd0cc34c1ee75cf2a1429b3b7"
+content-hash = "9e8a27ffa9d32bf707bff1463018dc7d1fbe515179afd18cfcd5374c9f1745ab"

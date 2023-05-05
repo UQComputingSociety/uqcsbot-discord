@@ -11,7 +11,7 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: uqcomputingsociety/uqcsbot-discord
-
+w
 
 jobs:
   build:
