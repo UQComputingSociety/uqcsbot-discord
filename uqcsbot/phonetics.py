@@ -173,29 +173,19 @@ class Phonetics(commands.Cog):
         remaining = input
         output = ""
         while len(remaining) > 0:
-            try:
-                output += XSAMPA_LOOKUP_4[remaining[0:4]]
+            if glyph := XSAMPA_LOOKUP_4.get(remaining[0:4], None):
+                output += glyph
                 remaining = remaining[4:]
-                continue
-            except KeyError:
-                pass
-            try:
-                output += XSAMPA_LOOKUP_3[remaining[0:3]]
+            elif glyph := XSAMPA_LOOKUP_3.get(remaining[0:3], None):
+                output += glyph
                 remaining = remaining[3:]
-                continue
-            except KeyError:
-                pass
-            try:
-                output += XSAMPA_LOOKUP_2[remaining[0:2]]
+            elif glyph := XSAMPA_LOOKUP_2.get(remaining[0:2], None):
+                output += glyph
                 remaining = remaining[2:]
-                continue
-            except KeyError:
-                pass
-            try:
-                output += XSAMPA_LOOKUP_1[remaining[0:1]]
+            elif glyph := XSAMPA_LOOKUP_1.get(remaining[0:1], None):
+                output += glyph
                 remaining = remaining[1:]
-                continue
-            except KeyError:
+            else:
                 output += remaining[0]
                 remaining = remaining[1:]
         await interaction.response.send_message(f"`{input}`\n{output}")
