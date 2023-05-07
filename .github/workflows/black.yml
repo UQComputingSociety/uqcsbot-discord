@@ -6,9 +6,16 @@ jobs:
   black:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: psf/black@stable
+      - name: "checkout repo"
+        uses: actions/checkout@v3
+      - name: "run black"
+        uses: psf/black@stable
         with:
           options: "--check --verbose"
           src: "./uqcsbot"
           version: "22.3.0"
+      - name: "archive logs"
+        uses: actions/upload-artifact@v3
+        with:
+          name: "black-logs"
+          path: "/tmp/blk_*"
