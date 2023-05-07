@@ -66,5 +66,11 @@ class Reminders(Base):
 class Starboard(Base):
     __tablename__ = "starboard"
 
-    recv = Column("recv", BigInteger, primary_key=True, nullable=False)
-    sent = Column("sent", BigInteger, nullable=False, unique=True)
+    # composite key on recv, sent.
+
+    # recv == null implies deleted recv message.
+    # recv_location == null implies deleted recv channel. recv should also be null.
+    # sent == null implies blacklisted recv message.
+    recv = Column("recv", BigInteger, primary_key=True, nullable=True)
+    recv_location = Column("recv_location", BigInteger, nullable=True, unique=False)
+    sent = Column("sent", BigInteger, primary_key=True, nullable=True, unique=True)
