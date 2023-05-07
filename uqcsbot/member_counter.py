@@ -43,6 +43,11 @@ class MemberCounter(commands.Cog):
             )
             return
 
+        bot_member = self.bot.uqcs_server.get_member(self.bot.user.id)
+        permissions = self.member_count_channel.permissions_for(bot_member)
+        if not permissions.manage_channels:
+            logging.warning(
+                f"Bot does not have the permission to manage the #Member Count channel. The current permissions are {permissions}. The bot user is {bot_member}.")
         await self.attempt_update_member_count_channel_name()
 
     @app_commands.describe(force="Infra-only arg to force updates.")
@@ -56,7 +61,7 @@ class MemberCounter(commands.Cog):
             > datetime.now(tz=ZoneInfo("Australia/Brisbane")) - self.NEW_MEMBER_TIME
         ]
         await interaction.response.send_message(
-            f"There are currently {interaction.guild.member_count} members in the UQCS discord server, with {len(new_members)} joining in the last 7 days."
+            f"There are currently {interaction.guild.member_count} members in the UQ Computing Society discord server, with {len(new_members)} joining in the last 7 days."
         )
 
         if interaction.user.guild_permissions.manage_guild and force:

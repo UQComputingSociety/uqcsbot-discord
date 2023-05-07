@@ -1,5 +1,7 @@
 import logging
 import os
+from typing import List
+import discord
 from discord.ext import commands
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.engine import Engine
@@ -7,6 +9,13 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 from aiohttp import web
 
+<<<<<<< HEAD
+=======
+ADMIN_ALERTS = "admin-alerts"
+
+class UQCSBot(commands.Bot):
+    """ An extended bot client to add extra functionality. """
+>>>>>>> 6ce7152bcf2777976527b540ea014b9967d772fa
 
 class UQCSBot(commands.Bot):
     """An extended bot client to add extra functionality."""
@@ -26,6 +35,32 @@ class UQCSBot(commands.Bot):
 
     async def setup_hook(self):
         await self.web_server()
+
+    async def admin_alert(
+        self, 
+        title: str, 
+        colour: discord.Colour, 
+        description: str = None, 
+        footer: str = None, 
+        fields: List[tuple] = None, 
+        fields_inline: bool = True
+    ):
+        """ Sends an alert to the admin channel for logging. """
+        admin_channel = discord.utils.get(self.uqcs_server.channels, name=ADMIN_ALERTS)
+
+        if admin_channel == None:
+            return
+
+        admin_message = discord.Embed(title=title, colour=colour)
+        if description:
+            admin_message.description = description
+        if fields:
+            for field in fields:
+                admin_message.add_field(name=field[0], value=field[1], inline=fields_inline)
+        if footer:
+            admin_message.set_footer(text=footer)
+
+        await admin_channel.send(embed=admin_message)
 
     # Web server binds to port 8080. This is a basic template to ensure
     # that Azure has something for a health check.

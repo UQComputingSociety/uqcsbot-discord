@@ -41,6 +41,7 @@ async def main():
     )
 
     cogs = [
+<<<<<<< HEAD
         "advent",
         "basic",
         "channels",
@@ -64,6 +65,36 @@ async def main():
         "working_on",
         "yelling",
     ]
+=======
+            "advent",
+            "basic", 
+            "cat",
+            "channels", 
+            "cowsay",
+            "error_handler",
+            "events",
+            "gaming",
+            "haiku", 
+            "holidays",
+            "hoogle",
+            "intros", 
+            "jobs_bulletin", 
+            "latex", 
+            "member_counter",
+            "minecraft",
+            "remindme",
+            "snailrace",
+            "starboard",
+            "text", 
+            "uptime",
+            "voteythumbs",
+            "whatsdue", 
+            "whatweekisit",
+            "working_on", 
+            "xkcd",
+            "yelling" 
+            ]
+>>>>>>> 6ce7152bcf2777976527b540ea014b9967d772fa
     for cog in cogs:
         await bot.load_extension(f"uqcsbot.{cog}")
 
