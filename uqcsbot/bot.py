@@ -11,6 +11,7 @@ from aiohttp import web
 
 ADMIN_ALERTS = "admin-alerts"
 
+
 class UQCSBot(commands.Bot):
     """An extended bot client to add extra functionality."""
 
@@ -31,15 +32,15 @@ class UQCSBot(commands.Bot):
         await self.web_server()
 
     async def admin_alert(
-        self, 
-        title: str, 
-        colour: discord.Colour, 
-        description: str = None, 
-        footer: str = None, 
-        fields: List[tuple] = None, 
-        fields_inline: bool = True
+        self,
+        title: str,
+        colour: discord.Colour,
+        description: str = None,
+        footer: str = None,
+        fields: List[tuple] = None,
+        fields_inline: bool = True,
     ):
-        """ Sends an alert to the admin channel for logging. """
+        """Sends an alert to the admin channel for logging."""
         admin_channel = discord.utils.get(self.uqcs_server.channels, name=ADMIN_ALERTS)
 
         if admin_channel == None:
@@ -50,7 +51,9 @@ class UQCSBot(commands.Bot):
             admin_message.description = description
         if fields:
             for field in fields:
-                admin_message.add_field(name=field[0], value=field[1], inline=fields_inline)
+                admin_message.add_field(
+                    name=field[0], value=field[1], inline=fields_inline
+                )
         if footer:
             admin_message.set_footer(text=footer)
 
