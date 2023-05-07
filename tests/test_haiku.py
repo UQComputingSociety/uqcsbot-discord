@@ -1,8 +1,5 @@
 import pytest
-from uqcsbot.haiku import (
-    _number_of_syllables_in_word,
-    _find_haiku
-)
+from uqcsbot.haiku import _number_of_syllables_in_word, _find_haiku
 
 
 def test_number_of_syllables_in_word():
@@ -255,7 +252,7 @@ def test_number_of_syllables_in_word():
         "silhouette": 3,
         "epitome": 4,
     }
-    for (word, expected_syllable_count) in test_cases.items():
+    for word, expected_syllable_count in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
 
 
@@ -282,7 +279,7 @@ def test_find_haiku():
         "wow I can't believe that it's haiku poetry day already guys",  # enchi#8880
         "Rhyme's overrated Haikus\n let you have some fun\n Plus they have good tune",  # NotRealAqua#6969
         "I could tell you more\n But with less words or lots more\n And you would feel them",  # Anti-Matter#1740
-        "Random syllables?\n Perhaps we need more Lovecraft\n Really random tongue",  # lsenjov#4288 
+        "Random syllables?\n Perhaps we need more Lovecraft\n Really random tongue",  # lsenjov#4288
         "something blah blah blah\n insert random words right here\n blah blah blah deez nuts",  # numberri#4096
     ]
     false_cases = [
@@ -290,10 +287,10 @@ def test_find_haiku():
         "neither is this",  # indium#6908
         "this is far too long to be a haiku, you should not accept this",  # indium#6908
         "when a haiku; kinda fits but has a word; at the end too longer",  # indium#6908
-        "ive tried these as emergency \"feed me now\" meals and theyre so bland",  # villuna#6251
+        'ive tried these as emergency "feed me now" meals and theyre so bland',  # villuna#6251
         "Lovecraft my dear\n The bot is well confused\n Stop confusing it",  # lsenjov#4288
         "someone's getting it sooner and someone's getting it later :^)",  # Madeline#8084
-        "socially inept people? in MY computer science discord server", # miri#2222
+        "socially inept people? in MY computer science discord server",  # miri#2222
     ]
     for haiku in true_cases:
         assert _find_haiku(haiku)

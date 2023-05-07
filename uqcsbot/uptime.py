@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-import os
+import random
 
 import discord
 from discord import app_commands
@@ -18,27 +18,38 @@ class UpTime(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        channel = discord.utils.get(self.bot.get_all_channels(), name=self.CHANNEL_NAME)
+        channel = discord.utils.get(
+            self.bot.uqcs_server.channels, name=self.CHANNEL_NAME
+        )
 
-        if channel != None:
-            await channel.send("I have rebooted!")
+        if channel is not None:
+            if random.randint(1, 100) == 1:
+                await channel.sent("Oopsie, I webooted uwu >_<")
+            else:
+                await channel.send("I have rebooted!")
         else:
-            logging.warning(f"#{self.CHANNEL_NAME} not found") 
+            logging.warning(f"Could not find required channel #{self.CHANNEL_NAME}")
 
     @app_commands.command()
     async def uptime(self, interaction: discord.Interaction):
         """
-            Defines the current uptime for UQCSBot
+        Defines the current uptime for UQCSBot
         """
         t = datetime.now() - self.bot.start_time
-        message = ("I've been online for"
-                   + f" {precisedelta(t, format='%.0f'):s}"
-                   + (f" (`{round(t.total_seconds()):d}` seconds)" if t.total_seconds() >= 60 else "")
-                   + f", since {self.bot.start_time.strftime('%H:%M:%S on %b %d'):s}"
-                   # adds ordinal suffix
-                   + f"{(lambda n: 'tsnrhtdd'[(n//10%10!=1)*(n%10<4)*n%10::4])(self.bot.start_time.day):s}.")
+        message = (
+            "I've been online for"
+            + f" {precisedelta(t, format='%.0f'):s}"
+            + (
+                f" (`{round(t.total_seconds()):d}` seconds)"
+                if t.total_seconds() >= 60
+                else ""
+            )
+            + f", since {self.bot.start_time.strftime('%H:%M:%S on %b %d'):s}"
+            # adds ordinal suffix
+            + f"{(lambda n: 'tsnrhtdd'[(n//10%10!=1)*(n%10<4)*n%10::4])(self.bot.start_time.day):s}."
+        )
         await interaction.response.send_message(message)
+
 
 async def setup(bot: UQCSBot):
     await bot.add_cog(UpTime(bot))
-
