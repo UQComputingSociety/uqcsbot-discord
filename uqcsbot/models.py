@@ -42,6 +42,7 @@ class AOCWinner(Base):
 
 class MCWhitelist(Base):
     __tablename__ = "mc_whitelisted"
+    
     mc_username = Column("mcuser", String, primary_key=True, nullable=False)
     discord_id = Column("discordid", BigInteger, nullable=False)
     admin_whitelisted = Column("adminwl", Boolean)
