@@ -34,7 +34,7 @@ class Starboard(commands.Cog):
         self.big_blocked_messages = []
 
         self.unblacklist_menu = app_commands.ContextMenu(
-            name="Starboard unblacklist",
+            name="Starboard Unblacklist",
             callback=self.context_unblacklist_sb_message,
         )
         self.bot.tree.add_command(self.unblacklist_menu)
@@ -329,7 +329,7 @@ class Starboard(commands.Cog):
                 if entry.recv_location != channel_id:
                     raise FatalErrorWithLog(
                         client=self.bot,
-                        message=f"Starboard state error: Recieved message ({message_id}) from different channel to what the DB expects!",
+                        message=f"Starboard state error: Recieved message ({message_id}) from different channel ({channel_id}) to what the DB expects ({entry.recv_location})!",
                     )
                 elif entry.sent is None:
                     raise BlacklistedMessageError()
