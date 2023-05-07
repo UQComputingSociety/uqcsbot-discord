@@ -173,9 +173,7 @@ class Text(commands.Cog):
         """
         Posts an httpcat image.
         """
-        # fmt: off
         if code in self.httpcat_codes:
-            # fmt: on
             await interaction.response.send_message(f"https://http.cat/{code}")
         else:
             await interaction.response.send_message(f"HTTP cat {code} is not available")
