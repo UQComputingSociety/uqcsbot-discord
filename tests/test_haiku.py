@@ -271,11 +271,6 @@ def test_find_haiku():
         "contractions are hard because they break a lot of the syllabic rules",  # </hax>#6701
         "I'm going to write the lowest effort haiku imaginable",  # enchi#8880
         "Yea, true. That's quite a good point that I had not quite thought of. Very true",
-<<<<<<< HEAD
-        "ill have to become careful with my messages to not send haiku",
-        "fwiw you also have to have word breaks in the right places to make it 5/7/5",
-        "This is a haiku\n I just want to test the bot\n Didn't read the code",
-=======
         "ill have to become careful with my messages to not send haiku",  # miri#2222
         "fwiw you also have to have word breaks in the right places to make it 5/7/5",  # </hax>#6701
         "This is a haiku\n I just want to test the bot\n Didn't read the code",  # NotRealAqua#6969
@@ -286,7 +281,6 @@ def test_find_haiku():
         "I could tell you more\n But with less words or lots more\n And you would feel them",  # Anti-Matter#1740
         "Random syllables?\n Perhaps we need more Lovecraft\n Really random tongue",  # lsenjov#4288 
         "something blah blah blah\n insert random words right here\n blah blah blah deez nuts",  # numberri#4096
->>>>>>> 6ce7152bcf2777976527b540ea014b9967d772fa
     ]
     false_cases = [
         "This is not a haiku",  # indium#6908

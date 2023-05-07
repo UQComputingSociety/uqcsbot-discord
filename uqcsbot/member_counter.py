@@ -47,7 +47,8 @@ class MemberCounter(commands.Cog):
         permissions = self.member_count_channel.permissions_for(bot_member)
         if not permissions.manage_channels:
             logging.warning(
-                f"Bot does not have the permission to manage the #Member Count channel. The current permissions are {permissions}. The bot user is {bot_member}.")
+                f"Bot does not have the permission to manage the #Member Count channel. The current permissions are {permissions}. The bot user is {bot_member}."
+            )
         await self.attempt_update_member_count_channel_name()
 
     @app_commands.describe(force="Infra-only arg to force updates.")

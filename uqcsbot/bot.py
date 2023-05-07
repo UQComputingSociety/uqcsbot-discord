@@ -9,13 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 from aiohttp import web
 
-<<<<<<< HEAD
-=======
 ADMIN_ALERTS = "admin-alerts"
-
-class UQCSBot(commands.Bot):
-    """ An extended bot client to add extra functionality. """
->>>>>>> 6ce7152bcf2777976527b540ea014b9967d772fa
 
 class UQCSBot(commands.Bot):
     """An extended bot client to add extra functionality."""

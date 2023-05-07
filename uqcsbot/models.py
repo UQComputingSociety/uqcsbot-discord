@@ -39,15 +39,12 @@ class AOCWinner(Base):
     aoc_userid = Column("aoc_userid", Integer, nullable=False)
     year = Column("year", Integer, nullable=False)
 
-<<<<<<< HEAD
-=======
 class MCWhitelist(Base):
     __tablename__ = 'mc_whitelisted'
     mc_username = Column("mcuser", String, primary_key=True, nullable=False)
     discord_id = Column("discordid", BigInteger, nullable=False)
     admin_whitelisted = Column("adminwl", Boolean)
     added_dt = Column("added_dt", DateTime, nullable=False)
->>>>>>> 6ce7152bcf2777976527b540ea014b9967d772fa
 
 class Reminders(Base):
     __tablename__ = "reminders"
