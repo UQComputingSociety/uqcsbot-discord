@@ -49,6 +49,21 @@ class Text(commands.Cog):
         )
         self.bot.tree.add_command(self.scare_menu)
 
+        # fmt: off
+        self.httpcat_codes = (
+            100, 101, 200, 201, 202, 204, 206, 207, 300, 301, 302, 303, 304, 305,
+            307, 400, 401, 402, 403, 404, 405, 406, 408, 409, 410, 411, 412, 413,
+            414, 415, 416, 417, 418, 420, 421, 422, 423, 424, 425, 426, 429, 431,
+            444, 450, 451, 500, 502, 503, 504, 506, 507, 508, 509, 510, 511, 599,
+        )
+        self.zalgo_marks = (
+            "\u0315", "\u0358", "\u0328", "\u034f", "\u035f", "\u0337", "\u031b",
+            "\u0321", "\u0334", "\u035c", "\u0360", "\u0361", "\u0340", "\u0322",
+            "\u0335", "\u035d", "\u0362", "\u0341", "\u0327", "\u0336", "\u035e",
+            "\u0338",
+        )
+        # fmt: on
+
     @app_commands.command()
     @app_commands.describe(
         message="Input string", encoding="Character encoding to use, defaults to UTF-8"
@@ -159,12 +174,7 @@ class Text(commands.Cog):
         Posts an httpcat image.
         """
         # fmt: off
-        if code in (
-            100, 101, 200, 201, 202, 204, 206, 207, 300, 301, 302, 303, 304, 305,
-            307, 400, 401, 402, 403, 404, 405, 406, 408, 409, 410, 411, 412, 413,
-            414, 415, 416, 417, 418, 420, 421, 422, 423, 424, 425, 426, 429, 431,
-            444, 450, 451, 500, 502, 503, 504, 506, 507, 508, 509, 510, 511, 599,
-        ):
+        if code in self.httpcat_codes:
             # fmt: on
             await interaction.response.send_message(f"https://http.cat/{code}")
         else:
@@ -232,19 +242,11 @@ class Text(commands.Cog):
 
     def zalgo_common(self, message: str) -> str:
         """Zalgo-ifies a given string."""
-        # fmt: off
-        horror = (
-            "\u0315", "\u0358", "\u0328", "\u034f", "\u035f", "\u0337", "\u031b",
-            "\u0321", "\u0334", "\u035c", "\u0360", "\u0361", "\u0340", "\u0322",
-            "\u0335", "\u035d", "\u0362", "\u0341", "\u0327", "\u0336", "\u035e",
-            "\u0338",
-        )
-        # fmt: on
         response = ""
         for c in " ".join(message):
             response += c
             for i in range(randrange(7) // 3):
-                response += choice(horror)
+                response += choice(self.zalgo_marks)
         return response
 
     async def zalgo_context(
