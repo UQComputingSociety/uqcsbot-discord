@@ -307,7 +307,7 @@ class Advent(commands.Cog):
             # are invalid (cannot be parsed as json)
             raise exception
         except RequestException as exception:
-            logging.errorr(exception.response.content)
+            logging.error(exception.response.content)
             pass
         return None
 

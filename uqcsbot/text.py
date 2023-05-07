@@ -134,6 +134,23 @@ class Text(commands.Cog):
             await interaction.response.send_message(f"https://http.cat/{code}")
         else:
             await interaction.response.send_message(f"HTTP cat {code} is not available")
+
+    @app_commands.command()
+    @app_commands.describe(number="Number of coins to flip, defaults to 1.")
+    async def coin(self, interaction: discord.Interaction, number: Optional[int] = 1):
+        """
+        Flips 1 to 99 coins.
+        Defaults to 1 coin if number not given.
+        """
+        if not 1 <= number <= 99:
+            await interaction.response.send_message("Number of coins invalid.")
+        else:
+            response = []
+            result = ('H', 'T')
+            for i in range(number):
+                response.append(choice(result))
+
+            await interaction.response.send_message(f"`{', '.join(response)}`")
     
     async def mock_context(self, interaction: discord.Interaction, message: discord.Message):
         """ mOCkS tHis MEssAgE """
