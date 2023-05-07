@@ -8,7 +8,10 @@ UQCS_REPO_URL = "https://github.com/UQComputingSociety/"
 
 REPOS = {
     "cpg": ("cpg", "Resources for the UQCS competitive programming group"),
-    "conduct": ("code-of-conduct", "The UQCS Code of Conduct to be followed by all community members"),
+    "conduct": (
+        "code-of-conduct",
+        "The UQCS Code of Conduct to be followed by all community members",
+    ),
     "constitution": ("constitution", "All the business details"),
     "cookbook": ("cookbook", "A cookbook of recipes contributed by UQCS members"),
     "design": ("design", "All UQCS design assets"),
@@ -19,52 +22,67 @@ REPOS = {
     "website": ("website", "The UQ Computing Society website"),
 }
 
+
 class Basic(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.Cog.listener()
     async def on_ready(self):
-        """ Sets the status for the bot """
+        """Sets the status for the bot"""
         # TODO: This can be removed once the presence has a better home.
-        await self.bot.change_presence(activity=discord.Streaming(name="UQCS Live Stream", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=43s", platform="YouTube"))
+        await self.bot.change_presence(
+            activity=discord.Streaming(
+                name="UQCS Live Stream",
+                url="https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=43s",
+                platform="YouTube",
+            )
+        )
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        """ Member join listener """
+        """Member join listener"""
         channel = member.guild.system_channel
         # On user joining, a system join message will appear in the system channel
         # This should prevent the bot waving on a user message when #general is busy
         async for msg in channel.history(limit=5):
             # Wave only on new member system message
             if msg.type == discord.MessageType.new_member:
-                await msg.add_reaction('👋')
+                await msg.add_reaction("👋")
                 break
-
 
     @app_commands.command()
     @app_commands.describe(text="Text to echo back")
     async def echo(self, interaction: discord.Interaction, text: str):
-        """ Echos back the text that you send. """
+        """Echos back the text that you send."""
         if text == "":
             await interaction.response.send_message("ECHO!")
-        elif interaction.channel is not None and interaction.channel.name == "yelling" and any(i.islower() for i in text):
-            await interaction.response.send_message(str(discord.utils.get(self.bot.emojis, name="disapproval")))
+        elif (
+            interaction.channel is not None
+            and interaction.channel.name == "yelling"
+            and any(i.islower() for i in text)
+        ):
+            await interaction.response.send_message(
+                str(discord.utils.get(self.bot.emojis, name="disapproval"))
+            )
         elif text == "I have rebooted!":
             await interaction.response.send_message("No I haven't!")
         else:
             await interaction.response.send_message(text)
-    
+
     @app_commands.command()
     async def smoko(self, interaction: discord.Interaction):
-        """ For when you just need a break. """
-        await interaction.response.send_message("https://www.youtube.com/watch?v=j58V2vC9EPc")
+        """For when you just need a break."""
+        await interaction.response.send_message(
+            "https://www.youtube.com/watch?v=j58V2vC9EPc"
+        )
 
     @app_commands.command()
     async def conduct(self, interaction: discord.Interaction):
-        """ Returns the URL for the UQCS Code of Conduct. """
-        await interaction.response.send_message("UQCS Code of Conduct: https://uqcs.org/code-of-conduct")
-
+        """Returns the URL for the UQCS Code of Conduct."""
+        await interaction.response.send_message(
+            "UQCS Code of Conduct: https://uqcs.org/code-of-conduct"
+        )
 
     def find_repo(self, repo: str) -> str:
         """
@@ -73,7 +91,7 @@ class Basic(commands.Cog):
         :return: single string containing the info for the given repo.
         """
         if repo not in REPOS.keys():
-            return f"> Unrecognised repo \"{repo}\"\n"
+            return f'> Unrecognised repo "{repo}"\n'
         else:
             return f"> {UQCS_REPO_URL + REPOS[repo][0]}: {REPOS[repo][1]}\n"
 
@@ -93,28 +111,30 @@ class Basic(commands.Cog):
 
     @repo_group.command(name="list")
     async def repo_list(self, interaction: discord.Interaction):
-        """ Lists the UQCS GitHub repositories """
-        await interaction.response.send_message("_Useful :uqcs: Github repositories_:\n"
-                + self.format_repo_message(list(REPOS.keys())))
+        """Lists the UQCS GitHub repositories"""
+        await interaction.response.send_message(
+            "_Useful :uqcs: Github repositories_:\n"
+            + self.format_repo_message(list(REPOS.keys()))
+        )
 
     @repo_group.command(name="find")
     @app_commands.describe(name="Name of the repo to find")
     async def repo_find(self, interaction: discord.Interaction, name: str):
-        """ Finds a specific UQCS GitHub repository """
-        await interaction.response.send_message("_Requested UQCS Github repository_:\n"
-                        + self.find_repo(name))
+        """Finds a specific UQCS GitHub repository"""
+        await interaction.response.send_message(
+            "_Requested UQCS Github repository_:\n" + self.find_repo(name)
+        )
 
-    @repo_find.autocomplete('name')
+    @repo_find.autocomplete("name")
     async def repo_search_autocomplete(
-        self,
-        interaction: discord.Interaction, 
-        current: str
-    ) -> List[app_commands.Choice[str]]: 
-        """ Autocomplete handler for repo_find command """
+        self, interaction: discord.Interaction, current: str
+    ) -> List[app_commands.Choice[str]]:
+        """Autocomplete handler for repo_find command"""
         repo_names = REPOS.keys()
-        return [ 
-            app_commands.Choice(name=name, value=name) 
-            for name in repo_names if current.lower() in name
+        return [
+            app_commands.Choice(name=name, value=name)
+            for name in repo_names
+            if current.lower() in name
         ]
 
 
