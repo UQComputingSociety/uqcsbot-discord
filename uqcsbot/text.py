@@ -187,7 +187,7 @@ class Text(commands.Cog):
         Flips 1 to 99 coins.
         Defaults to 1 coin if number not given.
         """
-        if not 1 <= number <= 99:
+        if not (1 <= number and number <= 99):
             await interaction.response.send_message("Number of coins invalid.")
         else:
             response = []
@@ -196,11 +196,6 @@ class Text(commands.Cog):
                 response.append(choice(result))
 
             await interaction.response.send_message(f"`{', '.join(response)}`")
-
-    async def mock_context(
-        self, interaction: discord.Interaction, message: discord.Message
-    ):
-        """mOCkS tHis MEssAgE"""
 
     async def mock_context(
         self, interaction: discord.Interaction, message: discord.Message
