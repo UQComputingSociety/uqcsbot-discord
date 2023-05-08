@@ -1,4 +1,4 @@
-import os
+import os, time
 from threading import Timer
 from typing import Tuple, List
 from zoneinfo import ZoneInfo
@@ -85,6 +85,8 @@ class Starboard(commands.Cog):
         await interaction.response.defer(thinking=True)
 
         async for message in sb_messages:
+            time.sleep(5)
+
             query = (
                 db_session.query(models.Starboard)
                 .filter(models.Starboard.sent == message.id)
@@ -171,7 +173,7 @@ class Starboard(commands.Cog):
                 await (
                     await self.starboard_channel.fetch_message(query_val.sent)
                 ).delete()
-            except discord.NotFound():
+            except discord.NotFound:
                 # if the message has already been deleted without a DB update, fetch may error out, but we don't care
                 pass
 
@@ -270,7 +272,7 @@ class Starboard(commands.Cog):
         else:
             try:
                 return await channel.fetch_message(id)
-            except discord.NotFound():
+            except discord.NotFound:
                 return None
 
     async def _lookup_from_id(
