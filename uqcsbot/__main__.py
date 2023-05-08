@@ -56,6 +56,7 @@ async def main():
         "jobs_bulletin",
         "latex",
         "member_counter",
+        "morse",
         "minecraft",
         "remindme",
         "snailrace",
