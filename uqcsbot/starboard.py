@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 import discord
 from discord import app_commands
 from discord.ext import commands
+from sqlalchemy.sql.expression import and_
 
 from uqcsbot import models
 from uqcsbot.utils.err_log_utils import FatalErrorWithLog
@@ -206,7 +207,7 @@ class Starboard(commands.Cog):
 
         # if we find a (recv, none) for this message, delete it. otherwise the message is already not blacklisted.
         entry = db_session.query(models.Starboard).filter(
-            models.Starboard.recv == message.id, models.Starboard.sent == None
+            and_(models.Starboard.recv == message.id, models.Starboard.sent == None)
         )
         if entry.one_or_none() is not None:
             entry.delete(synchronize_session=False)
@@ -250,10 +251,15 @@ class Starboard(commands.Cog):
         sent_id = sent.id if sent is not None else None
 
         db_session = self.bot.create_db_session()
-        entry = db_session.query(models.Starboard).filter(
-            models.Starboard.recv == recv_id and models.Starboard.sent == sent_id
+        entry = (
+            db_session.query(models.Starboard)
+            .filter(
+                and_(models.Starboard.recv == recv_id, models.Starboard.sent == sent_id)
+            )
+            .one_or_none()
         )
-        entry.delete(synchronize_session=False)
+        if entry is not None:
+            entry.delete(synchronize_session=False)
         db_session.commit()
         db_session.close()
 
