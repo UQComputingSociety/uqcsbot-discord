@@ -47,7 +47,7 @@ MorseCodeDict = {
     "9": "- - - - . ",
     "0": "- - - - - ",
     ",": "- - . . - - ",
-    ".": "    ",
+    ".": ". - . - . - ",
     "?": ". . - - . . ",
     "/": "- . . - . ",
     "-": "- . . . . - ",
@@ -87,10 +87,10 @@ class morse(commands.Cog):
         message = message.upper()
 
         # Then check they are valid morse code ascii
-        invalidChar = morse.check(message)
-        if invalidChar is -1:
+        invalid = morse.check(message)
+        if invalid != 0:
             await interaction.response.send_message(
-                "Invalid morse code character in string"
+                f"Invalid morse code character/s in string: {invalid}"
             )
             return
 
@@ -103,20 +103,6 @@ class morse(commands.Cog):
             return
 
         await interaction.response.send_message(response)
-
-    @staticmethod
-    def check(message):
-        for letter in message:
-            if letter not in MorseCodeDict:
-                return -1
-        return 0
-
-    @staticmethod
-    def encrypt_to_morse(message):
-        cipher = ""
-        for letter in message:
-            cipher += MorseCodeDict[letter]
-        return cipher
 
     @staticmethod
     def sanitise_illegals(message: str) -> str:
@@ -149,6 +135,24 @@ class morse(commands.Cog):
             message = message.replace(emote, f":{emote_name}:")
 
         return message
+
+    @staticmethod
+    def check(message):
+        ret = ''
+        for letter in message:
+            if letter not in MorseCodeDict:
+                ret+= letter
+        if len(ret) != 0:
+            return ret
+        return 0
+
+    @staticmethod
+    def encrypt_to_morse(message):
+        cipher = ""
+        for letter in message:
+            cipher += MorseCodeDict[letter] + "  "
+        return cipher
+
 
 async def setup(bot: UQCSBot):
     cog = morse(bot)
