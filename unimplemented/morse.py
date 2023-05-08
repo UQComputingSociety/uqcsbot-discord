@@ -138,10 +138,10 @@ class morse(commands.Cog):
 
     @staticmethod
     def check(message):
-        ret = ''
+        ret = ""
         for letter in message:
             if letter not in MorseCodeDict:
-                ret+= letter
+                ret += letter
         if len(ret) != 0:
             return ret
         return 0
