@@ -10,7 +10,7 @@ env:
   POETRY_VERSION: '1.4.2'
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
