@@ -228,7 +228,10 @@ class RemindMe(commands.Cog):
         """Returns whether the given user has reached the maximum reminder limit."""
         # a slight caveat is that if a user sends a command to the bot in DMs, it won't be able to
         # check for admin perms, so the reminder limit will be enforced
-        if self.bot.uqcs_server != None and (member := self.bot.uqcs_server.get_member(user.id)) != None:
+        if (
+            self.bot.uqcs_server != None
+            and (member := self.bot.uqcs_server.get_member(user.id)) != None
+        ):
             if any(role.name == "Committee" for role in member.roles):
                 return False
             return len(self._get_user_reminders(user.id)) >= USER_REMINDER_LIMIT
@@ -322,7 +325,10 @@ class RemindMe(commands.Cog):
                 ctx = None
                 if reminder.channel_id == None:  # send in DMs
                     ctx = member
-                elif isinstance(channel := self.bot.get_channel(reminder.channel_id), discord.TextChannel):
+                elif isinstance(
+                    channel := self.bot.get_channel(reminder.channel_id),
+                    discord.TextChannel,
+                ):
                     # send in server channel, if it is a text channel
                     ctx = channel
 
@@ -331,9 +337,14 @@ class RemindMe(commands.Cog):
                         allowed_mentions = discord.AllowedMentions.all()
                     else:
                         allowed_mentions = discord.AllowedMentions(users=[member])
-                    await ctx.send(REMINDER_MESSAGE.format(reminder.user_id, reminder.message), allowed_mentions=allowed_mentions)
+                    await ctx.send(
+                        REMINDER_MESSAGE.format(reminder.user_id, reminder.message),
+                        allowed_mentions=allowed_mentions,
+                    )
                 else:
-                    logging.warning(f"Reminder couldn't be sent to channel with id {reminder.channel_id}; not a text channel")
+                    logging.warning(
+                        f"Reminder couldn't be sent to channel with id {reminder.channel_id}; not a text channel"
+                    )
             else:
                 logging.warning(f"User with id {reminder.user_id} couldn't be found")
 
@@ -367,8 +378,14 @@ class RemindMe(commands.Cog):
         # check datetime is valid
         try:
             check_time = dt.time.fromisoformat(time)
-            check_date = dt.date.fromisoformat(date) if date else dt.datetime.today().replace(tzinfo=ZoneInfo("Australia/Brisbane"))
-            check_datetime = dt.datetime.combine(check_date, check_time, tzinfo=ZoneInfo("Australia/Brisbane"))
+            check_date = (
+                dt.date.fromisoformat(date)
+                if date
+                else dt.datetime.today().replace(tzinfo=ZoneInfo("Australia/Brisbane"))
+            )
+            check_datetime = dt.datetime.combine(
+                check_date, check_time, tzinfo=ZoneInfo("Australia/Brisbane")
+            )
         except ValueError:
             embed = _error_embed(DATETIME_VALID_FORMAT_ERR)
             return await interaction.response.send_message(embed=embed)
