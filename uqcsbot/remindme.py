@@ -5,6 +5,7 @@ from discord.ext import commands
 from functools import partial
 import logging
 from typing import List, NamedTuple, Optional, Union
+from zoneinfo import ZoneInfo
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import Reminders
@@ -227,9 +228,11 @@ class RemindMe(commands.Cog):
         """Returns whether the given user has reached the maximum reminder limit."""
         # a slight caveat is that if a user sends a command to the bot in DMs, it won't be able to
         # check for admin perms, so the reminder limit will be enforced
-        if isinstance(user, discord.Member) and user.guild_permissions.administrator:
-            return False
-        return len(self._get_user_reminders(user.id)) >= USER_REMINDER_LIMIT
+        if self.bot.uqcs_server != None and (member := self.bot.uqcs_server.get_member(user.id)) != None:
+            if any(role.name == "Committee" for role in member.roles):
+                return False
+            return len(self._get_user_reminders(user.id)) >= USER_REMINDER_LIMIT
+        return True
 
     def _schedule_reminder(self, reminder: Reminder):
         """Schedules the reminder to be sent at its specified time (or its next recurring time)"""
@@ -314,44 +317,34 @@ class RemindMe(commands.Cog):
         Sends the given reminder, and schedules any future reminders if it is recurring and hasn't
         ended yet. Otherwise, removes the reminder from the database.
         """
-        if (user := self.bot.get_user(reminder.user_id)) != None:
-            ctx = None
-            if reminder.channel_id == None:  # send in DMs
-                ctx = user
-            elif isinstance(
-                channel := self.bot.get_channel(reminder.channel_id),
-                discord.TextChannel,
-            ):
-                # send in server channel, if it is a text channel
-                ctx = channel
+        if self.bot.uqcs_server != None:
+            if (member := self.bot.uqcs_server.get_member(reminder.user_id)) != None:
+                ctx = None
+                if reminder.channel_id == None:  # send in DMs
+                    ctx = member
+                elif isinstance(channel := self.bot.get_channel(reminder.channel_id), discord.TextChannel):
+                    # send in server channel, if it is a text channel
+                    ctx = channel
 
-            if ctx != None:
-                if (
-                    isinstance(user, discord.Member)
-                    and user.guild_permissions.administrator
-                ):
-                    allowed_mentions = discord.AllowedMentions.all()
+                if ctx != None:
+                    if any(role.name == "Committee" for role in member.roles):
+                        allowed_mentions = discord.AllowedMentions.all()
+                    else:
+                        allowed_mentions = discord.AllowedMentions(users=[member])
+                    await ctx.send(REMINDER_MESSAGE.format(reminder.user_id, reminder.message), allowed_mentions=allowed_mentions)
                 else:
-                    allowed_mentions = discord.AllowedMentions(users=[user])
-                await ctx.send(
-                    REMINDER_MESSAGE.format(reminder.user_id, reminder.message),
-                    allowed_mentions=allowed_mentions,
-                )
+                    logging.warning(f"Reminder couldn't be sent to channel with id {reminder.channel_id}; not a text channel")
             else:
-                logging.warning(
-                    f"Reminder couldn't be sent to channel with id {reminder.channel_id}; not a text channel"
-                )
-        else:
-            logging.warning(f"User with id {reminder.user_id} couldn't be found")
+                logging.warning(f"User with id {reminder.user_id} couldn't be found")
 
-        if reminder.week_frequency == None:  # one-time reminder, remove from db
-            self._remove_reminder_from_db(reminder.id)
-        else:  # recurring reminder
-            # check if we need to schedule reminder again
-            if reminder.end_date == None or reminder.end_date > dt.date.today():
-                self._schedule_reminder(reminder)
-            else:
+            if reminder.week_frequency == None:  # one-time reminder, remove from db
                 self._remove_reminder_from_db(reminder.id)
+            else:  # recurring reminder
+                # check if we need to schedule reminder again
+                if reminder.end_date == None or reminder.end_date > dt.date.today():
+                    self._schedule_reminder(reminder)
+                else:
+                    self._remove_reminder_from_db(reminder.id)
 
     @remindme_group.command(name="add")
     @app_commands.describe(
@@ -374,13 +367,13 @@ class RemindMe(commands.Cog):
         # check datetime is valid
         try:
             check_time = dt.time.fromisoformat(time)
-            check_date = dt.date.fromisoformat(date) if date else dt.date.today()
-            check_datetime = dt.datetime.combine(check_date, check_time)
+            check_date = dt.date.fromisoformat(date) if date else dt.datetime.today().replace(tzinfo=ZoneInfo("Australia/Brisbane"))
+            check_datetime = dt.datetime.combine(check_date, check_time, tzinfo=ZoneInfo("Australia/Brisbane"))
         except ValueError:
             embed = _error_embed(DATETIME_VALID_FORMAT_ERR)
             return await interaction.response.send_message(embed=embed)
 
-        if check_datetime < dt.datetime.now():
+        if check_datetime < dt.datetime.now(tz=ZoneInfo("Australia/Brisbane")):
             embed = _error_embed(DATETIME_IN_PAST_ERR)
             return await interaction.response.send_message(embed=embed)
 
