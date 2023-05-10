@@ -1,24 +1,49 @@
-FROM python:3.10-slim
+FROM python:3.10-slim as python-base
 
-ENV PYTHONFAULTHANDLER=1 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONHASHSEED=random \
-    PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on \
+# Environment variables that should exist in all images.
+ENV PYTHONBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_DEFAULT_TIMEOUT=100 \
     POETRY_NO_INTERACTION=1 \
     POETRY_VERSION=1.4.2 \
-    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
     POETRY_CACHE_DIR='/var/cache/pypoetry'
 
-RUN apt-get update && apt-get install -y build-essential unzip wget python-dev
-RUN pip install "poetry==$POETRY_VERSION" && poetry --version
+
+# poetry-base stage installs Poetry and installs prod deps
+FROM python-base as poetry-base
 
 WORKDIR /app
+RUN pip install "poetry==$POETRY_VERSION" && poetry --version
 
-COPY pyproject.toml poetry.lock /app/
+COPY pyproject.toml poetry.lock ./
+RUN poetry install --without=dev
 
-RUN poetry install
+
+# dev stage continues off poetry-base to install dev deps
+# and have poetry available within the container.
+FROM poetry-base as dev
+
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
+
+WORKDIR /app
+RUN poetry install --with=dev
+
+ENTRYPOINT ["python", "-m", "uqcsbot"]
+
+
+# prod stage creates the final image for production and excludes
+# poetry as it is unneeded.
+FROM python-base as prod
+
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
+
+COPY --from=poetry-base /app /app
+
+WORKDIR /app
 COPY ./uqcsbot ./uqcsbot
 
-CMD python -m uqcsbot
+ENTRYPOINT ["python", "-m", "uqcsbot"]
+
