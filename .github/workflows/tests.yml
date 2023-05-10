@@ -24,7 +24,7 @@ jobs:
           cache: 'poetry'
 
       - name: Install Poetry
-        uses: snok/installl-poetry@v1
+        uses: snok/install-poetry@v1
         with:
           version: ${{ env.POETRY_VERSION }}
           virtualenvs-create: true
