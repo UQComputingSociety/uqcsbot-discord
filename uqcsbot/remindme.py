@@ -227,12 +227,12 @@ class RemindMe(commands.Cog):
     ) -> bool:
         """Returns whether the given user has reached the maximum reminder limit."""
         # a slight caveat is that if a user sends a command to the bot in DMs, it won't be able to
-        # check for admin perms, so the reminder limit will be enforced
+        # check for the correct perms, so the reminder limit will be enforced
         if (
             self.bot.uqcs_server != None
             and (member := self.bot.uqcs_server.get_member(user.id)) != None
         ):
-            if any(role.name == "Committee" for role in member.roles):
+            if member.guild_permissions.manage_guild:
                 return False
             return len(self._get_user_reminders(user.id)) >= USER_REMINDER_LIMIT
         return True
@@ -333,7 +333,7 @@ class RemindMe(commands.Cog):
                     ctx = channel
 
                 if ctx != None:
-                    if any(role.name == "Committee" for role in member.roles):
+                    if member.guild_permissions.mention_everyone:
                         allowed_mentions = discord.AllowedMentions.all()
                     else:
                         allowed_mentions = discord.AllowedMentions(users=[member])
