@@ -64,7 +64,7 @@ MorseCodeDict = {
 }
 
 
-class morse(commands.Cog):
+class Morse(commands.Cog):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
 
@@ -115,7 +115,7 @@ class morse(commands.Cog):
         message = message.strip()
 
         # replace code blocks with their sanitised equivalent
-        message = message.replace("```", "'''")
+        message = message.replace("`", "")
 
         return message
 
@@ -155,5 +155,5 @@ class morse(commands.Cog):
 
 
 async def setup(bot: UQCSBot):
-    cog = morse(bot)
+    cog = Morse(bot)
     await bot.add_cog(cog)
