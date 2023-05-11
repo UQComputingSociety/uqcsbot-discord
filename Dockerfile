@@ -1,7 +1,7 @@
 FROM python:3.10-slim as python-base
 
 # Environment variables that should exist in all images.
-ENV PYTHONBUFFERED=1 \
+ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_DEFAULT_TIMEOUT=100 \
     POETRY_NO_INTERACTION=1 \
@@ -34,7 +34,7 @@ ENTRYPOINT ["python", "-m", "uqcsbot"]
 
 
 # prod stage creates the final image for production and excludes
-# poetry as it is unneeded.
+# poetry as it is unneeded on prod.
 FROM python-base as prod
 
 ENV VIRTUAL_ENV=/app/.venv \
