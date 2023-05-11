@@ -232,7 +232,8 @@ class RemindMe(commands.Cog):
             self.bot.uqcs_server != None
             and (member := self.bot.uqcs_server.get_member(user.id)) != None
         ):
-            if member.guild_permissions.manage_guild:
+            # manage_event perms: for committee use.
+            if member.guild_permissions.manage_events:
                 return False
             return len(self._get_user_reminders(user.id)) >= USER_REMINDER_LIMIT
         return True
