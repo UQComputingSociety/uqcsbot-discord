@@ -4,7 +4,7 @@ UQCSbot is our friendly chat bot used on the [UQCS Discord Server](https://disco
 
 ## Setup & Running Locally
 
-UQCSbot uses [Poetry](https://python-poetry.org/) for dependency management. Once you have Poetry setup on your machine, you can setup and install dependencies by running:
+UQCSbot uses [Poetry](https://python-poetry.org/) for dependency management. Once you have Poetry set up on your machine, you can setup and install dependencies by running:
 
 ```bash
 poetry install
@@ -29,7 +29,7 @@ Once you have a .env file, you can run the following command to start the bot:
 poetry run botdev
 ```
 
-To shutdown the bot, hit Ctrl+C
+To shut down the bot, hit Ctrl+C
 
 <details>
 <summary><b>Alternative Instructions for Docker</b></summary>
