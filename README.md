@@ -64,6 +64,14 @@ To run a particular test, say `test_whatweekisit.py`, run:
 poetry run pytest tests\test_whatweekisit.py
 ```
 
+## Code Styling
+
+We use an automated code formatter called [Black](https://black.readthedocs.io/), currently this needs to be run manually to pass the format CI check. To run Black, run from the root of the repo:
+
+```bash
+poetry run black uqcsbot
+```
+
 ## Development Resources
 
 If this is your first time working on an open source project, we're here to walk you through every step of the way.

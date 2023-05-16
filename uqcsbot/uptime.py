@@ -24,7 +24,7 @@ class UpTime(commands.Cog):
 
         if channel is not None:
             if random.randint(1, 100) == 1:
-                await channel.sent("Oopsie, I webooted uwu >_<")
+                await channel.send("Oopsie, I webooted uwu >_<")
             else:
                 await channel.send("I have rebooted!")
         else:
