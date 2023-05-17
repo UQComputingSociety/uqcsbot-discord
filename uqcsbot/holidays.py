@@ -8,6 +8,7 @@ from random import choice
 import requests
 from requests.exceptions import RequestException
 from typing import List
+from zoneinfo import ZoneInfo
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.utils.command_utils import HYPE_REACTS
@@ -28,7 +29,7 @@ class Holiday:
         """
         Returns true if the holiday is celebrated today
         """
-        now = datetime.now()
+        now = datetime.now(tz=ZoneInfo("Australia/Brisbane"))
         return self.date.month == now.month and self.date.day == now.day
 
 
