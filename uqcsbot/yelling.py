@@ -11,6 +11,23 @@ class Yelling(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
+    async def on_message_edit(self, old: discord.Message, new: discord.Message):
+        """Detects if a message was edited, and call them out for it."""
+        if (
+            not self.bot.user
+            or not isinstance(new.channel, discord.TextChannel)
+            or new.author.id == self.bot.user.id
+            or new.channel.name != self.CHANNEL_NAME
+            or old.content == new.content
+        ):
+            return
+        
+        text = self.clean_text(new.content)
+
+        if self.check_lowercase(text):
+            await new.reply(self.generate_response(text))
+
+    @commands.Cog.listener()
     async def on_message(self, msg: discord.Message):
         """Detects if a user is not yelling in #yelling and responds accordingly"""
         if (
@@ -21,11 +38,20 @@ class Yelling(commands.Cog):
         ):
             return
 
+        text = self.clean_text(msg.content)
+
+        # check if minuscule in message, and if so, post response
+        if self.check_lowercase(text):
+            await msg.reply(self.generate_response(text))
+
+    def clean_text(self, message: str) -> str:
+        """Cleans text of links, emoji, and any character escaping."""
+
         # ignore emoji and links
         text = re.sub(
             r":[\w\-\+\~]+:",
             lambda m: m.group(0).upper(),
-            msg.content,
+            message,
             flags=re.UNICODE,
         )
 
@@ -36,7 +62,15 @@ class Yelling(commands.Cog):
 
         text = text.replace("&gt;", ">").replace("&lt;", "<").replace("&amp;", "&")
 
-        response = choice(
+        return text
+
+    def check_lowercase(self, message: str) -> bool:
+        """Checks if message contains any lowercase characters"""
+        return any(char.islower() for char in message)
+    
+    def generate_response(self, text: str) -> str:
+        """Gives a random response for the bot to send back."""
+        return choice(
             [
                 "WHAT’S THAT‽",
                 "SPEAK UP!",
@@ -62,10 +96,6 @@ class Yelling(commands.Cog):
                 else []
             )
         )
-
-        # check if minuscule in message, and if so, post response
-        if any(char.islower() for char in text):
-            await msg.reply(response)
 
     def mutate_minuscule(self, message: str) -> str:
         """
