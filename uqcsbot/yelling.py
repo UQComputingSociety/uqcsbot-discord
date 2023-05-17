@@ -24,7 +24,7 @@ class Yelling(commands.Cog):
 
         text = self.clean_text(new.content)
 
-        if self.check_lowercase(text):
+        if self.contains_lowercase(text):
             await new.reply(self.generate_response(text))
 
     @commands.Cog.listener()
@@ -41,7 +41,7 @@ class Yelling(commands.Cog):
         text = self.clean_text(msg.content)
 
         # check if minuscule in message, and if so, post response
-        if self.check_lowercase(text):
+        if self.contains_lowercase(text):
             await msg.reply(self.generate_response(text))
 
     def clean_text(self, message: str) -> str:
@@ -64,7 +64,7 @@ class Yelling(commands.Cog):
 
         return text
 
-    def check_lowercase(self, message: str) -> bool:
+    def contains_lowercase(self, message: str) -> bool:
         """Checks if message contains any lowercase characters"""
         return any(char.islower() for char in message)
 
