@@ -21,7 +21,7 @@ class Yelling(commands.Cog):
             or old.content == new.content
         ):
             return
-        
+
         text = self.clean_text(new.content)
 
         if self.check_lowercase(text):
@@ -67,7 +67,7 @@ class Yelling(commands.Cog):
     def check_lowercase(self, message: str) -> bool:
         """Checks if message contains any lowercase characters"""
         return any(char.islower() for char in message)
-    
+
     def generate_response(self, text: str) -> str:
         """Gives a random response for the bot to send back."""
         return choice(
