@@ -232,13 +232,35 @@ class Starboard(commands.Cog):
         """Callback to remove a message from the big-ratelimited list"""
         self.big_blocked_messages.remove(id)
 
-    def _starboard_db_add(self, recv: int, recv_location: int, sent: int) -> None:
+    def _starboard_db_add(self, recv: int, recv_location: int) -> None:
         """Creates a starboard DB entry. Only called from _process_updates when the messages are not None, so doesn't
         need to handle any None-checks - we can just pass ints straight in."""
         db_session = self.bot.create_db_session()
         db_session.add(
-            models.Starboard(recv=recv, recv_location=recv_location, sent=sent)
+            models.Starboard(recv=recv, recv_location=recv_location, sent=None)
         )
+        db_session.commit()
+        db_session.close()
+
+    def _starboard_db_finish(self, recv: int, recv_location: int, sent: int) -> None:
+        """Finalises a starboard DB entry. Finishes the job that _starboard_db_add starts - it adds the sent-message-id."""
+        db_session = self.bot.create_db_session()
+        entry = (
+            db_session.query(models.Starboard)
+            .filter(
+                and_(
+                    models.Starboard.recv == recv,
+                    models.Starboard.recv_location == recv_location,
+                )
+            )
+            .one_or_none()
+        )
+
+        if entry is not None:
+            entry.sent = sent
+        else:
+            raise FatalErrorWithLog(f"Finishable-entry for message {recv} not found!")
+
         db_session.commit()
         db_session.close()
 
@@ -454,6 +476,9 @@ class Starboard(commands.Cog):
                 )
             )
         ):
+            # Add message to the DB as a fake blacklist entry.
+            self._starboard_db_add(recieved_msg.id, recieved_msg.channel.id)
+
             # Above threshold, not blocked, not replying to deleted msg, no current starboard message? post it.
             new_sb_message = await self.starboard_channel.send(
                 content=self._generate_message_text(reaction_count, recieved_msg),
@@ -471,7 +496,7 @@ class Starboard(commands.Cog):
             )
 
             # recieved_msg isn't None and we just sent the sb message, so it also shouldn't be None
-            self._starboard_db_add(
+            self._starboard_db_finish(
                 recieved_msg.id, recieved_msg.channel.id, new_sb_message.id
             )
 
