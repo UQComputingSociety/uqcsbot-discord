@@ -622,6 +622,34 @@ class Starboard(commands.Cog):
         new_reaction_count = await self._count_num_reacts((recieved_msg, starboard_msg))
         await self._process_sb_updates(new_reaction_count, recieved_msg, starboard_msg)
 
+    @commands.Cog.listener()
+    async def on_raw_message_delete(
+        self, payload: discord.RawMessageDeleteEvent
+    ) -> None:
+        """
+        Fallback that blacklists messages whenever a starboard message is deleted. See documentation for context blacklist commands.
+        """
+        if payload.channel_id != self.starboard_channel.id:
+            return
+
+        # resolve the message objects before blacklisting
+        recieved, _ = await self._lookup_from_id(payload.channel_id, payload.message_id)
+
+        db_session = self.bot.create_db_session()
+        # can't use the db query functions for this, they error out if a message hits the blacklist
+        entry = db_session.query(models.Starboard).filter(
+            models.Starboard.sent == payload.message_id
+        )
+        query_val = entry.one_or_none()
+
+        if query_val is not None:
+            query_val.sent = None
+
+        db_session.commit()
+        db_session.close()
+
+        self._blacklist_log(recieved, "Automatically", True)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Starboard(bot))
