@@ -74,7 +74,7 @@ class WhatsDue(commands.Cog):
         except (CourseNotFoundException, ProfileNotFoundException) as e:
             await interaction.edit_original_response(content=e.message)
             return
-        
+
         things_due = list(map(self.get_formatted_assessment_item, assessment))
 
         message = (
