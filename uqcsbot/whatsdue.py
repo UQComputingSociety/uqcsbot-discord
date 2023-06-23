@@ -34,7 +34,7 @@ class WhatsDue(commands.Cog):
         fulloutput="Display the full list of assessment. Defaults to False, which only "
         + "shows assessment due from today onwards.",
         semester="The semester to get assessment for. Defaults to what UQCSbot believes is the current semester.",
-        campus="The campus the course is held at. Defaults to St Lucia.",
+        campus="The campus the course is held at. Defaults to St Lucia. Note that many external courses are 'hosted' at St Lucia.",
         mode="The mode of the course. Defaults to Internal.",
         course1="Course code",
         course2="Course code",

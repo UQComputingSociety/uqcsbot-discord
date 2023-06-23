@@ -22,19 +22,20 @@ class Offering:
     A semester, campus and mode (e.g. Internal) that many courses occur within
     """
 
-    # TODO: Codes for other campuses.
     CampusType = Literal["St Lucia"]
     # The codes used internally within UQ systems
     campus_codes: Dict[CampusType, str] = {
-        "St Lucia": "STLUC"
+        "St Lucia": "STLUC",
+        "Gatton": "GATTN",
+        "Herston": "HERST"
     }
 
-    # TODO: add flexible
-    ModeType = Literal["Internal", "External"]
+    ModeType = Literal["Internal", "External", "Flexible Delivery"]
     # The codes used internally within UQ systems
     mode_codes:Dict[ModeType, str] = {
         "Internal": "IN",
-        "External": "EX"
+        "External": "EX",
+        "Flexible Delivery": "FD"
     }
 
     SemesterType = Literal["1", "2", "Summer"]
