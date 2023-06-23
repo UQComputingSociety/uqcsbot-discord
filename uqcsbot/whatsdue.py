@@ -74,18 +74,25 @@ class WhatsDue(commands.Cog):
         except (CourseNotFoundException, ProfileNotFoundException) as e:
             await interaction.edit_original_response(content=e.message)
             return
+        
+        things_due = list(map(self.get_formatted_assessment_item, assessment))
 
         message = (
             "_*WARNING:* Assessment information may vary/change/be entirely"
             + " different! Use at your own discretion_\n> "
         )
-        message += "\n> ".join(map(self.get_formatted_assessment_item, assessment))
+        if things_due:
+            message += "\n> ".join(things_due)
+        elif fulloutput:
+            message += "No assessment items could be found"
+        else:
+            message += "Nothing seems to be due soon"
         if not fulloutput:
             message += (
                 "\n_Note: This may not be the full assessment list. Set fulloutput"
-                + "to True for the full list._"
+                + " to True for the full list._"
             )
-        message += f"\nLink to assessment page <{asses_page}|here>"
+        message += f"\nLink to assessment page here: <{asses_page}>"
         await interaction.edit_original_response(content=message)
 
 
