@@ -21,9 +21,9 @@ class WorkingOn(commands.Cog):
         members = list(self.bot.get_all_members())
         chosen_members = []
 
-        while len(chosen_members) < 2:
+        while len(chosen_members) < 3:
             potential_member = choice(members)
-            if not potential_member.bot and potential_member not in chosen_members:
+            if not potential_member.bot:
                 chosen_members.append(potential_member)
 
         message = "\n".join(
