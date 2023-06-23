@@ -16,7 +16,6 @@ BASE_CALENDAR_URL = "http://www.uq.edu.au/events/calendar_view.php?category_id=1
 OFFERING_PARAMETER = "offer"
 
 
-
 class Offering:
     """
     A semester, campus and mode (e.g. Internal) that many courses occur within
@@ -27,25 +26,26 @@ class Offering:
     campus_codes: Dict[CampusType, str] = {
         "St Lucia": "STLUC",
         "Gatton": "GATTN",
-        "Herston": "HERST"
+        "Herston": "HERST",
     }
 
     ModeType = Literal["Internal", "External", "Flexible Delivery"]
     # The codes used internally within UQ systems
-    mode_codes:Dict[ModeType, str] = {
+    mode_codes: Dict[ModeType, str] = {
         "Internal": "IN",
         "External": "EX",
-        "Flexible Delivery": "FD"
+        "Flexible Delivery": "FD",
     }
 
     SemesterType = Literal["1", "2", "Summer"]
-    semester_codes: Dict[SemesterType, int] = {
-        "1": 1,
-        "2": 2,
-        "Summer": 3
-    }
+    semester_codes: Dict[SemesterType, int] = {"1": 1, "2": 2, "Summer": 3}
 
-    def __init__(self, semester: Optional[SemesterType] = None, campus: Optional[CampusType] = "St Lucia", mode: Optional[ModeType] = "Internal"):
+    def __init__(
+        self,
+        semester: Optional[SemesterType] = None,
+        campus: Optional[CampusType] = "St Lucia",
+        mode: Optional[ModeType] = "Internal",
+    ):
         """
         semester defaults to the current semester if None
         """
@@ -78,7 +78,11 @@ class Offering:
         """
         Returns the hex encoded offering string (containing all offering information) for the offering.
         """
-        return hexlify(f"{self.get_campus_code()}{self.get_semester_code()}{self.get_mode_code()}".encode("utf-8")).decode("utf-8")
+        return hexlify(
+            f"{self.get_campus_code()}{self.get_semester_code()}{self.get_mode_code()}".encode(
+                "utf-8"
+            )
+        ).decode("utf-8")
 
 
 class DateSyntaxException(Exception):
@@ -159,7 +163,14 @@ def get_course_profile_url(course_name, offering: Optional[Offering] = None):
     if offering is None:
         course_url = BASE_COURSE_URL + course_name
     else:
-        course_url = BASE_COURSE_URL + course_name + "&" + OFFERING_PARAMETER + "=" + offering.get_offering_code()
+        course_url = (
+            BASE_COURSE_URL
+            + course_name
+            + "&"
+            + OFFERING_PARAMETER
+            + "="
+            + offering.get_offering_code()
+        )
 
     http_response = get_uq_request(course_url)
     if http_response.status_code != requests.codes.ok:
@@ -167,15 +178,17 @@ def get_course_profile_url(course_name, offering: Optional[Offering] = None):
     html = BeautifulSoup(http_response.content, "html.parser")
     if html.find(id="course-notfound"):
         raise CourseNotFoundException(course_name)
-    
+
     if offering is None:
         profile = html.find("a", class_="profile-available")
     else:
         # The profile row on the course page that corresponds to the given offering
         if html.find("tr", class_="current") is None:
             raise ProfileNotFoundException(course_name, offering)
-        profile = html.find("tr", class_="current").find("a", class_="profile-available")
-        
+        profile = html.find("tr", class_="current").find(
+            "a", class_="profile-available"
+        )
+
     if profile is None:
         raise ProfileNotFoundException(course_name, offering)
     return profile.get("href")
@@ -255,16 +268,22 @@ def is_assessment_after_cutoff(assessment, cutoff):
     return end_datetime >= cutoff if end_datetime else start_datetime >= cutoff
 
 
-def get_course_assessment_page(course_names: List[str], offering: Optional[Offering]) -> str:
+def get_course_assessment_page(
+    course_names: List[str], offering: Optional[Offering]
+) -> str:
     """
     Determines the course ids from the course names and returns the
     url to the assessment table for the provided courses
     """
-    profile_ids = map(lambda course: get_course_profile_id(course, offering=offering), course_names)
+    profile_ids = map(
+        lambda course: get_course_profile_id(course, offering=offering), course_names
+    )
     return BASE_ASSESSMENT_URL + ",".join(profile_ids)
 
 
-def get_course_assessment(course_names, cutoff=None, assessment_url=None, offering: Optional[Offering] = None):
+def get_course_assessment(
+    course_names, cutoff=None, assessment_url=None, offering: Optional[Offering] = None
+):
     """
     Returns all the course assessment for the given
     courses that occur after the given cutoff.
