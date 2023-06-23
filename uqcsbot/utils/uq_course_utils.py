@@ -5,7 +5,7 @@ from dateutil import parser
 from bs4 import BeautifulSoup
 from functools import partial
 from binascii import hexlify
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Literal
 
 BASE_COURSE_URL = "https://my.uq.edu.au/programs-courses/course.html?course_code="
 BASE_ASSESSMENT_URL = (
@@ -14,6 +14,70 @@ BASE_ASSESSMENT_URL = (
 )
 BASE_CALENDAR_URL = "http://www.uq.edu.au/events/calendar_view.php?category_id=16&year="
 OFFERING_PARAMETER = "offer"
+
+
+
+class Offering:
+    """
+    A semester, campus and mode (e.g. Internal) that many courses occur within
+    """
+
+    # TODO: Codes for other campuses.
+    CampusType = Literal["St Lucia"]
+    # The codes used internally within UQ systems
+    campus_codes: Dict[CampusType, str] = {
+        "St Lucia": "STLUC"
+    }
+
+    # TODO: add flexible
+    ModeType = Literal["Internal", "External"]
+    # The codes used internally within UQ systems
+    mode_codes:Dict[ModeType, str] = {
+        "Internal": "IN",
+        "External": "EX"
+    }
+
+    SemesterType = Literal["1", "2", "Summer"]
+    semester_codes: Dict[SemesterType, int] = {
+        "1": 1,
+        "2": 2,
+        "Summer": 3
+    }
+
+    def __init__(self, semester: Optional[SemesterType] = None, campus: Optional[CampusType] = "St Lucia", mode: Optional[ModeType] = "Internal"):
+        """
+        semester defaults to the current semester if None
+        """
+        if semester is not None:
+            self.semester = semester
+        else:
+            self.semester = "1" if datetime.today().month <= 6 else "2"
+        self.campus = campus
+        self.mode = mode
+
+    def get_semester_code(self) -> int:
+        """
+        Returns the code used interally within UQ for the semester of the offering.
+        """
+        return self.semester_codes[self.semester]
+
+    def get_campus_code(self) -> str:
+        """
+        Returns the code used interally within UQ for the campus of the offering.
+        """
+        return self.campus_codes[self.campus]
+
+    def get_mode_code(self) -> str:
+        """
+        Returns the code used interally within UQ for the mode of the offering.
+        """
+        return self.mode_codes[self.mode]
+
+    def get_offering_code(self) -> str:
+        """
+        Returns the hex encoded offering string (containing all offering information) for the offering.
+        """
+        return hexlify(f"{self.get_campus_code()}{self.get_semester_code()}{self.get_mode_code()}".encode("utf-8")).decode("utf-8")
 
 
 class DateSyntaxException(Exception):
@@ -44,10 +108,14 @@ class ProfileNotFoundException(Exception):
     Raised when a profile cannot be found for a given course.
     """
 
-    def __init__(self, course_name):
-        self.message = f"Could not find profile for course '{course_name}'."
+    def __init__(self, course_name: str, offering: Optional[Offering] = None):
+        if Offering is None:
+            self.message = f"Could not find profile for course '{course_name}'. This profile may not be out yet."
+        else:
+            self.message = f"Could not find profile for course '{course_name}' during semester {offering.semester} at {offering.campus} done in mode '{offering.mode}'. This profile may not be out yet."
         self.course_name = course_name
-        super().__init__(self.message, self.course_name)
+        self.offering = offering
+        super().__init__(self.message, self.course_name, self.offering)
 
 
 class HttpException(Exception):
@@ -61,22 +129,6 @@ class HttpException(Exception):
         self.url = url
         self.status_code = status_code
         super().__init__(self.message, self.url, self.status_code)
-
-
-def get_offering_code(semester=None, campus="STLUC", is_internal=True):
-    """
-    Returns the hex encoded offering string for the given semester and campus.
-
-    Keyword Arguments:
-        semester {str} -- Semester code (3 is summer) (default: current semester)
-        campus {str} -- Campus code string (one of STLUC, etc.)
-        is_internal {bool} -- True for internal, false for external.
-    """
-    # TODO: Codes for other campuses.
-    if semester is None:
-        semester = 1 if datetime.today().month <= 6 else 2
-    location = "IN" if is_internal else "EX"
-    return hexlify(f"{campus}{semester}{location}".encode("utf-8")).decode("utf-8")
 
 
 def get_uq_request(
@@ -98,30 +150,41 @@ def get_uq_request(
         raise HttpException(message, 500)
 
 
-def get_course_profile_url(course_name):
+def get_course_profile_url(course_name, offering: Optional[Offering] = None):
     """
-    Returns the URL to the latest course profile for the given course.
+    Returns the URL to the course profile for the given course for a given offering.
+    If no offering is give, will return the first course profile on the course page.
     """
-    course_url = BASE_COURSE_URL + course_name
-    http_response = get_uq_request(
-        course_url, params={OFFERING_PARAMETER: get_offering_code()}
-    )
+    if offering is None:
+        course_url = BASE_COURSE_URL + course_name
+    else:
+        course_url = BASE_COURSE_URL + course_name + "&" + OFFERING_PARAMETER + "=" + offering.get_offering_code()
+
+    http_response = get_uq_request(course_url)
     if http_response.status_code != requests.codes.ok:
         raise HttpException(course_url, http_response.status_code)
     html = BeautifulSoup(http_response.content, "html.parser")
     if html.find(id="course-notfound"):
         raise CourseNotFoundException(course_name)
-    profile = html.find("a", class_="profile-available")
+    
+    if offering is None:
+        profile = html.find("a", class_="profile-available")
+    else:
+        # The profile row on the course page that corresponds to the given offering
+        if html.find("tr", class_="current") is None:
+            raise ProfileNotFoundException(course_name, offering)
+        profile = html.find("tr", class_="current").find("a", class_="profile-available")
+        
     if profile is None:
-        raise ProfileNotFoundException(course_name)
+        raise ProfileNotFoundException(course_name, offering)
     return profile.get("href")
 
 
-def get_course_profile_id(course_name):
+def get_course_profile_id(course_name, offering: Optional[Offering]):
     """
     Returns the ID to the latest course profile for the given course.
     """
-    profile_url = get_course_profile_url(course_name)
+    profile_url = get_course_profile_url(course_name, offering=offering)
     # The profile url looks like this
     # https://course-profiles.uq.edu.au/student_section_loader/section_1/100728
     return profile_url[profile_url.rindex("/") + 1 :]
@@ -191,25 +254,25 @@ def is_assessment_after_cutoff(assessment, cutoff):
     return end_datetime >= cutoff if end_datetime else start_datetime >= cutoff
 
 
-def get_course_assessment_page(course_names: List[str]) -> str:
+def get_course_assessment_page(course_names: List[str], offering: Optional[Offering]) -> str:
     """
     Determines the course ids from the course names and returns the
     url to the assessment table for the provided courses
     """
-    profile_ids = map(get_course_profile_id, course_names)
+    profile_ids = map(lambda course: get_course_profile_id(course, offering=offering), course_names)
     return BASE_ASSESSMENT_URL + ",".join(profile_ids)
 
 
-def get_course_assessment(course_names, cutoff=None, assessment_url=None):
+def get_course_assessment(course_names, cutoff=None, assessment_url=None, offering: Optional[Offering] = None):
     """
     Returns all the course assessment for the given
     courses that occur after the given cutoff.
     """
     if assessment_url is None:
-        joined_assessment_url = get_course_assessment_page(course_names)
+        joined_assessment_url = get_course_assessment_page(course_names, offering)
     else:
         joined_assessment_url = assessment_url
-        http_response = get_uq_request(joined_assessment_url)
+    http_response = get_uq_request(joined_assessment_url)
     if http_response.status_code != requests.codes.ok:
         raise HttpException(joined_assessment_url, http_response.status_code)
     html = BeautifulSoup(http_response.content, "html.parser")

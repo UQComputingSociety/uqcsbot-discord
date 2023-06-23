@@ -8,6 +8,7 @@ from discord.ext import commands
 
 from uqcsbot.utils.command_utils import loading_status
 from uqcsbot.utils.uq_course_utils import (
+    Offering,
     CourseNotFoundException,
     HttpException,
     ProfileNotFoundException,
@@ -31,7 +32,10 @@ class WhatsDue(commands.Cog):
     @app_commands.command()
     @app_commands.describe(
         fulloutput="Display the full list of assessment. Defaults to False, which only "
-        + "shows assessment due from today onwards",
+        + "shows assessment due from today onwards.",
+        semester="The semester to get assessment for. Defaults to what UQCSbot believes is the current semester.",
+        campus="The campus the course is held at. Defaults to St Lucia.",
+        mode="The mode of the course. Defaults to Internal.",
         course1="Course code",
         course2="Course code",
         course3="Course code",
@@ -49,6 +53,9 @@ class WhatsDue(commands.Cog):
         course5: Optional[str],
         course6: Optional[str],
         fulloutput: Optional[bool] = False,
+        semester: Optional[Offering.SemesterType] = None,
+        campus: Optional[Offering.CampusType] = "St Lucia",
+        mode: Optional[Offering.ModeType] = "Internal",
     ):
         """
         Returns all the assessment for a given list of course codes that are scheduled to occur.
@@ -59,11 +66,12 @@ class WhatsDue(commands.Cog):
 
         possible_courses = [course1, course2, course3, course4, course5, course6]
         course_names = [c for c in possible_courses if c != None]
+        offering = Offering(semester=semester, campus=campus, mode=mode)
 
         # If full output is not specified, set the cutoff to today's date.
         cutoff = None if fulloutput else datetime.today()
         try:
-            asses_page = get_course_assessment_page(course_names)
+            asses_page = get_course_assessment_page(course_names, offering)
             assessment = get_course_assessment(course_names, cutoff, asses_page)
         except HttpException as e:
             logging.error(e.message)
