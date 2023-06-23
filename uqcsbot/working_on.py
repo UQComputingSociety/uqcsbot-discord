@@ -19,15 +19,19 @@ class WorkingOn(commands.Cog):
     async def workingon(self):
         """5pm ping for 2 lucky server members to share what they have been working on."""
         members = list(self.bot.get_all_members())
-        message = []
+        chosen_members = []
 
-        while len(message) < 2:
-            chosen = choice(members)
+        while len(chosen_members) < 2:
+            potential_member = choice(members)
+            if not potential_member.bot and potential_member not in chosen_members:
+                chosen_members.append(potential_member)
 
-            if not chosen.bot:
-                message.append(
-                    f"Hey {chosen.mention}! Tell us about something cool you are working on!"
-                )
+        message = "\n".join(
+            [
+                f"Hey {member.mention}! Tell us about something cool you are working on!"
+                for member in chosen_members
+            ]
+        )
 
         general_channel = discord.utils.get(
             self.bot.uqcs_server.channels, name=GENERAL_CHANNEL
@@ -35,7 +39,7 @@ class WorkingOn(commands.Cog):
 
         if general_channel is not None:
             await general_channel.send(
-                "\n".join(message),
+                message,
                 allowed_mentions=discord.AllowedMentions(
                     everyone=False, users=True, roles=False
                 ),
