@@ -11,8 +11,15 @@ class Haiku(commands.Cog):
     Trys to find Haiku messages in certain channels, and respond "Nice haiku" if it finds one
     """
 
-    ALLOWED_CHANNEL_NAMES = ["banter", "bot-testing",
-                             "dating", "food", "general", "memes", "yelling"]
+    ALLOWED_CHANNEL_NAMES = [
+        "banter",
+        "bot-testing",
+        "dating",
+        "food",
+        "general",
+        "memes",
+        "yelling",
+    ]
     YELLING_CHANNEL_NAME = "yelling"
 
     def __init__(self, bot: UQCSBot):
@@ -22,7 +29,7 @@ class Haiku(commands.Cog):
     async def on_ready(self):
         # As channels aren't ready when __init__() is called
         self.allowed_channels = [
-            discord.utils.get(self.bot.get_all_channels(), name=channel_name)
+            discord.utils.get(self.bot.uqcs_server.channels, name=channel_name)
             for channel_name in self.ALLOWED_CHANNEL_NAMES
         ]
 
@@ -41,7 +48,9 @@ class Haiku(commands.Cog):
 
         haiku_lines = ["> " + line for line in haiku_lines]
         haiku = "\n".join(haiku_lines)
-        if message.channel == discord.utils.get(self.bot.get_all_channels(), name=self.YELLING_CHANNEL_NAME):
+        if message.channel == discord.utils.get(
+            self.bot.uqcs_server.channels, name=self.YELLING_CHANNEL_NAME
+        ):
             await message.reply(f"Nice haiku:\n{haiku}".upper())
         else:
             await message.reply(f"Nice haiku:\n{haiku}")
@@ -49,13 +58,19 @@ class Haiku(commands.Cog):
     @app_commands.command()
     @app_commands.describe(word="Word to syllable check")
     async def syllables(self, interaction: discord.Interaction, word: str):
-        """ Checks the number of syllables in a given word. """
-        if (" " not in word):
-            pluralisation = "syllables" if _number_of_syllables_in_word(word) != 1 else "syllable"
+        """Checks the number of syllables in a given word."""
+        if " " not in word:
+            pluralisation = (
+                "syllables" if _number_of_syllables_in_word(word) != 1 else "syllable"
+            )
 
-            await interaction.response.send_message(f"{word} has {_number_of_syllables_in_word(word)} {pluralisation}.")
+            await interaction.response.send_message(
+                f"{word} has {_number_of_syllables_in_word(word)} {pluralisation}."
+            )
         else:
-            await interaction.response.send_message("I can only check one word at a time!")
+            await interaction.response.send_message(
+                "I can only check one word at a time!"
+            )
 
 
 def _find_haiku(text: str):
@@ -103,6 +118,7 @@ def _number_of_syllables_in_word(word: str):
     exceptions = {
         # Abbreviations
         "ok": 2,
+        "bbq": 3,
         "bsod": 4,
         "uq": 2,
         "uqcs": 4,
@@ -129,7 +145,12 @@ def _number_of_syllables_in_word(word: str):
         # Words ending in "eal" where "eal" consists of 2 syllables
         "boreal", "cereal", "corneal", "ethereal", "montreal",
         # Words ending in "nt" due to contraction (user forgetting punctuation)
-        "didnt", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt",
+        "didnt",
+        "doesnt",
+        "isnt",
+        "shouldnt",
+        "couldnt",
+        "wouldnt",
         # Words ending in "e" that is considered silent, when it is not.
         "maybe", "cafe", "naive", "recipe", "abalone", "marscapone", "epitome", "forte", "frappe", "eye", "acne",   
         # Words starting with "real", "read", "reap", "rear", "reed", "reel", "reign" (see prefixes_needing_one_less_syllable) that use "re" as a prefix
@@ -252,6 +273,68 @@ def _number_of_syllables_in_word(word: str):
     suffixes_to_remove_with_extra_syllable = (
         "ism",
     )
+    suffixes_to_remove_with_extra_syllable = ("ism",)
+
+    # SYLLABLE COUNTING PROCESS
+
+    number_of_syllables = 0
+
+    word = word.lower()
+    # Get rid of emotes. Stolen from https://www.freecodecamp.org/news/how-to-use-regex-to-match-emoji-including-discord-emotes/
+    word = re.sub("<a?:.+?:[0-9]+?>", " ", word)
+
+    if word.startswith(prefixes_needing_extra_syllable_before_illegal_replacement):
+        number_of_syllables += 1
+
+    # Replace "illegals" (non-alphabetic characters)
+    accents = {
+        "à": "a",
+        "á": "a",
+        "â": "a",
+        "ã": "a",
+        "ä": "a",
+        "å": "a",
+        "æ": "ae",
+        "ç": "c",
+        "è": "e",
+        "é": "e",
+        "ê": "e",
+        "ë": "e",
+        "ì": "i",
+        "í": "i",
+        "î": "i",
+        "ï": "i",
+        "ñ": "n",
+        "ò": "o",
+        "ó": "o",
+        "ô": "o",
+        "õ": "o",
+        "ö": "o",
+        "ø": "o",
+        "œ": "oe",
+        "ù": "u",
+        "ú": "u",
+        "û": "u",
+        "ü": "u",
+        "ý": "y",
+        "ÿ": "y",
+    }
+    for i, letter in enumerate(word):
+        if letter in accents:
+            unaccented_letter = accents[letter]
+            # Note that unaccented letter may be more than one character (eg "æ" goes to "ae")
+            word = word[:i] + unaccented_letter + word[i + len(unaccented_letter) :]
+    # Words ending in "'s" are similar to pluralising a word. If the word ends in "ch", "s" or "sh" then we add "es", otherwise we just add "s"
+    if word.endswith("'s"):
+        word = word.removesuffix("'s")
+        if word.endswith(("ch", "s", "sh")):
+            word += "es"
+        else:
+            word += "s"
+    word = re.sub("[^a-z]+", " ", word)
+    word = word.strip()
+    if word == "":
+        return 0
 
     # SYLLABLE COUNTING PROCESS
 
@@ -304,14 +387,18 @@ def _number_of_syllables_in_word(word: str):
     for suffix in suffixes_to_remove:
         if (
             word.endswith((suffix, suffix + "s"))
-            and _number_of_vowel_groups(word.removesuffix(suffix).removesuffix(suffix + "s")) > 0
+            and _number_of_vowel_groups(
+                word.removesuffix(suffix).removesuffix(suffix + "s")
+            ) > 0
         ):
             word = word.removesuffix(suffix).removesuffix(suffix + "s")
             number_of_syllables += _number_of_vowel_groups(suffix)
     for suffix in suffixes_to_remove_with_one_less_syllable:
         if (
             word.endswith((suffix, suffix + "s"))
-            and _number_of_vowel_groups(word.removesuffix(suffix).removesuffix(suffix + "s")) > 0
+            and _number_of_vowel_groups(
+                word.removesuffix(suffix).removesuffix(suffix + "s")
+            ) > 0
         ):
             word = word.removesuffix(suffix).removesuffix(suffix + "s")
             number_of_syllables += _number_of_vowel_groups(suffix)
@@ -319,7 +406,9 @@ def _number_of_syllables_in_word(word: str):
     for suffix in suffixes_to_remove_with_extra_syllable:
         if (
             word.endswith((suffix, suffix + "s"))
-            and _number_of_vowel_groups(word.removesuffix(suffix).removesuffix(suffix + "s")) > 0
+            and _number_of_vowel_groups(
+                word.removesuffix(suffix).removesuffix(suffix + "s")
+            ) > 0
         ):
             word = word.removesuffix(suffix).removesuffix(suffix + "s")
             number_of_syllables += _number_of_vowel_groups(suffix)

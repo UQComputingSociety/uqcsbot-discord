@@ -1,8 +1,5 @@
 import pytest
-from uqcsbot.haiku import (
-    _number_of_syllables_in_word,
-    _find_haiku
-)
+from uqcsbot.haiku import _number_of_syllables_in_word, _find_haiku
 
 
 def test_number_of_syllables_in_word():
@@ -307,7 +304,7 @@ def test_number_of_syllables_in_word():
         "algorithm": 4,
         "the": 1,
     }
-    for (word, expected_syllable_count) in test_cases.items():
+    for word, expected_syllable_count in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
 
 

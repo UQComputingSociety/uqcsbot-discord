@@ -11,44 +11,91 @@ class Yelling(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_message(self, msg: discord.Message):
-        """ Detects if a user is not yelling in #yelling and responds accordingly """
-        if not self.bot.user or not isinstance(msg.channel, discord.TextChannel) or \
-                msg.author.id == self.bot.user.id or msg.channel.name != self.CHANNEL_NAME:
+    async def on_message_edit(self, old: discord.Message, new: discord.Message):
+        """Detects if a message was edited, and call them out for it."""
+        if (
+            not self.bot.user
+            or not isinstance(new.channel, discord.TextChannel)
+            or new.author.id == self.bot.user.id
+            or new.channel.name != self.CHANNEL_NAME
+            or old.content == new.content
+        ):
             return
 
+        text = self.clean_text(new.content)
+
+        if self.contains_lowercase(text):
+            await new.reply(self.generate_response(text))
+
+    @commands.Cog.listener()
+    async def on_message(self, msg: discord.Message):
+        """Detects if a user is not yelling in #yelling and responds accordingly"""
+        if (
+            not self.bot.user
+            or not isinstance(msg.channel, discord.TextChannel)
+            or msg.author.id == self.bot.user.id
+            or msg.channel.name != self.CHANNEL_NAME
+        ):
+            return
+
+        text = self.clean_text(msg.content)
+
+        # check if minuscule in message, and if so, post response
+        if self.contains_lowercase(text):
+            await msg.reply(self.generate_response(text))
+
+    def clean_text(self, message: str) -> str:
+        """Cleans text of links, emoji, and any character escaping."""
+
         # ignore emoji and links
-        text = re.sub(r":[\w\-\+\~]+:", lambda m: m.group(0).upper(), msg.content, flags=re.UNICODE)
+        text = re.sub(
+            r":[\w\-\+\~]+:",
+            lambda m: m.group(0).upper(),
+            message,
+            flags=re.UNICODE,
+        )
 
         # slightly more permissive version of discord's url regex, matches absolutely anything between http(s):// and whitespace
-        text = re.sub(r"https?:\/\/[^\s]+", lambda m: m.group(0).upper(), text, flags=re.UNICODE)
+        text = re.sub(
+            r"https?:\/\/[^\s]+", lambda m: m.group(0).upper(), text, flags=re.UNICODE
+        )
 
         text = text.replace("&gt;", ">").replace("&lt;", "<").replace("&amp;", "&")
 
-        response = choice(["WHAT’S THAT‽",
-                   "SPEAK UP!",
-                   "STOP WHISPERING!",
-                   "I CAN’T HEAR YOU!",
-                   "I THOUGHT I HEARD SOMETHING!",
-                   "I CAN’T UNDERSTAND YOU WHEN YOU MUMBLE!",
-                   "YOU’RE GONNA NEED TO BE LOUDER!",
-                   "WHY ARE YOU SO QUIET‽",
-                   "QUIET PEOPLE SHOULD BE DRAGGED OUT INTO THE STREET AND SHOT!",
-                   "PLEASE USE YOUR OUTSIDE VOICE!",
-                   "IT’S ON THE LEFT OF THE “A” KEY!",
-                   "FORMER PRESIDENT THEODORE ROOSEVELT’S FOREIGN POLICY IS A SHAM!",
-                   "#YELLING IS FOR EXTERNAL SCREAMING!",
-                   f"DID YOU SAY \n>>>{self.mutate_minuscule(text)}".upper(),
-                   f"WHAT IS THE MEANING OF THIS ARCANE SYMBOL “{self.random_minuscule(text)}”‽"
-                   + " I RECOGNISE IT NOT!"]
-                  # the following is a reference to both "The Wicker Man" and "Nethack"
-                  + (['OH, NO! NOT THE `a`S! NOT THE `a`S! AAAAAHHHHH!']
-                     if 'a' in text else []))
+        return text
 
-        # check if minuscule in message, and if so, post response
-        if any(char.islower() for char in text):
-            await msg.reply(response)
+    def contains_lowercase(self, message: str) -> bool:
+        """Checks if message contains any lowercase characters"""
+        return any(char.islower() for char in message)
 
+    def generate_response(self, text: str) -> str:
+        """Gives a random response for the bot to send back."""
+        return choice(
+            [
+                "WHAT’S THAT‽",
+                "SPEAK UP!",
+                "STOP WHISPERING!",
+                "I CAN’T HEAR YOU!",
+                "I THOUGHT I HEARD SOMETHING!",
+                "I CAN’T UNDERSTAND YOU WHEN YOU MUMBLE!",
+                "YOU’RE GONNA NEED TO BE LOUDER!",
+                "WHY ARE YOU SO QUIET‽",
+                "QUIET PEOPLE SHOULD BE DRAGGED OUT INTO THE STREET AND SHOT!",
+                "PLEASE USE YOUR OUTSIDE VOICE!",
+                "IT’S ON THE LEFT OF THE “A” KEY!",
+                "FORMER PRESIDENT THEODORE ROOSEVELT’S FOREIGN POLICY IS A SHAM!",
+                "#YELLING IS FOR EXTERNAL SCREAMING!",
+                f"DID YOU SAY \n>>>{self.mutate_minuscule(text)}".upper(),
+                f"WHAT IS THE MEANING OF THIS ARCANE SYMBOL “{self.random_minuscule(text)}”‽"
+                + " I RECOGNISE IT NOT!",
+            ]
+            # the following is a reference to both "The Wicker Man" and "Nethack"
+            + (
+                ["OH, NO! NOT THE `a`S! NOT THE `a`S! AAAAAHHHHH!"]
+                if "a" in text
+                else []
+            )
+        )
 
     def mutate_minuscule(self, message: str) -> str:
         """
@@ -61,12 +108,11 @@ class Yelling(commands.Cog):
         result = ""
         for char in message:
             if char.islower() and random() < 0.4:
-                result += choice('abcdefghijklmnopqrstuvwxyz')
+                result += choice("abcdefghijklmnopqrstuvwxyz")
             else:
                 result += char
 
         return result
-
 
     def random_minuscule(self, message: str) -> str:
         """
@@ -80,6 +126,6 @@ class Yelling(commands.Cog):
                 possible += char
         return choice(possible) if possible else ""
 
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Yelling(bot))
-
