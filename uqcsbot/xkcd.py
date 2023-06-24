@@ -30,11 +30,12 @@ class Xkcd(commands.Cog):
         """
         Returns a random xkcd comic or the comic with the given number.
         """
+        await interaction.response.defer(thinking=True)
 
         # If number is given, check if its a valid number
         if number is not None and number <= 0:
-            await interaction.response.send_message(
-                "Invalid xkcd number (must be positive)"
+            await interaction.edit_original_response(
+                content="Invalid xkcd number (must be positive)"
             )
             return
 
@@ -50,10 +51,14 @@ class Xkcd(commands.Cog):
 
         # Check if the xkcd data failed to fetch
         if xkcd_num == XKCD_FETCH_ERROR[0]:
-            await interaction.response.send_message("Failed to fetch xkcd page")
+            await interaction.edit_original_response(
+                    content="Failed to fetch xkcd page"
+            )
             return
         elif xkcd_num == XKCD_PARSE_ERROR[0]:
-            await interaction.response.send_message("Failed to parse xkcd page data")
+            await interaction.edit_original_response(
+                    content="Failed to parse xkcd page data"
+            )
             return
 
         # Create a custom embed for the xkcd comic
@@ -65,7 +70,7 @@ class Xkcd(commands.Cog):
         message.set_footer(text="xkcd.com")
 
         # Send it!
-        await interaction.response.send_message(embed=message)
+        await interaction.edit_original_response(embed=message)
 
     @staticmethod
     def get_xkcd_data(url: str) -> (int, str, str, str):
