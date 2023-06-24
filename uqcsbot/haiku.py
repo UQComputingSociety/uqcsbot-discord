@@ -131,16 +131,22 @@ def _number_of_syllables_in_word(word: str):
         # Words ending in "nt" due to contraction (user forgetting punctuation)
         "didnt", "doesnt", "isnt", "shouldnt", "couldnt", "wouldnt",
         # Words ending in "e" that is considered silent, when it is not.
-        "maybe", "cafe", "naive", "recipe", "abalone", "marscapone", "epitome",
+        "maybe", "cafe", "naive", "recipe", "abalone", "marscapone", "epitome", "forte", "frappe", "eye", "acne",   
         # Words starting with "real", "read", "reap", "rear", "reed", "reel", "reign" (see prefixes_needing_one_less_syllable) that use "re" as a prefix
         # Note that "realit" covers all words with root "reality"
         "realign", "realit", "reallocat", "readdres", "readjust", "reapp", "rearm", "rearrang", "rearrest", "reeducat", "reelect", "reignit", 
+        # Words that have "ea" pronounced as two syllables
+        "area",
         # Words that have "ee" pronounced as two syllables
         "career",
-        # Words that have "ie" pronounced as two syllables
-        "audience", "plier", "societ", "quiet",
+        # Words that have "eo" pronounced as two syllables
+        "video",
         # Words that have "ia" pronounced as two syllables
-        "pliant",
+        "pliant", "media", "association", "via", "india", "variat",
+        # Words that have "ie" pronounced as two syllables
+        "audience", "plier", "societ", "quiet", "experience",
+        # Words that have "io" pronounced as two syllables
+        "audio", "radio", "period", "mario",
         # Words that have "oe" pronounced as two syllables
         "poet",
         # Words that have "oi" pronounced as two syllables
@@ -149,10 +155,14 @@ def _number_of_syllables_in_word(word: str):
         "zoology",
         # Words that have "ue" pronounced as two syllables
         "silhouett",
+        # Words that have "ua" pronounced as two syllables
+        "punctuat",
         # Words that have "yo" pronounced as two syllables
-        "everyone",
+        "everyone", "anyone",
         # Words ending in "ed" that use "ed" as a syllable
         "biped", "daybed", "naked", "parallelepiped", "wretched",
+        # Words that have "ism" as a suffix despite having no other vowels
+        "schism",
     )
     # These are prefixes that contain "illegal" characters what are replaced (such as "é")
     prefixes_needing_extra_syllable_before_illegal_replacement = (
@@ -169,7 +179,7 @@ def _number_of_syllables_in_word(word: str):
 
         # Compound words with a silent "e" in the middle.
         # Note that "something" with the suffix "ing" removed
-        "facebook", "forefather", "lovecraft", "someth", "therefore", "whitespace", "timezone",
+        "facebook", "forefather", "lovecraft", "someth", "therefore", "whitespace", "timezone", "livestream", "pikelet", "safety",
         # Words starting with "triX" where "X" is a vowel that aren't using "tri" as a prefix
         # Note that "s" is removed for "tries, becoming "trie"
         "tried", "trie", 
@@ -189,23 +199,29 @@ def _number_of_syllables_in_word(word: str):
         "le",
         # If not part of the "cian" or "tian" suffixes, "ian" often is pronounced as 2 syllables. For example, "Australian" (compared to "politician").
         "ian",
-        # Usually, the suffix "ious" is one syllable, but if it is preceeded by "b", "n", "p" or "r" it is two syllables. For example, "anxious" has 2 syllables, but "amphibious" has 4 syllables. Likewise, consider "harmonious", "copious" and "glorious". Note: "s" has already been removed.
-        "biou", "niou", "piou", "riou",
+        # Usually, the suffix "ious" is one syllable, but if it is preceeded by "b", "n", "p", "r", "v" it is two syllables. For example, "anxious" has 2 syllables, but "amphibious" has 4 syllables. Likewise, consider "harmonious", "copious" and "glorious". Note: "s" has already been removed.
+        "biou", "niou", "piou", "riou", "viou",
         # Usually, the suffix "ial" is one syllable, but if it is preceeded by "b", "d", "l", "m", "n", "r", "v" or "x" it is two syllables. For example, "initial" has 3 syllables, but "microbial" has 4 syllables. Likewise, consider "radial", "familial", "polynomial", "millennial", "aerial", "trivial" and "axial".
         "bial", "dial", "lial", "mial", "nial", "rial", "vial", "xial",
         # Words ending in "Xate" where X is a vowel, such as "graduate", often have "ate" as a separate syllable. The only exception is words ending in "quate" such as "adequate".
-        "aate", "eate", "iate", "oate", "uate",
+        "aate", "eate", "iate", "oate", "uate", "aated", "eated", "iated", "oated", "uated",
         # The suffix "ual" consists of two syllables such as "contextual". (Enter debate about "actual", "casual" and "usual". We will assume all of these have 3 syllables. Note that "actually" also has 3 syllables by this classification (which matches google's recommended pronunciation). We also use the British pronunciation of "dual", which has 2 syllables.) We exclude "qual" for words such as "equal".
         "ual",
         # The suffix "rior" contains two syllables in most words. For example "posterior" and "superior".
         "rior",
         # The suffix "phe" is pronounced as a syllable, for example "apostrophe".
         "phe",
+        # Words ending in "tre" have it pronounced as "ter", for example "metre" and "centre"
+        "tre",
+        # Words ending in "ayer" have it pronounced as two syllables, for example "player" and "slayer"
+        "ayer",
+        # Words ending in "thm" have it pronounced as a syllable, for example "rhythm" and "algorithm"
+        "thm",
     )
 
     suffixes_needing_one_less_syllable = (
         # Usually words ending in "le" have "le" as a syllable, but this does not occur if a vowel is before the "e", as the "e" acts to change the other vowels sound. For example, consider "whale", "clientele", "pile", "hole" and "capsule"
-        "ale", "ele", "ile", "ole", "ule",
+        "ale", "ele", "ile", "ole", "ule", "yle",
         # The "cian" or "tian" suffixes have "ian" pronounced as 1 syllables. For example, "politician" (compared to "Australian").
         "cian", "tian",
         # Words ending in "Xate" where X is a vowel where "Xate" is a single syllable, for example "adequate".
@@ -221,7 +237,8 @@ def _number_of_syllables_in_word(word: str):
         # Words ending in "Xle" where "X" is a constant but with a silent "e" at the end
         "aisle", "isle",
         # Words containing "ue" at the end acting as a silent "e"
-        "tongue",
+        "tongue", "meringue", "merengue", "vague", 
+
     )
 
     # REMOVED SUFFIXES
@@ -316,11 +333,6 @@ def _number_of_syllables_in_word(word: str):
         number_of_syllables += 1
     word = word.removesuffix("s")
 
-    # Any exceptions to this need to be put in the exceptions dictionary
-    if len(word) <= 3:
-        # Root words of 3 letters or less tend to have only 1 syllable. Any extra vowel groups within the root word need to be disregarded. For example "ageless" turns into "age" which only has 1 syllable, so 3 - 2 + 1 = 2 syllables in total. Similarly "eyes" turns into "eye" has 2 - 2 + 1 = 1 syllables in total, and "manly" has 2 - 1 + 1 = 2 syllables in total.
-        return number_of_syllables - _number_of_vowel_groups(word) + 1
-
     # GENERAL SUFFIX RULES
     # Do not move these to the suffixes tuples, as they often are contained within larger suffixes (contained within the suffix tuple; at most one suffix tuple rule applies, so we should avoid overlap)
     # Words like "flipped" and "asked" don't have a syllable for "ed"
@@ -335,6 +347,7 @@ def _number_of_syllables_in_word(word: str):
     if (
         word.endswith("e")
         and not word.endswith(("ae", "ee", "ie", "oe", "ue"))
+        and _number_of_vowel_groups(word.removesuffix("e")) > 0
     ):
         number_of_syllables -= 1
 
