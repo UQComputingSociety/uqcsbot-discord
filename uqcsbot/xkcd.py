@@ -78,7 +78,8 @@ class Xkcd(commands.Cog):
         Returns the xkcd data from the given url.
 
         :param url: The url to fetch the xkcd data from
-        :return: A tuple containing the xkcd number, title, description and image url
+        :return: A tuple containing the xkcd number, title,
+                 description and image url
         """
 
         # Get the xkcd page
@@ -106,7 +107,8 @@ class Xkcd(commands.Cog):
             re.MULTILINE,
         )
         img_match = re.search(
-            r'(?<=Image URL \(for hotlinking\/embedding\): <a href= ")(.*?)(?=">)', data
+            (r'(?<=Image URL \(for hotlinking\/embedding\): <a href= ")'
+             r'(.*?)(?=">)'), data
         )
 
         # If any of the regexes failed, return an error
