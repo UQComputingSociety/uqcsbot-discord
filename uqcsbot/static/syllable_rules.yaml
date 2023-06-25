@@ -1,4 +1,5 @@
 # Try to keep these to a minimum by writing new rules, especially explicit exceptions.
+# A YAML file was chosen over JSON in order to have comments, as many of these require some explanation
 
 exceptions: {
     # Abbreviations
@@ -9,6 +10,7 @@ exceptions: {
     "uqcs": 4,
 }
 
+# Letters to be replaced
 accents: {
     "à": "a",
     "á": "a",

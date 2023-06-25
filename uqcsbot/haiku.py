@@ -105,6 +105,7 @@ def _find_haiku(text: str):
     """
     Finds a haiku and a related "probability" that something is a haiku.
     The "probability" is a rough estimate based on the amount of punctuation and words contained.
+    Note that this function gives probabilities of 0 for many messages that might be a haiku (if the bot miscounts the syllables).
     """
     probability: float = HAIKU_BASE_PROBABILITY
     syllable_count: int = 0
