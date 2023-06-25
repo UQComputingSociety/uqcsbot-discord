@@ -12,14 +12,20 @@ class Latex(commands.Cog):
     @app_commands.command(description="Renders the given LaTeX")
     @app_commands.describe(input="LaTeX to render")
     async def latex(self, interaction: discord.Interaction, input: str):
-        if len(input) == 0:
-            return
+        # since bot prohibits empty prompts, checking len==0 seems redundant
+        await interaction.response.defer(thinking=True)
 
-        url = f"https://latex.codecogs.com/png.image?%5Cdpi%7B200%7D%5Cbg%7B36393f%7D%5Cfg%7Bwhite%7D{quote(input)}"
-
-        await interaction.response.send_message(
-            f'LaTeX render for "{input}"\n{url}',
+        url = (
+            "https://latex.codecogs.com/png.image?"
+            "%5Cdpi%7B200%7D%5Cbg%7B36393f%7D%5Cfg%7Bwhite%7D"
+            f"{quote(input)}"
         )
+        embed = discord.Embed(
+            colour=discord.Colour.blue(),
+            title=f'Latex render for "{input}"',
+        ).set_image(url=f"{url}")
+
+        await interaction.edit_original_response(embed=embed)
 
 
 async def setup(bot: commands.Bot):

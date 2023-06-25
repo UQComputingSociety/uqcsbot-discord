@@ -44,7 +44,6 @@ async def main():
         "advent",
         "basic",
         "cat",
-        "channels",
         "cowsay",
         "error_handler",
         "events",

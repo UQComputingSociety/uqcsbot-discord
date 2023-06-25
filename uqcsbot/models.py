@@ -1,4 +1,4 @@
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -13,18 +13,8 @@ from sqlalchemy import (
 Base = declarative_base()
 
 
-class Channel(Base):
-    __tablename__ = "channels"
-
-    id = Column("id", BigInteger, primary_key=True, nullable=False)
-    name = Column("name", String, nullable=False)
-    joinable = Column("joinable", Boolean)
-    emoji = Column("emoji", String, nullable=False)
-
-    def __repr__(self):
-        return f"Channel({self.id}, {self.name}, {self.joinable}, {self.emoji})"
-
-
+# Used for linking a message to a bot function.
+# Previously used for the channel cog, currently unused.
 class Message(Base):
     __tablename__ = "messages"
 
@@ -66,5 +56,11 @@ class Reminders(Base):
 class Starboard(Base):
     __tablename__ = "starboard"
 
-    recv = Column("recv", BigInteger, primary_key=True, nullable=False)
-    sent = Column("sent", BigInteger, nullable=False, unique=True)
+    # composite key on recv, sent.
+
+    # recv == null implies deleted recv message.
+    # recv_location == null implies deleted recv channel. recv should also be null.
+    # sent == null implies blacklisted recv message.
+    recv = Column("recv", BigInteger, primary_key=True, nullable=True)
+    recv_location = Column("recv_location", BigInteger, nullable=True, unique=False)
+    sent = Column("sent", BigInteger, primary_key=True, nullable=True, unique=True)

@@ -30,8 +30,10 @@ class VoteyThumbs(commands.Cog):
         self, interaction: discord.Interaction, message: discord.Message
     ):
         """Starts a 👍 👎 vote."""
+        await interaction.response.defer(ephemeral=True)
+
         await self.common_react(message)
-        await interaction.response.send_message("Vote away!", ephemeral=True)
+        await interaction.edit_original_response(content="Vote away!")
 
     @app_commands.command(name="voteythumbs")
     @app_commands.describe(question="The question that shall be voted upon")
@@ -39,10 +41,12 @@ class VoteyThumbs(commands.Cog):
         self, interaction: discord.Interaction, question: str
     ):
         """Starts a 👍 👎 vote."""
-        await interaction.response.send_message(question)
+        await interaction.response.defer()
         message = await interaction.original_response()
 
         await self.common_react(message)
+
+        await interaction.edit_original_response(content=question)
 
 
 async def setup(bot: commands.Bot):
