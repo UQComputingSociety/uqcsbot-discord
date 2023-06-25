@@ -1,7 +1,7 @@
 import re
 from typing import Final
 from yaml import load, Loader
-import logging
+import random
 
 import discord
 from discord import app_commands
@@ -20,15 +20,29 @@ ALLOWED_CHANNEL_NAMES: Final[list[str]] = [
     "yelling",
 ]
 YELLING_CHANNEL_NAME: Final[str] = "yelling"
+HAIKU_BASE_PROBABILITY: float = 0.5
+# How much "more likely" (as determined by _increase_probability) a haiku is if it has punctuation at the end of a line.
+HAIKU_PUNCTUATION_PROBABILITY_INCREASE: float = 1.6
+# Words that increase the probability of a haiku, and the amount they increase the probability by (as determined by _increase_probability)
+HAIKU_FAVOURITE_WORD_LIST: dict[str, float] = {
+    "haiku": 6,
+    "haikus": 6,
+    "syllable": 4,
+    "word": 1.6,
+    "words": 1.6,
+    "poem": 2,
+    "poems": 2,
+}
 
 SyllableRulesType = dict[str, dict[str, int] | tuple[str, ...]]
 SYLLABLE_RULES: SyllableRulesType = {}
-with open(SYLLABLE_RULES_PATH, 'r', encoding='utf-8') as syllable_rules_file:
+with open(SYLLABLE_RULES_PATH, "r", encoding="utf-8") as syllable_rules_file:
     SYLLABLE_RULES = load(syllable_rules_file, Loader=Loader)
 # beginswith and endswith both require tuples, so turn all lists into tuples
 for rule_name, rule_specification in SYLLABLE_RULES.items():
     if isinstance(rule_specification, list):
         SYLLABLE_RULES[rule_name] = tuple(rule_specification)
+
 
 class Haiku(commands.Cog):
     """
@@ -56,8 +70,8 @@ class Haiku(commands.Cog):
         ):
             return
 
-        haiku_lines = _find_haiku(message.content)
-        if not haiku_lines:
+        haiku_lines, probability_of_showing_haiku = _find_haiku(message.content)
+        if not haiku_lines or random.random() > probability_of_showing_haiku:
             return
 
         haiku_lines = ["> " + line for line in haiku_lines]
@@ -92,32 +106,61 @@ def _find_haiku(text: str):
     Finds a haiku and a related "probability" that something is a haiku.
     The "probability" is a rough estimate based on the amount of punctuation and words contained.
     """
-    syllable_count = 0
+    probability: float = HAIKU_BASE_PROBABILITY
+    syllable_count: int = 0
     lines: list[str] = []
     current_line: list[str] = []
+    punctuation_at_end_of_previous_line = True  # Initially true so that any punctuation at the beginning does not increase the probability.
     haiku_syllable_count = [5, 7, 5]
+
+    def _increased_probability(probability: float, index: float):
+        """
+        Calculates the probability of at least 1 success in index Bernoulli trials with given probability.
+        """
+        return 1 - (1 - probability) ** index
+
     for word in text.split():
         number_of_syllables = _number_of_syllables_in_word(word)
 
         # Remove all space-separated punctuation and emotes
         if number_of_syllables == 0:
+            # If the last or first "word" is actually punctuation, keep it and increase the chance of it being a haiku
+            if not current_line:
+                if not punctuation_at_end_of_previous_line:
+                    lines[-1] = lines[-1] + " " + word
+                    punctuation_at_end_of_previous_line = True
+                probability = _increased_probability(
+                    probability, HAIKU_PUNCTUATION_PROBABILITY_INCREASE
+                )
             continue
 
         if len(lines) == 3:
-            return False
+            return False, 0
 
         current_line.append(word)
+        if word.lower() in HAIKU_FAVOURITE_WORD_LIST:
+            probability = _increased_probability(
+                probability, HAIKU_FAVOURITE_WORD_LIST[word.lower()]
+            )
+
         syllable_count += number_of_syllables
         if syllable_count > haiku_syllable_count[len(lines)]:
-            return False
+            return False, 0
         if syllable_count == haiku_syllable_count[len(lines)]:
+            # If the last character is punctuation, increase the chance of it being a haiku
+            if not word[-1].isalnum():
+                probability = _increased_probability(
+                    probability, HAIKU_PUNCTUATION_PROBABILITY_INCREASE
+                )
+
             lines.append(" ".join(current_line))
             current_line = []
             syllable_count = 0
+            punctuation_at_end_of_previous_line = False
 
     if len(lines) != 3:
-        return False
-    return lines
+        return False, 0
+    return lines, probability
 
 
 def _number_of_vowel_groups(word: str):
@@ -142,7 +185,9 @@ def _number_of_syllables_in_word(word: str):
     # Get rid of emotes. Stolen from https://www.freecodecamp.org/news/how-to-use-regex-to-match-emoji-including-discord-emotes/
     word = re.sub("<a?:.+?:[0-9]+?>", " ", word)
 
-    if word.startswith(SYLLABLE_RULES["prefixes_needing_extra_syllable_before_illegal_replacement"]):
+    if word.startswith(
+        SYLLABLE_RULES["prefixes_needing_extra_syllable_before_illegal_replacement"]
+    ):
         number_of_syllables += 1
 
     # Replace "illegals" (non-alphabetic characters)

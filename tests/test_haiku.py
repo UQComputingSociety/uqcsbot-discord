@@ -345,6 +345,8 @@ def test_find_haiku():
         "socially inept people? in MY computer science discord server", # miri#2222
     ]
     for haiku in true_cases:
-        assert _find_haiku(haiku)
+        is_haiku, _ = _find_haiku(haiku)
+        assert is_haiku
     for text in false_cases:
-        assert not _find_haiku(text)
+        is_haiku, _ = _find_haiku(text)
+        assert not is_haiku
