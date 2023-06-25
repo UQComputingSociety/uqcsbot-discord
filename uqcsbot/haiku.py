@@ -8,6 +8,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
+from uqcsbot.utils.err_log_utils import FatalErrorWithLog
 
 SYLLABLE_RULES_PATH: Final[str] = "uqcsbot/static/syllable_rules.yaml"
 ALLOWED_CHANNEL_NAMES: Final[list[str]] = [
@@ -51,7 +52,11 @@ class Haiku(commands.Cog):
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
-        # TODO close cog if syllable rules is empty
+        if SYLLABLE_RULES == {}:
+            raise FatalErrorWithLog(
+                bot,
+                f"The syllable rules (used for haiku detection) could not be found in {SYLLABLE_RULES_PATH}. Haiku detection will not work.",
+            )
 
     @commands.Cog.listener()
     async def on_ready(self):
