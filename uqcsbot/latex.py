@@ -15,14 +15,15 @@ class Latex(commands.Cog):
         # since bot prohibits empty prompts, checking len==0 seems redundant
         await interaction.response.defer(thinking=True)
 
-        url = ("https://latex.codecogs.com/png.image?"
-               "%5Cdpi%7B200%7D%5Cbg%7B36393f%7D%5Cfg%7Bwhite%7D"
-               f"{quote(input)}")
-        embed = (discord.Embed(
-                colour=discord.Colour.blue(),
-                title=f"Latex render for \"{input}\"",
-            ).set_image(url=f"{url}")
+        url = (
+            "https://latex.codecogs.com/png.image?"
+            "%5Cdpi%7B200%7D%5Cbg%7B36393f%7D%5Cfg%7Bwhite%7D"
+            f"{quote(input)}"
         )
+        embed = discord.Embed(
+            colour=discord.Colour.blue(),
+            title=f'Latex render for "{input}"',
+        ).set_image(url=f"{url}")
 
         await interaction.edit_original_response(embed=embed)
 

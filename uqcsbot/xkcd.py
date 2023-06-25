@@ -52,12 +52,12 @@ class Xkcd(commands.Cog):
         # Check if the xkcd data failed to fetch
         if xkcd_num == XKCD_FETCH_ERROR[0]:
             await interaction.edit_original_response(
-                    content="Failed to fetch xkcd page"
+                content="Failed to fetch xkcd page"
             )
             return
         elif xkcd_num == XKCD_PARSE_ERROR[0]:
             await interaction.edit_original_response(
-                    content="Failed to parse xkcd page data"
+                content="Failed to parse xkcd page data"
             )
             return
 
@@ -107,8 +107,11 @@ class Xkcd(commands.Cog):
             re.MULTILINE,
         )
         img_match = re.search(
-            (r'(?<=Image URL \(for hotlinking\/embedding\): <a href= ")'
-             r'(.*?)(?=">)'), data
+            (
+                r'(?<=Image URL \(for hotlinking\/embedding\): <a href= ")'
+                r'(.*?)(?=">)'
+            ),
+            data,
         )
 
         # If any of the regexes failed, return an error
