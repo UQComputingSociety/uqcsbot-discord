@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Any
 
 import discord
 from discord import app_commands
@@ -98,8 +98,7 @@ class Basic(commands.Cog):
             + self.format_repo_message(list(REPOS.keys()))
         )
 
-    @repo_group.command(name="find")
-    @app_commands.describe(name="Name of the repo to find")
+    @repo_group.command(name="find", description="Name of the repo to find")
     async def repo_find(self, interaction: discord.Interaction, name: str):
         """Finds a specific UQCS GitHub repository"""
         await interaction.response.send_message(
