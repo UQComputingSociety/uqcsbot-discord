@@ -11,6 +11,7 @@ from uqcsbot.bot import UQCSBot
 
 SemesterType = Optional[Literal["Sem 1", "Sem 2", "Summer"]]
 
+
 class PastExams(commands.Cog):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
@@ -22,7 +23,14 @@ class PastExams(commands.Cog):
         semester="The semester to find exams for. Leave blank for all semesters.",
         random_exam="Whether to select a single random exam.",
     )
-    async def pastexams(self, interaction: discord.Interaction, course_code: str, year: Optional[int] = None, semester: SemesterType = None, random_exam: bool = False):
+    async def pastexams(
+        self,
+        interaction: discord.Interaction,
+        course_code: str,
+        year: Optional[int] = None,
+        semester: SemesterType = None,
+        random_exam: bool = False,
+    ):
         """
         Returns a list of past exams, or, if specified, a past exam for a specific year.
         """
@@ -43,10 +51,11 @@ class PastExams(commands.Cog):
                 content=f"No past exams could be found for {course_code}."
             )
             return
-        
-        logging.warning(f"Past exams: {[exam.year for exam in past_exams]}")
+
         if semester:
-            past_exams = list(filter(lambda exam: exam.semester == semester, past_exams))
+            past_exams = list(
+                filter(lambda exam: exam.semester == semester, past_exams)
+            )
         if year:
             past_exams = list(filter(lambda exam: exam.year == str(year), past_exams))
 
@@ -55,7 +64,7 @@ class PastExams(commands.Cog):
                 content=f"No past exams could be found for {course_code} matching your specifications."
             )
             return
-        
+
         if random_exam:
             past_exams = [choice(past_exams)]
 
@@ -65,11 +74,12 @@ class PastExams(commands.Cog):
                 content=f"Past exam for {course_code.upper()}:\n`{exam.year} {exam.semester}`: {exam.link}"
             )
             return
-        
+
         message = f"Past exams for {course_code.upper()}:\n"
         for exam in past_exams:
             message += f"`{exam.year} {exam.semester}`: <{exam.link}>\n"
         await interaction.edit_original_response(content=message)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(PastExams(bot))
