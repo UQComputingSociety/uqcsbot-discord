@@ -56,6 +56,7 @@ async def main():
         "latex",
         "member_counter",
         "minecraft",
+        "phonetics",
         "remindme",
         "snailrace",
         "starboard",
