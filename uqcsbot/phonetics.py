@@ -167,9 +167,17 @@ class Phonetics(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(description="Converts X-SAMPA to IPA")
+    @app_commands.command()
     @app_commands.describe(input="X-SAMPA to convert")
     async def xsampa(self, interaction: discord.Interaction, input: str):
+        """
+        Converts X-SAMPA to IPA
+
+        For example: /xsampa j}kj}sI(j)EsbQt
+
+            `j}kj}sI(j)EsbQt`
+            jʉkjʉsɪ(j)ɛsbɒt
+        """
         remaining = input
         output = ""
         while len(remaining) > 0:
