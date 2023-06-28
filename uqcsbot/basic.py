@@ -1,4 +1,5 @@
 from typing import List, Any
+from mypy_extensions import VarArg, KwArg
 
 import discord
 from discord import app_commands

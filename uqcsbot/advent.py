@@ -338,7 +338,7 @@ class Advent(commands.Cog):
         def usage_error(message, *args, **kwargs):
             raise ValueError(message)
 
-        parser.error = usage_error  # type: ignore
+        parser.error = usage_error
 
         args = parser.parse_args(argv)
 

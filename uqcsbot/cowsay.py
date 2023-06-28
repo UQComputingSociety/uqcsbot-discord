@@ -140,7 +140,7 @@ class Cowsay(commands.Cog):
         """
 
         # Set the tongue if the cow is dead or if the tongue is set to True.
-        tongue = "U" if tongue or mood == "Dead" else " "
+        tongue_out = "U" if tongue or mood == "Dead" else " "
 
         # Set the bubble connection based on whether the cow is thinking or
         # speaking.
@@ -157,7 +157,7 @@ class Cowsay(commands.Cog):
         cow = f"        {bubble_connect}   ^__^\n"
         cow += f"         {bubble_connect}  ({cow_eyes})\_______\n"
         cow += f"            (__)\       )\/\ \n"
-        cow += f"             {tongue}  ||----w |\n"
+        cow += f"             {tongue_out}  ||----w |\n"
         cow += f"                ||     ||\n"
         return cow
 
@@ -242,7 +242,7 @@ class Cowsay(commands.Cog):
             # As requested by the audience, you can manually break lines by
             # adding "\n" anywhere in the message and it will be respected.
             if "\\n" in word:
-                parts: str = word.split("\\n", 1)
+                parts: List[str] = word.split("\\n", 1)
 
                 # The `\n` is by itself, so start a new line.
                 if parts[0] == "" and parts[1] == "":

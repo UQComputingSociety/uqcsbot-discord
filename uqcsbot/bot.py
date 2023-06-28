@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List
+from typing import List, Optional
 import discord
 from discord.ext import commands
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -35,9 +35,9 @@ class UQCSBot(commands.Bot):
         self,
         title: str,
         colour: discord.Colour,
-        description: str = None,
-        footer: str = None,
-        fields: List[tuple] = None,
+        description: Optional[str] = None,
+        footer: Optional[str] = None,
+        fields: Optional[List[tuple]] = None,
         fields_inline: bool = True,
     ):
         """Sends an alert to the admin channel for logging."""
