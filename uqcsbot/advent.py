@@ -549,8 +549,10 @@ async def setup(bot: UQCSBot):
     if os.environ.get("AOC_SESSION_ID") is not None:
         SESSION_ID = os.environ.get("AOC_SESSION_ID")
     else:
-        raise FatalErrorWithLog(bot, "Unable to find AoC session ID. Not loading advent cog.")
-    
+        raise FatalErrorWithLog(
+            bot, "Unable to find AoC session ID. Not loading advent cog."
+        )
+
     cog = Advent(bot)
-    
+
     await bot.add_cog(cog)
