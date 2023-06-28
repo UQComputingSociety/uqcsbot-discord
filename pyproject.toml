@@ -38,4 +38,31 @@ requires = ["poetry-core>=1.3.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pyright]
-strict = ['**']
+strict = ["**"]
+exclude = [
+    "**/__main__.py",
+    "**/advent.py",
+    "**/bot.py",
+    "**/cowsay.py",
+    "**/error_handler.py",
+    "**/events.py",
+    "**/gaming.py",
+    "**/haiku.py",
+    "**/holidays.py",
+    "**/hoogle.py",
+    "**/jobs_bulletin.py",
+    "**/member_counter.py",
+    "**/minecraft.py",
+    "**/remindme.py",
+    "**/snailrace.py",
+    "**/starboard.py",
+    "**/text.py",
+    "**/uptime.py",
+    "**/whatsdue.py",
+    "**/working_on.py",
+    "**/xkcd.py",
+    "**/utils/command_utils.py",
+    "**/utils/err_log_utils.py",
+    "**/utils/snailrace_utils.py",
+    "**/utils/uq_course_utils.py"
+]

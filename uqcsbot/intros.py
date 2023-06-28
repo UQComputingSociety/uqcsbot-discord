@@ -1,13 +1,11 @@
 import discord
 from discord.ext import commands
 
-from uqcsbot.bot import UQCSBot
-
 
 class Intros(commands.Cog):
     CHANNEL_NAME = "intros"
 
-    def __init__(self, bot: UQCSBot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.Cog.listener()
