@@ -1,5 +1,4 @@
-from typing import List, Any
-from mypy_extensions import VarArg, KwArg
+from typing import List
 
 import discord
 from discord import app_commands
@@ -41,9 +40,10 @@ class Basic(commands.Cog):
         )
 
     @commands.Cog.listener()
-    async def on_member_join(self, member):
+    async def on_member_join(self, member: discord.Member):
         """Member join listener"""
-        channel = member.guild.system_channel
+        if (channel := member.guild.system_channel) is None:
+            return
         # On user joining, a system join message will appear in the system channel
         # This should prevent the bot waving on a user message when #general is busy
         async for msg in channel.history(limit=5):
@@ -84,7 +84,7 @@ class Basic(commands.Cog):
         :param repos: list of strings of repo names
         :return: a single string with a formatted message containing repo info for the given names
         """
-        repo_strings = []
+        repo_strings: List[str] = []
         for potential_repo in repos:
             repo_strings.append(self.find_repo(potential_repo))
         return "".join(repo_strings)
