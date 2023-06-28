@@ -31,7 +31,7 @@ class MCWhitelist(Base):
         "mcuser", String, primary_key=True, nullable=False
     )
     discord_id: Mapped[str] = mapped_column("discordid", BigInteger, nullable=False)
-    admin_whitelisted: Mapped[Optional[bool]] = mapped_column("adminwl", Boolean)
+    admin_whitelisted: Mapped[bool] = mapped_column("adminwl", Boolean)
     added_dt: Mapped[datetime] = mapped_column("added_dt", DateTime, nullable=False)
 
 
@@ -48,7 +48,7 @@ class Reminders(Base):
     time = mapped_column("time", Time, nullable=False)
     start_date = mapped_column("start_date", Date, nullable=False)
     end_date = mapped_column("end_date", Date, nullable=True)
-    week_frequency: Mapped[int] = mapped_column(
+    week_frequency: Mapped[Optional[int]] = mapped_column(
         "week_frequency", Integer, nullable=True
     )
 
@@ -61,12 +61,12 @@ class Starboard(Base):
     # recv == null implies deleted recv message.
     # recv_location == null implies deleted recv channel. recv should also be null.
     # sent == null implies blacklisted recv message.
-    recv: Mapped[int] = mapped_column(
+    recv: Mapped[Optional[int]] = mapped_column(
         "recv", BigInteger, primary_key=True, nullable=True
     )
-    recv_location: Mapped[int] = mapped_column(
+    recv_location: Mapped[Optional[int]] = mapped_column(
         "recv_location", BigInteger, nullable=True, unique=False
     )
-    sent: Mapped[int] = mapped_column(
+    sent: Mapped[Optional[int]] = mapped_column(
         "sent", BigInteger, primary_key=True, nullable=True, unique=True
     )
