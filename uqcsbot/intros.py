@@ -1,11 +1,12 @@
 import discord
 from discord.ext import commands
+from uqcsbot.bot import UQCSBot
 
 
 class Intros(commands.Cog):
     CHANNEL_NAME = "intros"
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: UQCSBot):
         self.bot = bot
 
     @commands.Cog.listener()
@@ -21,5 +22,5 @@ class Intros(commands.Cog):
         await msg.add_reaction("👋")
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: UQCSBot):
     await bot.add_cog(Intros(bot))

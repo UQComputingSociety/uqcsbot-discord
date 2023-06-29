@@ -155,8 +155,8 @@ class Cowsay(commands.Cog):
 
         # Draw the cow.
         cow = f"        {bubble_connect}   ^__^\n"
-        cow += f"         {bubble_connect}  ({cow_eyes})\_______\n"
-        cow += f"            (__)\       )\/\ \n"
+        cow += f"         {bubble_connect}  ({cow_eyes})\\_______\n"
+        cow += f"            (__)\\       )\\/\\ \n"
         cow += f"             {tongue_out}  ||----w |\n"
         cow += f"                ||     ||\n"
         return cow
@@ -186,10 +186,10 @@ class Cowsay(commands.Cog):
         tux += f"        .--. \n"
         tux += f"       |{tux_eyes} | \n"
         tux += f"       |:_/ | \n"
-        tux += f"      //   \ \ \n"
+        tux += f"      //   \\ \\ \n"
         tux += f"     (|     | ) \n"
-        tux += f"    /'\_   _/`\ \n"
-        tux += f"    \___)=(___/ \n"
+        tux += f"    /'\\_   _/`\\ \n"
+        tux += f"    \\___)=(___/ \n"
         return tux
 
     @staticmethod
@@ -215,7 +215,7 @@ class Cowsay(commands.Cog):
         """
 
         # Regex to match emotes.
-        emotes: List[str] = re.findall("<a?:\w+:\d+>", message)
+        emotes: List[str] = re.findall(r"<a?:\w+:\d+>", message)
 
         # Replace each emote with its name.
         for emote in emotes:
@@ -242,7 +242,7 @@ class Cowsay(commands.Cog):
             # As requested by the audience, you can manually break lines by
             # adding "\n" anywhere in the message and it will be respected.
             if "\\n" in word:
-                parts: List[str] = word.split("\\n", 1)
+                parts = word.split("\\n", 1)
 
                 # The `\n` is by itself, so start a new line.
                 if parts[0] == "" and parts[1] == "":
@@ -271,7 +271,7 @@ class Cowsay(commands.Cog):
             # the list of words to be processed.
             if len(word) > wrap:
                 # Cut the word to the remaining space on the line.
-                cut_word: str = word[: (wrap - len(line))]
+                cut_word = word[: (wrap - len(line))]
 
                 # Add the rest of the word to the list of words to be processed.
                 words.insert(index, word[len(cut_word) :])

@@ -20,10 +20,6 @@ from uqcsbot.utils.err_log_utils import FatalErrorWithLog
 # Leaderboard API URL with placeholders for year and code.
 LEADERBOARD_URL = "https://adventofcode.com/{year}/leaderboard/private/view/{code}.json"
 
-# Session cookie (will expire in approx 30 days).
-# See: https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables#aoc_session_id
-SESSION_ID: str = ""
-
 # UQCS leaderboard ID.
 UQCS_LEADERBOARD = 989288
 
@@ -163,6 +159,10 @@ class Member:
 class Advent(commands.Cog):
     CHANNEL_NAME = "contests"
 
+    # Session cookie (will expire in approx 30 days).
+    # See: https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables#aoc_session_id
+    SESSION_ID: str = ""
+
     def __init__(self, bot: UQCSBot):
         self.bot = bot
         self.bot.schedule_task(
@@ -182,6 +182,13 @@ class Advent(commands.Cog):
             day="1-25",
             month=12,
         )
+
+        if os.environ.get("AOC_SESSION_ID") is not None:
+            SESSION_ID = os.environ.get("AOC_SESSION_ID")
+        else:
+            raise FatalErrorWithLog(
+                bot, "Unable to find AoC session ID. Not loading advent cog."
+            )
 
     def star_char(self, num_stars: int):
         """
@@ -354,7 +361,7 @@ class Advent(commands.Cog):
         try:
             response = requests.get(
                 LEADERBOARD_URL.format(year=year, code=code),
-                cookies={"session": SESSION_ID},
+                cookies={"session": self.SESSION_ID},
             )
             return response.json()
         except ValueError as exception:  # json.JSONDecodeError
@@ -546,13 +553,6 @@ class Advent(commands.Cog):
 
 
 async def setup(bot: UQCSBot):
-    if os.environ.get("AOC_SESSION_ID") is not None:
-        SESSION_ID = os.environ.get("AOC_SESSION_ID")
-    else:
-        raise FatalErrorWithLog(
-            bot, "Unable to find AoC session ID. Not loading advent cog."
-        )
-
     cog = Advent(bot)
 
     await bot.add_cog(cog)

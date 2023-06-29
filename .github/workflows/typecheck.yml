@@ -1,6 +1,10 @@
-name: Code Style Check
+name: Static Type Check
 
 on: [pull_request]
+
+env: 
+  PYTHON_VERSION: '3.10'
+  POETRY_VERSION: '1.4.2'
 
 jobs:
   types:

@@ -2,7 +2,7 @@ import requests
 import re
 import html
 
-from typing import Optional
+from typing import Optional, Tuple
 
 import discord
 from discord import app_commands
@@ -73,7 +73,7 @@ class Xkcd(commands.Cog):
         await interaction.edit_original_response(embed=message)
 
     @staticmethod
-    def get_xkcd_data(url: str) -> (int, str, str, str):
+    def get_xkcd_data(url: str) -> Tuple[int, str, str, str]:
         """
         Returns the xkcd data from the given url.
 
@@ -90,7 +90,7 @@ class Xkcd(commands.Cog):
         return Xkcd.parse_xkcd_page(response.content)
 
     @staticmethod
-    def parse_xkcd_page(content: str) -> (int, str, str, str):
+    def parse_xkcd_page(content: bytes) -> Tuple[int, str, str, str]:
         """
         Parses the xkcd page content and returns the xkcd number, title,
         description and image url. This function can allow offline testing.
