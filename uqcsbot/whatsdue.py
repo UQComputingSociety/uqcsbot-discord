@@ -52,10 +52,10 @@ class WhatsDue(commands.Cog):
         course4: Optional[str],
         course5: Optional[str],
         course6: Optional[str],
-        fulloutput: Optional[bool] = False,
-        semester: Optional[Offering.SemesterType] = None,
-        campus: Optional[Offering.CampusType] = "St Lucia",
-        mode: Optional[Offering.ModeType] = "Internal",
+        fulloutput: bool = False,
+        semester: Offering.SemesterType = None,
+        campus: Offering.CampusType = "St Lucia",
+        mode: Offering.ModeType = "Internal",
     ):
         """
         Returns all the assessment for a given list of course codes that are scheduled to occur.
@@ -64,15 +64,17 @@ class WhatsDue(commands.Cog):
 
         await interaction.response.defer(thinking=True)
 
-        possible_courses = [course1, course2, course3, course4, course5, course6]
-        course_names = [c for c in possible_courses if c != None]
+        possible_courses = [course1, course2,
+                            course3, course4, course5, course6]
+        course_names = [c.upper() for c in possible_courses if c != None]
         offering = Offering(semester=semester, campus=campus, mode=mode)
 
         # If full output is not specified, set the cutoff to today's date.
         cutoff = None if fulloutput else datetime.today()
         try:
             asses_page = get_course_assessment_page(course_names, offering)
-            assessment = get_course_assessment(course_names, cutoff, asses_page)
+            assessment = get_course_assessment(
+                course_names, cutoff, asses_page)
         except HttpException as e:
             logging.error(e.message)
             await interaction.edit_original_response(
@@ -83,25 +85,32 @@ class WhatsDue(commands.Cog):
             await interaction.edit_original_response(content=e.message)
             return
 
-        things_due = list(map(self.get_formatted_assessment_item, assessment))
-
-        message = (
-            "_*WARNING:* Assessment information may vary/change/be entirely"
-            + " different! Use at your own discretion_\n> "
+        embed = discord.Embed(
+            title=f"What's Due: {', '.join(course_names)}",
+            url=asses_page,
+            description="*WARNING: Assessment information may vary/change/be entirely different! Use at your own discretion*"
         )
-        if things_due:
-            message += "\n> ".join(things_due)
+        if assessment:
+            for assessment_item in assessment:
+                course, task, due, weight = assessment_item
+                embed.add_field(
+                    name=course,
+                    value=f"`{weight}` {task} **({due})**",
+                    inline=False,
+                )
         elif fulloutput:
-            message += "No assessment items could be found"
-        else:
-            message += "Nothing seems to be due soon"
-        if not fulloutput:
-            message += (
-                "\n_Note: This may not be the full assessment list. Set fulloutput"
-                + " to True for the full list._"
+            embed.add_field(
+                value=f"No assessment items could be found",
             )
-        message += f"\nLink to assessment page here: <{asses_page}>"
-        await interaction.edit_original_response(content=message)
+        else:
+            embed.add_field(
+                value=f"Nothing seems to be due soon",
+            )
+        
+        if not fulloutput:
+            embed.set_footer(text="Note: This may not be the full assessment list. Set fulloutput to True for the full list.")
+
+        await interaction.edit_original_response(embed=embed)
 
 
 async def setup(bot: commands.Bot):
