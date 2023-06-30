@@ -14,6 +14,7 @@ class ManageCogs(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="managecogs")
+    @app_commands.default_permissions(manage_guild=True)
     @app_commands.describe(
         cog='The cog (i.e. python file) to try to unload. Use python package notation, so no suffix of ".py" and "." between folders: e.g. "manage_cogs".',
     )
