@@ -20,14 +20,6 @@ class WhatsDue(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    def get_formatted_assessment_item(self, assessment_item):
-        """
-        Returns the given assessment item in a pretty
-        message format to display to a user.
-        """
-        course, task, due, weight = assessment_item
-        return f"**{course}**: `{weight}` *{task}* **({due})**"
-
     @app_commands.command()
     @app_commands.describe(
         fulloutput="Display the full list of assessment. Defaults to False, which only "
@@ -52,7 +44,7 @@ class WhatsDue(commands.Cog):
         course5: Optional[str],
         course6: Optional[str],
         fulloutput: bool = False,
-        semester: Offering.SemesterType = None,
+        semester: Optional[Offering.SemesterType] = None,
         campus: Offering.CampusType = "St Lucia",
         mode: Offering.ModeType = "Internal",
     ):
@@ -63,8 +55,7 @@ class WhatsDue(commands.Cog):
 
         await interaction.response.defer(thinking=True)
 
-        possible_courses = [course1, course2,
-                            course3, course4, course5, course6]
+        possible_courses = [course1, course2, course3, course4, course5, course6]
         course_names = [c.upper() for c in possible_courses if c != None]
         offering = Offering(semester=semester, campus=campus, mode=mode)
 
@@ -72,8 +63,7 @@ class WhatsDue(commands.Cog):
         cutoff = None if fulloutput else datetime.today()
         try:
             asses_page = get_course_assessment_page(course_names, offering)
-            assessment = get_course_assessment(
-                course_names, cutoff, asses_page)
+            assessment = get_course_assessment(course_names, cutoff, asses_page)
         except HttpException as e:
             logging.error(e.message)
             await interaction.edit_original_response(
@@ -87,7 +77,7 @@ class WhatsDue(commands.Cog):
         embed = discord.Embed(
             title=f"What's Due: {', '.join(course_names)}",
             url=asses_page,
-            description="*WARNING: Assessment information may vary/change/be entirely different! Use at your own discretion*"
+            description="*WARNING: Assessment information may vary/change/be entirely different! Use at your own discretion*",
         )
         if assessment:
             for assessment_item in assessment:
@@ -99,15 +89,19 @@ class WhatsDue(commands.Cog):
                 )
         elif fulloutput:
             embed.add_field(
+                name="",
                 value=f"No assessment items could be found",
             )
         else:
             embed.add_field(
+                name="",
                 value=f"Nothing seems to be due soon",
             )
-        
+
         if not fulloutput:
-            embed.set_footer(text="Note: This may not be the full assessment list. Set fulloutput to True for the full list.")
+            embed.set_footer(
+                text="Note: This may not be the full assessment list. Set fulloutput to True for the full list."
+            )
 
         await interaction.edit_original_response(embed=embed)
 
