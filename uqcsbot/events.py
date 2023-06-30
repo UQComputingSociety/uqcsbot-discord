@@ -1,7 +1,7 @@
 import logging
 from calendar import day_abbr, month_abbr, month_name
 from datetime import date, datetime, timedelta
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 
 import discord
 from discord import app_commands
@@ -17,14 +17,17 @@ UQCS_CALENDAR_URL = (
     "https://calendar.google.com/calendar/ical/"
     "q3n3pce86072n9knt3pt65fhio%40group.calendar.google.com/public/basic.ics"
 )
-# EXTERNAL_CALENDAR_URL = "https://calendar.google.com/calendar/ical/" \
+# EXTERNAL_CALENDAR_URL =d "https://calendar.google.com/calendar/ical/" \
 #                         "72abf01afvsl3bjd9oq2g1avgg%40group.calendar.google.com/public/basic.ics"
 # Testing calendar: "https://calendar.google.com/calendar/ical/7djv171v2mdr4dmufq612j6uj4%40group.calendar.google.com/public/basic.ics"
 
-MONTH_NUMBER = {month.lower(): index for index, month in enumerate(month_abbr)}
+MONTH_NUMBER: Dict[str, int] = {
+    month.lower(): index for index, month in enumerate(month_abbr)
+}
+
+BRISBANE_TZ = timezone("Australia/Brisbane")
 
 MAX_RECURRING_EVENTS = 3
-BRISBANE_TZ = timezone("Australia/Brisbane")
 
 
 class EventFilter(object):

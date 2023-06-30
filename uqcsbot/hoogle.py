@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict
 
 import discord
 from discord import app_commands
@@ -26,7 +26,7 @@ class Hoogle(commands.Cog):
     def get_hoogle_page(self, type_sig: str) -> str:
         return f"https://hoogle.haskell.org/?hoogle={html.unescape(type_sig)}"
 
-    def pretty_hoogle_result(self, result: dict) -> str:
+    def pretty_hoogle_result(self, result: Dict[str, str]) -> str:
         url = result["url"]
         # convert url special chars to readable form
         type_sig = (
