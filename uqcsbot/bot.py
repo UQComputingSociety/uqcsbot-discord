@@ -13,7 +13,7 @@ from pytz import timezone
 
 """
 TODO: TYPE ISSUES IN THIS FILE:
-    - apscheduler has no stubs. They're planned for the 4.0 release... in the future.
+    - apscheduler has no stubs. They're planned for the 4.0 release... sometime.
     - aiohttp handler witchery
 """
 
@@ -29,6 +29,8 @@ class UQCSBot(commands.Bot):
         # Important channel names & constants go here
         self.ADMIN_ALERTS_CNAME = "admin-alerts"
         self.GENERAL_CNAME = "general"
+        self.BOT_CNAME = "bot-testing"
+        self.STARBOARD_CNAME = "starboard"
         self.BOT_TIMEZONE = timezone("Australia/Brisbane")
 
         self.uqcs_server: discord.Guild

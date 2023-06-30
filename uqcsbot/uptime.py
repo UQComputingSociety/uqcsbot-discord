@@ -11,24 +11,22 @@ from uqcsbot.bot import UQCSBot
 
 
 class UpTime(commands.Cog):
-    CHANNEL_NAME = "bot-testing"
-
     def __init__(self, bot: UQCSBot):
         self.bot = bot
 
     @commands.Cog.listener()
     async def on_ready(self):
         channel = discord.utils.get(
-            self.bot.uqcs_server.channels, name=self.CHANNEL_NAME
+            self.bot.uqcs_server.channels, name=self.bot.BOT_CNAME
         )
 
-        if channel is not None:
+        if channel is not None and isinstance(channel, discord.TextChannel):
             if random.randint(1, 100) == 1:
                 await channel.send("Oopsie, I webooted uwu >_<")
             else:
                 await channel.send("I have rebooted!")
         else:
-            logging.warning(f"Could not find required channel #{self.CHANNEL_NAME}")
+            logging.warning(f"Could not find required channel #{self.bot.BOT_CNAME}")
 
     @app_commands.command()
     async def uptime(self, interaction: discord.Interaction):

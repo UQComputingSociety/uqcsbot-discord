@@ -40,20 +40,22 @@ build-backend = "poetry.core.masonry.api"
 [tool.pyright]
 strict = ["**"]
 exclude = [
+    # large and/or annoying multiclass files
     "**/advent.py",
-    "**/bot.py",
-    "**/error_handler.py",
     "**/events.py",
-    "**/gaming.py",
-    "**/haiku.py",
-    "**/member_counter.py",
     "**/remindme.py",
-    "**/snailrace.py",
     "**/starboard.py",
-    "**/uptime.py",
     "**/whatsdue.py",
-    "**/working_on.py",
+    "**/gaming.py",
+    
+    # waiting for external stubs
+    "**/bot.py",
+
+    # only used by another blocked file
+    "**/error_handler.py",
     "**/utils/command_utils.py",
-    "**/utils/snailrace_utils.py",
-    "**/utils/uq_course_utils.py"
+    "**/utils/uq_course_utils.py",
+
+    # isaac's job
+    "**/haiku.py"
 ]

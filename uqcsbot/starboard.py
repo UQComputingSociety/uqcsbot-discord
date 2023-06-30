@@ -1,6 +1,6 @@
 import os, time
 from threading import Timer
-from typing import Tuple, List
+from typing import Tuple, List, Union
 from zoneinfo import ZoneInfo
 
 import discord
@@ -9,6 +9,7 @@ from discord.ext import commands
 from sqlalchemy.sql.expression import and_
 
 from uqcsbot import models
+from uqcsbot.bot import UQCSBot
 from uqcsbot.utils.err_log_utils import FatalErrorWithLog
 
 
@@ -23,16 +24,20 @@ class Starboard(commands.Cog):
     MODLOG_CHANNEL_NAME = "admin-alerts"
     BRISBANE_TZ = ZoneInfo("Australia/Brisbane")
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: UQCSBot):
         self.bot = bot
-        self.base_threshold = int(os.environ.get("SB_BASE_THRESHOLD"))
-        self.big_threshold = int(os.environ.get("SB_BIG_THRESHOLD"))
-        self.ratelimit = int(os.environ.get("SB_RATELIMIT"))
+
+        if (base := os.environ.get("SB_BASE_THRESHOLD")) is not None:
+            self.base_threshold = int(base)
+        if (big := os.environ.get("SB_BIG_THRESHOLD")) is not None:
+            self.big_threshold = int(big)
+        if (limit := os.environ.get("SB_RATELIMIT")) is not None:
+            self.ratelimit = limit
 
         # messages that are temp blocked from being resent to the starboard
-        self.base_blocked_messages = []
+        self.base_blocked_messages: List[int] = []
         # messages that are temp blocked from being repinned in the starboard
-        self.big_blocked_messages = []
+        self.big_blocked_messages: List[int] = []
 
         self.unblacklist_menu = app_commands.ContextMenu(
             name="Starboard Unblacklist",
@@ -53,13 +58,16 @@ class Starboard(commands.Cog):
         N.B. this does assume the server only has one channel called "starboard" and one emoji called
         "starhaj". If this assumption stops holding, we may need to move back to IDs (cringe)
         """
-        self.starboard_emoji = discord.utils.get(self.bot.emojis, name=self.EMOJI_NAME)
-        self.starboard_channel = discord.utils.get(
-            self.bot.get_all_channels(), name=self.SB_CHANNEL_NAME
-        )
-        self.modlog = discord.utils.get(
-            self.bot.get_all_channels(), name=self.MODLOG_CHANNEL_NAME
-        )
+        if (emoji := discord.utils.get(self.bot.emojis, name=self.EMOJI_NAME)) is not None:
+            self.starboard_emoji = emoji
+        if (channel := discord.utils.get(
+            self.bot.get_all_channels(), name=self.bot.STARBOARD_CNAME
+        )) is not None and isinstance(channel, discord.TextChannel):
+            self.starboard_channel = channel
+        if (log := discord.utils.get(
+            self.bot.get_all_channels(), name=self.bot.ADMIN_ALERTS_CNAME
+        )) is not None and isinstance(log, discord.TextChannel):
+            self.modlog = log
 
     @app_commands.command()
     @app_commands.default_permissions(manage_guild=True)
@@ -92,17 +100,19 @@ class Starboard(commands.Cog):
                 .filter(models.Starboard.sent == message.id)
                 .one_or_none()
             )
-            if query is None and message.author.id == self.bot.user.id:
+            if query is None and message.author.id == self.bot.safe_user.id:
                 # only delete messages that uqcsbot itself sent
                 await message.delete()
-            elif message.author.id == self.bot.user.id:
+            elif message.author.id == self.bot.safe_user.id:
+                recieved_msg: Union[discord.Message, None] = None
+                starboard_msg: Union[discord.Message, None] = None
+
                 try:
                     recieved_msg, starboard_msg = await self._lookup_from_id(
                         self.starboard_channel.id, message.id
                     )
                 except BlacklistedMessageError:
-                    if starboard_msg is not None:
-                        await starboard_msg.delete()
+                    pass
 
                 new_reaction_count = await self._count_num_reacts(
                     (recieved_msg, starboard_msg)
@@ -118,6 +128,9 @@ class Starboard(commands.Cog):
         self, message: discord.Message, user: discord.Member, blacklist: bool
     ):
         """Logs the use of a blacklist/unblacklist command to the modlog."""
+        if not isinstance(message.author, discord.Member):
+            return
+
         state = "blacklisted" if blacklist else "unblacklisted"
 
         embed = discord.Embed(
@@ -318,7 +331,7 @@ class Starboard(commands.Cog):
                     # This is Isaac's initial-starboard message. I know, IDs are bad. BUT
                     # consider that this doesn't cause any of the usual ID-related issues
                     # like breaking lookups in other servers.
-                    return
+                    return (None, None)
 
                 raise FatalErrorWithLog(
                     client=self.bot,
@@ -598,5 +611,5 @@ class Starboard(commands.Cog):
         await self._process_sb_updates(new_reaction_count, recieved_msg, starboard_msg)
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: UQCSBot):
     await bot.add_cog(Starboard(bot))

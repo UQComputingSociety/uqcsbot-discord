@@ -1,4 +1,5 @@
 import discord, random, datetime, asyncio
+from typing import Literal, List, Union
 
 # Racer Icon
 SNAILRACE_SNAIL_EMOJI = "🐌"
@@ -35,10 +36,10 @@ SNAILRACE_NO_START = "Sorry, but there aren't enough racers to start the race!"
 SNAILRACE_WINNER = "The race has finished! %s has won!"
 SNAILRACE_WINNER_TIE = "The race has finished! It's a tie between %s!"
 
-SnailRaceJoinType = 0 | 1 | 2
-SnailRaceJoinAdded = 0
-SnailRaceJoinAlreadyJoined = 1
-SnailRaceJoinRaceFull = 2
+SnailRaceJoinType = Literal[0, 1, 2]
+SnailRaceJoinAdded: SnailRaceJoinType = 0
+SnailRaceJoinAlreadyJoined: SnailRaceJoinType = 1
+SnailRaceJoinRaceFull: SnailRaceJoinType = 2
 
 
 class SnailRacer:
@@ -85,7 +86,7 @@ class SnailRaceState:
         self.race_start_time = datetime.datetime.now()
         self.racing = False
 
-        self.racers = []
+        self.racers: List[SnailRacer] = []
         self.open_interaction = None
 
     def is_racing(self) -> bool:
@@ -127,10 +128,12 @@ class SnailRaceState:
     async def race_start(self):
         await self._start_racing(self.open_interaction)
 
-    async def _start_racing(self, interaction: discord.Interaction):
+    async def _start_racing(self, interaction: Union[discord.Interaction, None]):
         """
         Start the race loop, this will be triggered after the entry has closed.
         """
+        if interaction is None or not isinstance(interaction.channel, discord.TextChannel):
+            return
 
         if not len(self.racers) > 0:
             await interaction.channel.send(SNAILRACE_NO_START)
