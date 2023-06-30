@@ -1,6 +1,6 @@
 from random import choice, randrange
 from string import hexdigits
-from typing import Optional
+from typing import Optional, List
 
 import discord
 from discord import app_commands
@@ -74,11 +74,13 @@ class Text(commands.Cog):
         self,
         interaction: discord.Interaction,
         message: str,
-        encoding: Optional[str] = "utf-8",
+        encoding: Optional[str],
     ):
         """
         Converts a binary string to text or vice versa.
         """
+        encoding = encoding if encoding is not None else "utf-8"
+
         if not message:
             response = "Please include string to convert."
         elif set(message).issubset(["0", "1"]) and len(message) > 2:
@@ -114,13 +116,15 @@ class Text(commands.Cog):
         self,
         interaction: discord.Interaction,
         message: str,
-        distance: Optional[int] = 13,
+        distance: Optional[int],
     ):
         """
         Performs caesar shift with a shift of N on given text.
         N defaults to 13 if not given.
         """
+        distance = distance if distance is not None else 13
         result = ""
+
         for c in message:
             if ord("A") <= ord(c) <= ord("Z"):
                 result += chr((ord(c) - ord("A") + distance) % 26 + ord("A"))
@@ -140,21 +144,23 @@ class Text(commands.Cog):
         self,
         interaction: discord.Interaction,
         message: str,
-        encoding: Optional[str] = "utf-8",
+        encoding: Optional[str],
     ):
         """
         Converts a hexadecimal string to text or vice versa.
         """
+        encoding = encoding if encoding is not None else "utf-8"
+
         if not message:
             response = "Please include string to convert."
         elif all(c in hexdigits for c in message) and len(message) > 2:
             try:
                 decoded_message = bytes.fromhex(message)
                 response = decoded_message.decode(encoding)
-            except ValueError:
-                response = "Hexadecimal string contains partial byte."
             except UnicodeDecodeError as e:
                 response = e.reason
+            except ValueError:
+                response = "Hexadecimal string contains partial byte."
             except LookupError:
                 response = "Invalid encoding. A list of valid encodings can be found at <https://docs.python.org/3/library/codecs.html#standard-encodings>"
         else:
@@ -181,17 +187,17 @@ class Text(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(number="Number of coins to flip, defaults to 1.")
-    async def coin(self, interaction: discord.Interaction, number: Optional[int] = 1):
+    async def coin(self, interaction: discord.Interaction, number: Optional[int]):
         """
         Flips 1 to 99 coins.
         Defaults to 1 coin if number not given.
         """
-        if not (1 <= number and number <= 99):
+        if number is not None and not (1 <= number and number <= 99):
             await interaction.response.send_message("Number of coins invalid.")
         else:
-            response = []
+            response: List[str] = []
             result = ("H", "T")
-            for i in range(number):
+            for _ in range((number if number is not None else 1)):
                 response.append(choice(result))
 
             await interaction.response.send_message(f"`{', '.join(response)}`")
@@ -239,7 +245,7 @@ class Text(commands.Cog):
         response = ""
         for c in " ".join(message):
             response += c
-            for i in range(randrange(7) // 3):
+            for _ in range(randrange(7) // 3):
                 response += choice(self.zalgo_marks)
         return response
 

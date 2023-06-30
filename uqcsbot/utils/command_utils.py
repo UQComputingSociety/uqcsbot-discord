@@ -23,7 +23,7 @@ def loading_status(command_fn: Callable):
             return
 
         react = choice(LOADING_REACTS)
-        reaction = await ctx.message.add_reaction(react)
+        await ctx.message.add_reaction(react)
         res = await command_fn(self, ctx, *args)
         await ctx.message.remove_reaction(react, ctx.bot.user)
         return res

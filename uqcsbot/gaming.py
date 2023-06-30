@@ -1,7 +1,6 @@
 from difflib import SequenceMatcher
-from html import unescape
 from json import loads
-from typing import Optional
+from typing import Optional, Dict, Any
 from urllib.error import HTTPError
 from urllib.request import urlopen
 from xml.etree.ElementTree import fromstring
@@ -12,7 +11,6 @@ from discord.ext import commands
 from requests import get
 
 from uqcsbot.bot import UQCSBot
-from uqcsbot.utils.command_utils import loading_status
 
 
 class Gaming(commands.Cog):
@@ -23,7 +21,6 @@ class Gaming(commands.Cog):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
 
-    @classmethod
     def get_bgg_id(self, search_name: str) -> Optional[str]:
         """
         returns the bgg id, searching by name
@@ -50,8 +47,7 @@ class Gaming(commands.Cog):
                     ).ratio()
         return max(match, key=match.get)
 
-    @classmethod
-    def get_board_game_parameters(self, identity: str) -> Optional[dict]:
+    def get_board_game_parameters(self, identity: str) -> Optional[Dict[str, str]]:
         """
         returns the various parameters of a board game from bgg
         """
@@ -174,8 +170,7 @@ class Gaming(commands.Cog):
 
         return parameters
 
-    @classmethod
-    def format_board_game_parameters(self, parameters: dict) -> discord.Embed:
+    def format_board_game_parameters(self, parameters: Dict[str, str]) -> discord.Embed:
         embed = discord.Embed(title=parameters.get("name", ":question:"))
         embed.add_field(
             name="Summary",
@@ -231,13 +226,15 @@ class Gaming(commands.Cog):
         identity = self.get_bgg_id(board_game)
         if identity is None:
             await interaction.edit_original_response(
-                "Could not find board game with that name."
+                content="Could not find board game with that name."
             )
             return
 
         parameters = self.get_board_game_parameters(identity)
         if parameters is None:
-            await interaction.edit_original_response("Something has gone wrong.")
+            await interaction.edit_original_response(
+                content="Something has gone wrong."
+            )
             return
 
         embed = self.format_board_game_parameters(parameters)
@@ -269,28 +266,30 @@ class Gaming(commands.Cog):
                 fault = loads(e.read())
                 if fault.get("type") == "ambiguous":
                     await interaction.edit_original_response(
-                        "Request 404'd; Multiple Possible Cards"
+                        content="Request 404'd; Multiple Possible Cards"
                     )
                 else:
                     await interaction.edit_original_response(
-                        "Request 404'd; No Cards Found"
+                        content="Request 404'd; No Cards Found"
                     )
                 return
-            await interaction.edit_original_response(str(e))
+            await interaction.edit_original_response(content=str(e))
             return
 
-        card = loads(response.read())
-        if "image_uris" in card:
+        card_obj: Any = loads(response.read())
+        if "image_uris" in card_obj:
             # single faced cards
-            await interaction.edit_original_response(content=card["image_uris"]["png"])
+            await interaction.edit_original_response(
+                content=card_obj["image_uris"]["png"]
+            )
         else:
             # double faced cards
             await interaction.edit_original_response(
                 content="\n".join(
-                    face["image_uris"]["png"] for face in card["card_faces"]
+                    face["image_uris"]["png"] for face in card_obj["card_faces"]
                 )
             )
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: UQCSBot):
     await bot.add_cog(Gaming(bot))
