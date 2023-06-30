@@ -68,10 +68,20 @@ class DominosCoupons(commands.Cog):
             )
             return
 
+        embed = discord.Embed(
+            title="Domino's Coupons",
+            url=COUPONESE_DOMINOS_URL,
+            description=f"Keywords: {keywords}",
+            timestamp=datetime.now(),
+        )
         message = "Domino's Coupons:\n"
         for coupon in coupons:
-            message += f"`{coupon.code}` - {coupon.description} *[Expires: {coupon.expiry_date}]*\n"
-        await interaction.edit_original_response(content=message)
+            embed.add_field(
+                name=coupon.code,
+                value=f"{coupon.description} *[Expires: {coupon.expiry_date}]*",
+                inline=False,
+            )
+        await interaction.edit_original_response(embed=embed)
 
 
 class Coupon:
