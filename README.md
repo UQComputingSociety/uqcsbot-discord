@@ -72,6 +72,14 @@ We use an automated code formatter called [Black](https://black.readthedocs.io/)
 poetry run black uqcsbot
 ```
 
+## Static Type Checks
+
+We use [Pyright](https://github.com/microsoft/pyright) to perform static type checks; which all commits should pass. The exception list is within `pyproject.toml` is for legacy code only, as we hope that all new cogs can be made to pass. To run Pyright, run from the root of the repo:
+
+```bash
+poetry run pyright uqcsbot
+```
+
 ## Development Resources
 
 If this is your first time working on an open source project, we're here to walk you through every step of the way.
