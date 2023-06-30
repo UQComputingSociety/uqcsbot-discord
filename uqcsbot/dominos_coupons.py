@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List
 import logging
 import requests
 from requests.exceptions import RequestException
@@ -29,9 +29,9 @@ class DominosCoupons(commands.Cog):
     async def dominoscoupons(
         self,
         interaction: discord.Interaction,
-        number_of_coupons: Optional[int] = 5,
-        ignore_expiry: Optional[bool] = True,
-        keywords: Optional[str] = "",
+        number_of_coupons: int = 5,
+        ignore_expiry: bool = True,
+        keywords: str = "",
     ):
         """
         Returns a list of dominos coupons
@@ -55,7 +55,7 @@ class DominosCoupons(commands.Cog):
             return
         except HTTPResponseException as error:
             logging.warning(
-                f"Received a HTTP response code that was not OK (200), namely ({error.http_code}). Error information: {error.message}"
+                f"Received a HTTP response code that was not OK (200), namely ({error.http_code}). Error information: {error}"
             )
             await interaction.edit_original_response(
                 content=f"Could not find the coupons on the coupon website (<{COUPONESE_DOMINOS_URL}>)..."
@@ -74,7 +74,6 @@ class DominosCoupons(commands.Cog):
             description=f"Keywords: {keywords}",
             timestamp=datetime.now(),
         )
-        message = "Domino's Coupons:\n"
         for coupon in coupons:
             embed.add_field(
                 name=coupon.code,
@@ -118,7 +117,7 @@ class HTTPResponseException(Exception):
         self.http_code = http_code
 
 
-def _get_coupons(n: int, ignore_expiry: bool, keywords: list[str]) -> list[Coupon]:
+def _get_coupons(n: int, ignore_expiry: bool, keywords: List[str]) -> List[Coupon]:
     """
     Returns a list of n Coupons
     """
@@ -137,17 +136,17 @@ def _get_coupons(n: int, ignore_expiry: bool, keywords: list[str]) -> list[Coupo
     return coupons[:n]
 
 
-def _get_coupons_from_page() -> list[Coupon]:
+def _get_coupons_from_page() -> List[Coupon]:
     """
     Strips results from html page and returns a list of Coupon(s)
     """
     http_response = requests.get(COUPONESE_DOMINOS_URL)
     if http_response.status_code != requests.codes.ok:
-        raise HTTPResponseException(COUPONESE_DOMINOS_URL, http_response.status_code)
+        raise HTTPResponseException(http_response.status_code)
     soup = BeautifulSoup(http_response.content, "html.parser")
     soup_coupons = soup.find_all(class_="ov-coupon")
 
-    coupons = []
+    coupons: List[Coupon] = []
 
     for soup_coupon in soup_coupons:
         expiry_date_str = soup_coupon.find(class_="ov-expiry").get_text(strip=True)
