@@ -27,7 +27,7 @@ class Cat(commands.Cog):
         order = deque([pink, red, yellow, green, cyan, blue])
         # randomly shifts starting colout
         shift = randrange(0, 5)
-        for i in range(shift):
+        for _ in range(shift):
             order.append(order.popleft())
 
         cat = "\n".join(

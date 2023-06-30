@@ -22,12 +22,10 @@ async def main():
     intents.members = True
     intents.message_content = True
 
-    DISCORD_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
-
-    DATABASE_URI = os.environ.get("POSTGRES_URI_BOT")
-    if DATABASE_URI == None:
-        # If the database env variable is not defined, default to SQLite in memory db.
-        DATABASE_URI = "sqlite:///"
+    if (discord_token := os.environ.get("DISCORD_BOT_TOKEN")) is None:
+        raise RuntimeError("Bot token is not set!")
+    if (database_uri := os.environ.get("POSTGRES_URI_BOT")) is None:
+        database_uri = "sqlite:///"
 
     # If you need to override the allowed mentions that can be done on a per message basis, but default to off
     allowed_mentions = discord.AllowedMentions.none()
@@ -56,6 +54,7 @@ async def main():
         "latex",
         "member_counter",
         "minecraft",
+        "phonetics",
         "remindme",
         "snailrace",
         "starboard",
@@ -71,11 +70,11 @@ async def main():
     for cog in cogs:
         await bot.load_extension(f"uqcsbot.{cog}")
 
-    db_engine = create_engine(DATABASE_URI, echo=True)
+    db_engine = create_engine(database_uri, echo=True)
     Base.metadata.create_all(db_engine)
     bot.set_db_engine(db_engine)
 
-    await bot.start(DISCORD_TOKEN)
+    await bot.start(discord_token)
 
 
 asyncio.run(main())
