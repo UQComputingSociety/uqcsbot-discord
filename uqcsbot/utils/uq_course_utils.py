@@ -270,12 +270,19 @@ class Exam:
         self.link = link
 
 
+def get_past_exams_page_url(course_code: str) -> str:
+    """
+    Returns the URL of the UQ library past exam page
+    """
+    return BASE_PAST_EXAMS_URL + course_code
+
+
 def get_past_exams(course_code: str) -> Iterable[Exam]:
     """
     Takes the course code and generates each result in the format:
     ('year Sem X:', link)
     """
-    url = BASE_PAST_EXAMS_URL + course_code
+    url = get_past_exams_page_url(course_code)
     http_response = requests.get(url)
     if http_response.status_code != requests.codes.ok:
         raise HttpException(url, http_response.status_code)

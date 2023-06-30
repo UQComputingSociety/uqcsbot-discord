@@ -6,7 +6,11 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from uqcsbot.utils.uq_course_utils import get_past_exams, HttpException
+from uqcsbot.utils.uq_course_utils import (
+    get_past_exams,
+    get_past_exams_page_url,
+    HttpException,
+)
 
 SemesterType = Optional[Literal["Sem 1", "Sem 2", "Summer"]]
 
@@ -69,15 +73,32 @@ class PastExams(commands.Cog):
 
         if len(past_exams) == 1:
             exam = past_exams[0]
-            await interaction.edit_original_response(
-                content=f"Past exam for {course_code.upper()}:\n`{exam.year} {exam.semester}`: {exam.link}"
+            embed = discord.Embed(
+                title=f"Past exam for {course_code.upper()}",
+                description=f"**{exam.year} {exam.semester}**: {exam.link}",
             )
+            await interaction.edit_original_response(embed=embed)
             return
 
-        message = f"Past exams for {course_code.upper()}:\n"
+        description = ""
+        if year is not None or semester is not None:
+            description = "Only showing exams for " + " ".join(
+                str(restriction)
+                for restriction in [year, semester]
+                if restriction is not None
+            )
+        embed = discord.Embed(
+            title=f"Past exams for {course_code.upper()}",
+            url=get_past_exams_page_url(course_code),
+            description=description,
+        )
         for exam in past_exams:
-            message += f"`{exam.year} {exam.semester}`: <{exam.link}>\n"
-        await interaction.edit_original_response(content=message)
+            embed.add_field(
+                name=f"{exam.year} {exam.semester}",
+                value=exam.link,
+                inline=False,
+            )
+        await interaction.edit_original_response(embed=embed)
 
 
 async def setup(bot: commands.Bot):
