@@ -288,7 +288,7 @@ def get_past_exams(course_code: str) -> Iterable[Exam]:
     exam_list_json = exam_list_json[0]
 
     for exam_json in exam_list_json:
-        year = exam_json[0]["examYear"]
+        year = int(exam_json[0]["examYear"])
         # Semesters are given as "Sem.1", so we will change this to "Sem 1"
         semester = exam_json[0]["examPeriod"].replace(".", " ")
         link = exam_json[0]["paperUrl"]
