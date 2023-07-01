@@ -1,5 +1,5 @@
 import re
-from typing import Final, Dict, List
+from typing import Final, Dict, List, Tuple
 from yaml import load, Loader
 import random
 
@@ -37,7 +37,7 @@ HAIKU_FAVOURITE_WORD_LIST: Dict[str, float] = {
 
 # The following should be treated like constants after they are loaded in
 # Affixes should contain all prefix, suffix and infix lists as tuples, as it is easier to work with beginswith and endswith
-affixes: Dict[str,  tuple[str, ...]] = {}
+affixes: Dict[str, Tuple[str, ...]] = {}
 # Words that are excluded from the syllable counting process and instead have a custom syllable count (like acronyms)
 syllable_exceptions: Dict[str, int] = {}
 # Accents and "equivalent" characters that they should be replaced with for syllable counting purposes
@@ -48,7 +48,7 @@ with open(SYLLABLE_RULES_PATH, "r", encoding="utf-8") as syllable_rules_file:
 # beginswith and endswith both require tuples, so turn all lists into tuples
 for rule_name, rule_specification in syllable_rules.items():
     if isinstance(rule_specification, list):
-        affixes[rule_name] = tuple(rule_specification) # type: ignore
+        affixes[rule_name] = tuple(rule_specification)  # type: ignore
     elif isinstance(rule_specification, dict):
         match rule_name:
             case "exceptions":
