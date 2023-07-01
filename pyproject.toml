@@ -46,7 +46,6 @@ exclude = [
     "**/remindme.py",
     "**/starboard.py",
     "**/whatsdue.py",
-    "**/gaming.py",
     
     # waiting for external stubs
     "**/bot.py",
