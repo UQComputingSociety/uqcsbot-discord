@@ -1,5 +1,5 @@
 import re
-from typing import Final
+from typing import Final, Dict, List
 from yaml import load, Loader
 import random
 
@@ -11,7 +11,7 @@ from uqcsbot.bot import UQCSBot
 from uqcsbot.utils.err_log_utils import FatalErrorWithLog
 
 SYLLABLE_RULES_PATH: Final[str] = "uqcsbot/static/syllable_rules.yaml"
-ALLOWED_CHANNEL_NAMES: Final[list[str]] = [
+ALLOWED_CHANNEL_NAMES: Final[List[str]] = [
     "banter",
     "bot-testing",
     "dating",
@@ -25,7 +25,7 @@ HAIKU_BASE_PROBABILITY: float = 0.5
 # How much "more likely" (as determined by _increase_probability) a haiku is if it has punctuation at the end of a line.
 HAIKU_PUNCTUATION_PROBABILITY_INCREASE: float = 1.6
 # Words that increase the probability of a haiku, and the amount they increase the probability by (as determined by _increase_probability)
-HAIKU_FAVOURITE_WORD_LIST: dict[str, float] = {
+HAIKU_FAVOURITE_WORD_LIST: Dict[str, float] = {
     "haiku": 6,
     "haikus": 6,
     "syllable": 4,
@@ -35,14 +35,29 @@ HAIKU_FAVOURITE_WORD_LIST: dict[str, float] = {
     "poems": 2,
 }
 
-SyllableRulesType = dict[str, dict[str, int] | tuple[str, ...]]
-SYLLABLE_RULES: SyllableRulesType = {}
+# The following should be treated like constants after they are loaded in
+# Affixes should contain all prefix, suffix and infix lists as tuples, as it is easier to work with beginswith and endswith
+affixes: Dict[str,  tuple[str, ...]] = {}
+# Words that are excluded from the syllable counting process and instead have a custom syllable count (like acronyms)
+syllable_exceptions: Dict[str, int] = {}
+# Accents and "equivalent" characters that they should be replaced with for syllable counting purposes
+accent_replacements: Dict[str, str] = {}
+
 with open(SYLLABLE_RULES_PATH, "r", encoding="utf-8") as syllable_rules_file:
-    SYLLABLE_RULES = load(syllable_rules_file, Loader=Loader)
+    syllable_rules = load(syllable_rules_file, Loader=Loader)
 # beginswith and endswith both require tuples, so turn all lists into tuples
-for rule_name, rule_specification in SYLLABLE_RULES.items():
+for rule_name, rule_specification in syllable_rules.items():
     if isinstance(rule_specification, list):
-        SYLLABLE_RULES[rule_name] = tuple(rule_specification)
+        affixes[rule_name] = tuple(rule_specification) # type: ignore
+    elif isinstance(rule_specification, dict):
+        match rule_name:
+            case "exceptions":
+                syllable_exceptions = rule_specification
+            case "accents":
+                accent_replacements = rule_specification
+            case _:
+                # We will catch this on __init__ of the cog. We cannot deal with this error now via FatalErrorWithLog, as the bot may not have loaded enough
+                pass
 
 
 class Haiku(commands.Cog):
@@ -52,7 +67,7 @@ class Haiku(commands.Cog):
 
     def __init__(self, bot: UQCSBot):
         self.bot = bot
-        if SYLLABLE_RULES == {}:
+        if affixes == {} or syllable_exceptions == {} or accent_replacements == {}:
             raise FatalErrorWithLog(
                 bot,
                 f"The syllable rules (used for haiku detection) could not be found in {SYLLABLE_RULES_PATH}. Haiku detection will not work.",
@@ -67,7 +82,7 @@ class Haiku(commands.Cog):
         ]
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(self, message: discord.Message):
         if (
             message.channel not in self.allowed_channels
             or message.author.bot
@@ -114,8 +129,8 @@ def _find_haiku(text: str):
     """
     probability: float = HAIKU_BASE_PROBABILITY
     syllable_count: int = 0
-    lines: list[str] = []
-    current_line: list[str] = []
+    lines: List[str] = []
+    current_line: List[str] = []
     punctuation_at_end_of_previous_line = True  # Initially true so that any punctuation at the beginning does not increase the probability.
     haiku_syllable_count = [5, 7, 5]
 
@@ -178,7 +193,7 @@ def _number_of_vowel_groups(word: str):
     return len(re.findall("[aeiouy]+", word))
 
 
-def _number_of_syllables_in_word(word: str):
+def _number_of_syllables_in_word(word: str) -> int:
     """
     Estimate the number of syllables in a word.
     Inspired off the algorithm from this website: https://eayd.in/?p=232
@@ -192,14 +207,14 @@ def _number_of_syllables_in_word(word: str):
     word = re.sub("<a?:.+?:[0-9]+?>", " ", word)
 
     if word.startswith(
-        SYLLABLE_RULES["prefixes_needing_extra_syllable_before_illegal_replacement"]
+        affixes["prefixes_needing_extra_syllable_before_illegal_replacement"]
     ):
         number_of_syllables += 1
 
     # Replace "illegals" (non-alphabetic characters)
     for i, letter in enumerate(word):
-        if letter in SYLLABLE_RULES["accents"]:
-            unaccented_letter = SYLLABLE_RULES["accents"][letter]
+        if letter in accent_replacements:
+            unaccented_letter = accent_replacements[letter]
             # Note that unaccented letter may be more than one character (eg "æ" goes to "ae")
             word = word[:i] + unaccented_letter + word[i + len(unaccented_letter) :]
     # Words ending in "'s" are similar to pluralising a word. If the word ends in "ch", "s" or "sh" then we add "es", otherwise we just add "s"
@@ -214,15 +229,15 @@ def _number_of_syllables_in_word(word: str):
     if word == "":
         return 0
 
-    if word in SYLLABLE_RULES["exceptions"].keys():
-        return SYLLABLE_RULES["exceptions"][word]
+    if word in syllable_exceptions:
+        return syllable_exceptions[word]
 
     # Deals with abbreviations with no vowels
     if _number_of_vowel_groups(word) == 0:
         return len(word.replace(" ", ""))
 
     # Remove suffixes so we can focus on the syllables of the root word, but only if it is a true suffix (checked by testing if there is another vowel without the suffix)
-    for suffix in SYLLABLE_RULES["suffixes_to_remove"]:
+    for suffix in affixes["suffixes_to_remove"]:
         if (
             word.endswith((suffix, suffix + "s"))
             and _number_of_vowel_groups(
@@ -232,7 +247,7 @@ def _number_of_syllables_in_word(word: str):
         ):
             word = word.removesuffix(suffix).removesuffix(suffix + "s")
             number_of_syllables += _number_of_vowel_groups(suffix)
-    for suffix in SYLLABLE_RULES["suffixes_to_remove_with_one_less_syllable"]:
+    for suffix in affixes["suffixes_to_remove_with_one_less_syllable"]:
         if (
             word.endswith((suffix, suffix + "s"))
             and _number_of_vowel_groups(
@@ -243,7 +258,7 @@ def _number_of_syllables_in_word(word: str):
             word = word.removesuffix(suffix).removesuffix(suffix + "s")
             number_of_syllables += _number_of_vowel_groups(suffix)
             number_of_syllables -= 1
-    for suffix in SYLLABLE_RULES["suffixes_to_remove_with_extra_syllable"]:
+    for suffix in affixes["suffixes_to_remove_with_extra_syllable"]:
         if (
             word.endswith((suffix, suffix + "s"))
             and _number_of_vowel_groups(
@@ -290,13 +305,13 @@ def _number_of_syllables_in_word(word: str):
         number_of_syllables += 1
 
     # Deal with exceptions from the given prefix and suffix lists
-    if word.startswith(SYLLABLE_RULES["prefixes_needing_extra_syllable"]):
+    if word.startswith(affixes["prefixes_needing_extra_syllable"]):
         number_of_syllables += 1
-    if word.startswith(SYLLABLE_RULES["prefixes_needing_one_less_syllable"]):
+    if word.startswith(affixes["prefixes_needing_one_less_syllable"]):
         number_of_syllables -= 1
-    if word.endswith(SYLLABLE_RULES["suffixes_needing_one_more_syllable"]):
+    if word.endswith(affixes["suffixes_needing_one_more_syllable"]):
         number_of_syllables += 1
-    if word.endswith(SYLLABLE_RULES["suffixes_needing_one_less_syllable"]):
+    if word.endswith(affixes["suffixes_needing_one_less_syllable"]):
         number_of_syllables -= 1
 
     return number_of_syllables

@@ -1,4 +1,3 @@
-import pytest
 from uqcsbot.haiku import _number_of_syllables_in_word, _find_haiku
 
 

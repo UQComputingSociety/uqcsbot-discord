@@ -46,7 +46,6 @@ exclude = [
     "**/error_handler.py",
     "**/events.py",
     "**/gaming.py",
-    "**/haiku.py",
     "**/member_counter.py",
     "**/remindme.py",
     "**/snailrace.py",
