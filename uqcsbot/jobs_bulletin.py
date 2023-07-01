@@ -2,6 +2,8 @@ import discord
 import logging
 from discord.ext import commands
 
+from uqcsbot.bot import UQCSBot
+
 
 class JobsBulletin(commands.Cog):
     CHANNEL_NAME = "jobs-bulletin"
@@ -41,7 +43,7 @@ class JobsBulletin(commands.Cog):
         + f" #uqcs-meta or by email at {UQCS_EMAIL}.",
     ]
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: UQCSBot):
         self.bot = bot
 
     @commands.Cog.listener()
@@ -99,5 +101,5 @@ class JobsBulletin(commands.Cog):
         await msg.author.send(embed=user_message)
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: UQCSBot):
     await bot.add_cog(JobsBulletin(bot))

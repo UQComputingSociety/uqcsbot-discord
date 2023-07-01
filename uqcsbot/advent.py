@@ -15,17 +15,17 @@ from requests.exceptions import RequestException
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import AOCWinner
 from uqcsbot.utils.command_utils import loading_status
+from uqcsbot.utils.err_log_utils import FatalErrorWithLog
 
 # Leaderboard API URL with placeholders for year and code.
 LEADERBOARD_URL = "https://adventofcode.com/{year}/leaderboard/private/view/{code}.json"
-# Session cookie (will expire in approx 30 days).
-# See: https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables#aoc_session_id
-SESSION_ID = os.environ.get("AOC_SESSION_ID")
+
 # UQCS leaderboard ID.
 UQCS_LEADERBOARD = 989288
 
 # Days in Advent of Code. List of numbers 1 to 25.
 ADVENT_DAYS = list(range(1, 25 + 1))
+
 # Puzzles are unlocked at midnight EST.
 EST_TIMEZONE = timezone(timedelta(hours=-5))
 
@@ -159,6 +159,10 @@ class Member:
 class Advent(commands.Cog):
     CHANNEL_NAME = "contests"
 
+    # Session cookie (will expire in approx 30 days).
+    # See: https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables#aoc_session_id
+    SESSION_ID: str = ""
+
     def __init__(self, bot: UQCSBot):
         self.bot = bot
         self.bot.schedule_task(
@@ -178,6 +182,13 @@ class Advent(commands.Cog):
             day="1-25",
             month=12,
         )
+
+        if os.environ.get("AOC_SESSION_ID") is not None:
+            SESSION_ID = os.environ.get("AOC_SESSION_ID")
+        else:
+            raise FatalErrorWithLog(
+                bot, "Unable to find AoC session ID. Not loading advent cog."
+            )
 
     def star_char(self, num_stars: int):
         """
@@ -334,7 +345,7 @@ class Advent(commands.Cog):
         def usage_error(message, *args, **kwargs):
             raise ValueError(message)
 
-        parser.error = usage_error  # type: ignore
+        parser.error = usage_error
 
         args = parser.parse_args(argv)
 
@@ -343,14 +354,14 @@ class Advent(commands.Cog):
 
         return args
 
-    def get_leaderboard(self, year: int, code: int) -> Dict:
+    def get_leaderboard(self, year: int, code: int) -> Optional[Dict]:
         """
         Returns a json dump of the leaderboard
         """
         try:
             response = requests.get(
                 LEADERBOARD_URL.format(year=year, code=code),
-                cookies={"session": SESSION_ID},
+                cookies={"session": self.SESSION_ID},
             )
             return response.json()
         except ValueError as exception:  # json.JSONDecodeError
@@ -543,4 +554,5 @@ class Advent(commands.Cog):
 
 async def setup(bot: UQCSBot):
     cog = Advent(bot)
+
     await bot.add_cog(cog)
