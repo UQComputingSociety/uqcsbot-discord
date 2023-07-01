@@ -132,7 +132,9 @@ class SnailRaceState:
         """
         Start the race loop, this will be triggered after the entry has closed.
         """
-        if interaction is None or not isinstance(interaction.channel, discord.TextChannel):
+        if interaction is None or not isinstance(
+            interaction.channel, discord.TextChannel
+        ):
             return
 
         if not len(self.racers) > 0:

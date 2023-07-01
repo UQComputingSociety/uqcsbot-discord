@@ -32,7 +32,9 @@ class WorkingOn(commands.Cog):
             self.bot.uqcs_server.channels, name=self.bot.GENERAL_CNAME
         )
 
-        if general_channel is not None and isinstance(general_channel, discord.TextChannel):
+        if general_channel is not None and isinstance(
+            general_channel, discord.TextChannel
+        ):
             await general_channel.send(
                 "\n".join(message),
                 allowed_mentions=discord.AllowedMentions(
@@ -40,7 +42,9 @@ class WorkingOn(commands.Cog):
                 ),
             )
         else:
-            logging.warning(f"Could not find required channel #{self.bot.GENERAL_CNAME}")
+            logging.warning(
+                f"Could not find required channel #{self.bot.GENERAL_CNAME}"
+            )
 
 
 async def setup(bot: UQCSBot):

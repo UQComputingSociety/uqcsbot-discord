@@ -26,7 +26,8 @@ class MemberCounter(commands.Cog):
         member_count_channels: List[discord.VoiceChannel] = [
             channel
             for channel in self.bot.uqcs_server.channels
-            if channel.name.startswith(self.MEMBER_COUNT_PREFIX) and isinstance(channel, discord.VoiceChannel)
+            if channel.name.startswith(self.MEMBER_COUNT_PREFIX)
+            and isinstance(channel, discord.VoiceChannel)
         ]
         if len(member_count_channels) == 0:
             logging.warning(
@@ -46,12 +47,14 @@ class MemberCounter(commands.Cog):
             )
             return
 
-        if (bot_member := self.bot.uqcs_server.get_member(self.bot.safe_user.id)) is None:
+        if (
+            bot_member := self.bot.uqcs_server.get_member(self.bot.safe_user.id)
+        ) is None:
             logging.warning(
                 f"Unable to determine bot permissions for managing #Member Count channel."
             )
             return
-        
+
         permissions = self.member_count_channel.permissions_for(bot_member)
         if not permissions.manage_channels:
             logging.warning(
@@ -63,13 +66,16 @@ class MemberCounter(commands.Cog):
     @app_commands.command(name="membercount")
     async def member_count(self, interaction: discord.Interaction, force: bool = False):
         """Display the number of members"""
-        if interaction.guild is None or not isinstance(interaction.user, discord.Member):
+        if interaction.guild is None or not isinstance(
+            interaction.user, discord.Member
+        ):
             return
-        
+
         new_members = [
             member
             for member in interaction.guild.members
-            if member.joined_at is not None and member.joined_at
+            if member.joined_at is not None
+            and member.joined_at
             > datetime.now(tz=ZoneInfo("Australia/Brisbane")) - self.NEW_MEMBER_TIME
         ]
         await interaction.response.send_message(

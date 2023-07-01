@@ -7,7 +7,8 @@ from uqcsbot.bot import UQCSBot
 import uqcsbot.utils.snailrace_utils as snail
 from typing_extensions import TypeVar
 
-V = TypeVar('V', bound='SnailRaceView', covariant=True)
+V = TypeVar("V", bound="SnailRaceView", covariant=True)
+
 
 # Trying out Discord buttons for Snail Race Interactions
 class SnailRaceView(discord.ui.View):
@@ -22,7 +23,7 @@ class SnailRaceView(discord.ui.View):
         """
         if self.raceState.open_interaction is None:
             return
-        
+
         for child in self.children:
             if isinstance(child, discord.ui.Button):
                 child.disabled = True

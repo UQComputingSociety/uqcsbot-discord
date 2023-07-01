@@ -58,15 +58,21 @@ class Starboard(commands.Cog):
         N.B. this does assume the server only has one channel called "starboard" and one emoji called
         "starhaj". If this assumption stops holding, we may need to move back to IDs (cringe)
         """
-        if (emoji := discord.utils.get(self.bot.emojis, name=self.EMOJI_NAME)) is not None:
+        if (
+            emoji := discord.utils.get(self.bot.emojis, name=self.EMOJI_NAME)
+        ) is not None:
             self.starboard_emoji = emoji
-        if (channel := discord.utils.get(
-            self.bot.get_all_channels(), name=self.bot.STARBOARD_CNAME
-        )) is not None and isinstance(channel, discord.TextChannel):
+        if (
+            channel := discord.utils.get(
+                self.bot.get_all_channels(), name=self.bot.STARBOARD_CNAME
+            )
+        ) is not None and isinstance(channel, discord.TextChannel):
             self.starboard_channel = channel
-        if (log := discord.utils.get(
-            self.bot.get_all_channels(), name=self.bot.ADMIN_ALERTS_CNAME
-        )) is not None and isinstance(log, discord.TextChannel):
+        if (
+            log := discord.utils.get(
+                self.bot.get_all_channels(), name=self.bot.ADMIN_ALERTS_CNAME
+            )
+        ) is not None and isinstance(log, discord.TextChannel):
             self.modlog = log
 
     @app_commands.command()
