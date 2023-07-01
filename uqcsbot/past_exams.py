@@ -40,7 +40,7 @@ class PastExams(commands.Cog):
         await interaction.response.defer(thinking=True)
 
         try:
-            past_exams = get_past_exams(course_code)    
+            past_exams = get_past_exams(course_code)
         except HttpException as exception:
             logging.warning(
                 f"Received a HTTP response code {exception.status_code}. Error information: {exception.message}"
@@ -78,7 +78,7 @@ class PastExams(commands.Cog):
                 description=f"**{exam.year} {exam.semester}**: {exam.link}",
             )
             embed.set_footer(
-                text = "The above link will require a UQ SSO login to access."
+                text="The above link will require a UQ SSO login to access."
             )
             await interaction.edit_original_response(embed=embed)
             return
@@ -101,9 +101,7 @@ class PastExams(commands.Cog):
                 value=exam.link,
                 inline=False,
             )
-        embed.set_footer(
-            text = "The above links will require a UQ SSO login to access."
-        )
+        embed.set_footer(text="The above links will require a UQ SSO login to access.")
         await interaction.edit_original_response(embed=embed)
 
 
