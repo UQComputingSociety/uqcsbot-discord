@@ -318,11 +318,8 @@ class Starboard(commands.Cog):
         sent_id = sent.id if sent is not None else None
 
         db_session = self.bot.create_db_session()
-        entry = (
-            db_session.query(models.Starboard)
-            .filter(
-                and_(models.Starboard.recv == recv_id, models.Starboard.sent == sent_id)
-            )
+        entry = db_session.query(models.Starboard).filter(
+            and_(models.Starboard.recv == recv_id, models.Starboard.sent == sent_id)
         )
         entry.delete(synchronize_session=False)
         db_session.commit()
