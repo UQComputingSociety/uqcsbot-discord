@@ -29,7 +29,9 @@ class UQCSBot(commands.Bot):
         # Important channel names & constants go here
         self.ADMIN_ALERTS_CNAME = "admin-alerts"
         self.GENERAL_CNAME = "general"
+        self.STARBOARD_CNAME = "starboard"
         self.BOT_TIMEZONE = timezone("Australia/Brisbane")
+        self.STARBOARD_ENAME = "starhaj"
 
         self.uqcs_server: discord.Guild
 

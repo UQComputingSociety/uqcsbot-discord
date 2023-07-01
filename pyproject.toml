@@ -49,7 +49,6 @@ exclude = [
     "**/member_counter.py",
     "**/remindme.py",
     "**/snailrace.py",
-    "**/starboard.py",
     "**/uptime.py",
     "**/whatsdue.py",
     "**/working_on.py",
