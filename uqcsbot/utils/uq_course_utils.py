@@ -4,7 +4,6 @@ from datetime import datetime
 from dateutil import parser
 from bs4 import BeautifulSoup, element
 from functools import partial
-from binascii import hexlify
 from typing import List, Dict, Optional, Literal, Tuple
 
 BASE_COURSE_URL = "https://my.uq.edu.au/programs-courses/course.html?course_code="
@@ -29,12 +28,13 @@ class Offering:
         "Herston": "HERST",
     }
 
-    ModeType = Literal["Internal", "External", "Flexible Delivery"]
+    ModeType = Literal["Internal", "External", "Flexible Delivery", "Intensive"]
     # The codes used internally within UQ systems
     mode_codes: Dict[ModeType, str] = {
         "Internal": "IN",
         "External": "EX",
         "Flexible Delivery": "FD",
+        "Intensive": "IT",
     }
 
     SemesterType = Literal["1", "2", "Summer"]
@@ -56,7 +56,7 @@ class Offering:
         if semester is not None:
             self.semester = semester
         else:
-            self.semester = "1" if datetime.today().month <= 6 else "2"
+            self.semester = self._estimate_current_semester()
         self.semester
         self.campus = campus
         self.mode = mode
@@ -84,11 +84,23 @@ class Offering:
         """
         Returns the hex encoded offering string (containing all offering information) for the offering.
         """
-        return hexlify(
-            f"{self.get_campus_code()}{self.get_semester_code()}{self.get_mode_code()}".encode(
-                "utf-8"
-            )
-        ).decode("utf-8")
+        offering_code_text = (
+            f"{self.get_campus_code()}{self.get_semester_code()}{self.get_mode_code()}"
+        )
+        return offering_code_text.encode("utf-8").hex()
+
+    @staticmethod
+    def _estimate_current_semester() -> SemesterType:
+        """
+        Returns an estimate of the current semester (represented by an integer) based on the current month. 3 represents summer semester.
+        """
+        current_month = datetime.today().month
+        if 2 <= current_month <= 6:
+            return "1"
+        elif 7 <= current_month <= 11:
+            return "2"
+        else:
+            return "Summer"
 
 
 class DateSyntaxException(Exception):

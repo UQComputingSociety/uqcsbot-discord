@@ -77,7 +77,7 @@ class WhatsDue(commands.Cog):
         embed = discord.Embed(
             title=f"What's Due: {', '.join(course_names)}",
             url=asses_page,
-            description="*WARNING: Assessment information may vary/change/be entirely different! Use at your own discretion*",
+            description="*WARNING: Assessment information may vary/change/be entirely different! Use at your own discretion. Check your ECP for a true list of assessment.*",
         )
         if assessment:
             for assessment_item in assessment:
@@ -100,7 +100,7 @@ class WhatsDue(commands.Cog):
 
         if not fulloutput:
             embed.set_footer(
-                text="Note: This may not be the full assessment list. Set fulloutput to True for the full list."
+                text="Note: This may not be the full assessment list. Set fulloutput to True to see a potentially more complete list, or check your ECP for a true list of assessment."
             )
 
         await interaction.edit_original_response(embed=embed)
