@@ -60,7 +60,9 @@ class Gaming(commands.Cog):
             for element in item:
                 if element.tag == "name":
                     match[item.get("id")] = SequenceMatcher(
-                        None, search_name, (x if (x := element.get("value")) is not None else "")
+                        None,
+                        search_name,
+                        (x if (x := element.get("value")) is not None else ""),
                     ).ratio()
         return max(match, key=match.get)
 
@@ -88,7 +90,7 @@ class Gaming(commands.Cog):
             "description": None,
             "image": None,
             "min_time": "",
-            "max_time": ""
+            "max_time": "",
         }
 
         for element in result:
@@ -226,12 +228,14 @@ class Gaming(commands.Cog):
                     f"• Ranked {value:s} in the {key:s} genre.\n"
                     for key, value in parameters.get("subranks", {}).items()
                 )
-                + f"Categories: {', '.join(parameters['categories']):s}\n" +
-                f"Mechanics: {', '.join(parameters['mechanics']):s}\n"
+                + f"Categories: {', '.join(parameters['categories']):s}\n"
+                + f"Mechanics: {', '.join(parameters['mechanics']):s}\n"
             ),
         )
         max_message_length = 1000
-        description: str = (x if (x := parameters["description"]) is not None else ":question:")
+        description: str = (
+            x if (x := parameters["description"]) is not None else ":question:"
+        )
         if len(description) > max_message_length:
             description = description[:max_message_length] + "\u2026"
         embed.add_field(name="Description", inline=False, value=description)
