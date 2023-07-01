@@ -2,6 +2,10 @@ from discord.ext import commands
 from discord.ext.commands.errors import MissingRequiredArgument
 import logging
 
+"""
+TODO: this is bundled with advent.py and should be removed.
+"""
+
 
 class ErrorHandler(commands.Cog):
     @commands.Cog.listener()
