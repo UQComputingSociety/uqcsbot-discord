@@ -323,10 +323,8 @@ class Starboard(commands.Cog):
             .filter(
                 and_(models.Starboard.recv == recv_id, models.Starboard.sent == sent_id)
             )
-            .one_or_none()
         )
-        if entry is not None:
-            entry.delete(synchronize_session=False)
+        entry.delete(synchronize_session=False)
         db_session.commit()
         db_session.close()
 

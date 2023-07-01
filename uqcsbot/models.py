@@ -65,6 +65,7 @@ class Starboard(Base):
     recv_location: Mapped[Optional[int]] = mapped_column(
         "recv_location", BigInteger, nullable=True, unique=False
     )
-    sent: Mapped[Optional[int]] = mapped_column(
+    # external Optional is needed as a type hint that the column can return None values.
+    sent: Optional[Mapped[Optional[int]]] = mapped_column(
         "sent", BigInteger, primary_key=True, nullable=True, unique=True
     )
