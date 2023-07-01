@@ -277,7 +277,7 @@ def get_past_exams_page_url(course_code: str) -> str:
     return BASE_PAST_EXAMS_URL + course_code
 
 
-def get_past_exams(course_code: str) -> Iterable[Exam]:
+def get_past_exams(course_code: str) -> List[Exam]:
     """
     Takes the course code and generates each result in the format:
     ('year Sem X:', link)
@@ -294,9 +294,11 @@ def get_past_exams(course_code: str) -> Iterable[Exam]:
         return []
     exam_list_json = exam_list_json[0]
 
+    exam_list = []
     for exam_json in exam_list_json:
         year = int(exam_json[0]["examYear"])
         # Semesters are given as "Sem.1", so we will change this to "Sem 1"
         semester = exam_json[0]["examPeriod"].replace(".", " ")
         link = exam_json[0]["paperUrl"]
-        yield Exam(year, semester, link)
+        exam_list.append(Exam(year, semester, link))
+    return exam_list
