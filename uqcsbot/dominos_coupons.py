@@ -16,6 +16,16 @@ MAX_COUPONS = 10  # Prevents abuse
 COUPONESE_DOMINOS_URL = "https://www.couponese.com/store/dominos.com.au/"
 
 
+class HTTPResponseException(Exception):
+    """
+    An exception for when a HTTP response is not requests.codes.ok
+    """
+
+    def __init__(self, http_code: int, *args: object) -> None:
+        super().__init__(*args)
+        self.http_code = http_code
+
+
 class DominosCoupons(commands.Cog):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
@@ -55,7 +65,7 @@ class DominosCoupons(commands.Cog):
             return
         except HTTPResponseException as error:
             logging.warning(
-                f"Received a HTTP response code that was not OK (200), namely ({error.http_code}). Error information: {error}"
+                f"Received a HTTP response code {error.http_code}. Error information: {error}"
             )
             await interaction.edit_original_response(
                 content=f"Could not find the coupons on the coupon website (<{COUPONESE_DOMINOS_URL}>)..."
@@ -105,16 +115,6 @@ class Coupon:
 
     def keyword_matches(self, keyword: str) -> bool:
         return keyword.lower() in self.description.lower()
-
-
-class HTTPResponseException(Exception):
-    """
-    An exception for when a HTTP response is not requests.codes.ok
-    """
-
-    def __init__(self, http_code: int, *args: object) -> None:
-        super().__init__(*args)
-        self.http_code = http_code
 
 
 def _get_coupons(n: int, ignore_expiry: bool, keywords: List[str]) -> List[Coupon]:
