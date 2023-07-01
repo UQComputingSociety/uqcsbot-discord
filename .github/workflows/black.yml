@@ -8,6 +8,7 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+
       - name: Run black
         id: runBlack
         uses: psf/black@stable
@@ -15,9 +16,11 @@ jobs:
           options: "--check --verbose"
           src: "./uqcsbot"
           version: "23.3.0"
+
       - name: Convert logs to artifacts
         uses: actions/upload-artifact@v3
         if: always() && (steps.runBlack.outcome == 'failure')
         with:
           name: "black-logs"
           path: "/tmp/blk_*"
+          

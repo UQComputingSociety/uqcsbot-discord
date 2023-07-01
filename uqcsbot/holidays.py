@@ -8,6 +8,7 @@ from random import choice
 import requests
 from requests.exceptions import RequestException
 from typing import List
+from zoneinfo import ZoneInfo
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.utils.command_utils import HYPE_REACTS
@@ -28,7 +29,7 @@ class Holiday:
         """
         Returns true if the holiday is celebrated today
         """
-        now = datetime.now()
+        now = datetime.now(tz=ZoneInfo("Australia/Brisbane"))
         return self.date.month == now.month and self.date.day == now.day
 
 
@@ -39,7 +40,7 @@ def get_holiday() -> Holiday | None:
         return None
 
     geek_holidays = get_holidays_from_csv()
-    holidays = get_holidays_from_page(holiday_page)
+    holidays = get_holidays_from_page(holiday_page.decode("utf-8"))
 
     holidays_today = [
         holiday for holiday in holidays + geek_holidays if holiday.is_today()
@@ -48,7 +49,7 @@ def get_holiday() -> Holiday | None:
     return choice(holidays_today) if holidays_today else None
 
 
-def get_holidays_from_page(holiday_page) -> List[Holiday]:
+def get_holidays_from_page(holiday_page: str) -> List[Holiday]:
     """Strips results from html page"""
     soup = BeautifulSoup(holiday_page, "html.parser")
     soup_holidays = (
@@ -57,7 +58,7 @@ def get_holidays_from_page(holiday_page) -> List[Holiday]:
         + soup.find_all(class_="hl")
     )
 
-    holidays = []
+    holidays: List[Holiday] = []
 
     for soup_holiday in soup_holidays:
         date_string = soup_holiday.find("th").get_text(strip=True)
@@ -75,7 +76,7 @@ def get_holidays_from_csv() -> List[Holiday]:
     Returns list of holiday objects, one for each holiday in csv file
     csv rows in format: date,description,link
     """
-    holidays = []
+    holidays: List[Holiday] = []
     with open(HOLIDAY_CSV_PATH, "r") as csvfile:
         for row in csv.reader(csvfile):
             date = datetime.strptime(row[0], "%d %b")
@@ -94,7 +95,6 @@ def get_holiday_page() -> bytes | None:
         return response.content
     except RequestException as e:
         logging.warning(e.response.content)
-    return None
 
 
 class Holidays(commands.Cog):
@@ -117,12 +117,8 @@ class Holidays(commands.Cog):
         if holiday is None:
             return
 
-        if self.bot.uqcs_server is None:
-            logging.warning("UQCS guild not found (?!).")
-            return
-
         general_channel = discord.utils.get(
-            self.bot.uqcs_server.channels, name=GENERAL_CHANNEL
+            self.bot.uqcs_server.channels, name=self.bot.GENERAL_CNAME
         )
         if general_channel is None:
             logging.warning(f"Could not find required channel #{GENERAL_CHANNEL}")

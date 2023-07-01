@@ -3,12 +3,13 @@ import os
 from datetime import datetime
 
 import discord
-from aiomcrcon import Client, IncorrectPasswordError, RCONConnectionError
+from aiomcrcon import Client, IncorrectPasswordError, RCONConnectionError  # type: ignore
 from discord import Member, app_commands, Colour
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import MCWhitelist
+from uqcsbot.utils.err_log_utils import FatalErrorWithLog
 
 RCON_ADDRESS = os.environ.get("MC_RCON_ADDRESS")
 RCON_PORT = os.environ.get("MC_RCON_PORT")
@@ -31,7 +32,12 @@ class Minecraft(commands.Cog):
         An ID of -1 is returned if there was an issue connecting to the server.
         """
         try:
-            async with Client(RCON_ADDRESS, RCON_PORT, RCON_PASSWORD) as client:
+            if RCON_ADDRESS is None or RCON_PORT is None or RCON_PASSWORD is None:
+                raise FatalErrorWithLog(
+                    self.bot, "Attempted to send RCON command but couldn't log in!"
+                )
+
+            async with Client(RCON_ADDRESS, int(RCON_PORT), RCON_PASSWORD) as client:
                 response = await client.send_cmd(command)
 
         except RCONConnectionError:
@@ -127,5 +133,5 @@ class Minecraft(commands.Cog):
         )
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: UQCSBot):
     await bot.add_cog(Minecraft(bot))

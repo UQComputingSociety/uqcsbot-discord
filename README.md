@@ -64,6 +64,34 @@ To run a particular test, say `test_whatweekisit.py`, run:
 poetry run pytest tests\test_whatweekisit.py
 ```
 
+## Code Styling
+
+We use an automated code formatter called [Black](https://black.readthedocs.io/), currently this needs to be run manually to pass the format CI check. To run Black, run from the root of the repo:
+
+```bash
+poetry run black uqcsbot
+```
+
+Individual files can also be styled with:
+
+```bash
+poetry run pyright uqcsbot/file.py
+```
+
+## Static Type Checks
+
+We use [Pyright](https://github.com/microsoft/pyright) to perform static type checks; which all commits should pass. The exception list within `pyproject.toml` is only to be used for legacy code or libraries with no available typing stubs. We hope that all new cogs can be made to pass - if you're having trouble, ping us on discord and we'll give you a hand. To run Pyright, run from the root of the repo:
+
+```bash
+poetry run pyright uqcsbot
+```
+
+Individual files can also be typechecked with:
+
+```bash
+poetry run pyright uqcsbot/file.py
+```
+
 ## Development Resources
 
 If this is your first time working on an open source project, we're here to walk you through every step of the way.
