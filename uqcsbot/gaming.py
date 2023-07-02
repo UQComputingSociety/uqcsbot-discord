@@ -53,18 +53,19 @@ class Gaming(commands.Cog):
             return None
 
         # filters for the closest name match
-        match: Any = {}
+        match: Dict[str, float] = {}
         for item in results:
-            if item.get("id") is None:
+            item_id = item.get("id")
+            if item_id is None:
                 continue
             for element in item:
                 if element.tag == "name":
-                    match[item.get("id")] = SequenceMatcher(
+                    match[item_id] = SequenceMatcher(
                         None,
                         search_name,
                         (x if (x := element.get("value")) is not None else ""),
                     ).ratio()
-        return max(match, key=match.get)
+        return max(match, key=lambda x: match.get(x, 0))
 
     def get_board_game_parameters(self, identity: str) -> Optional[Parameters]:
         """
