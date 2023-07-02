@@ -56,6 +56,7 @@ async def main():
         "minecraft",
         "phonetics",
         "remindme",
+        "repos",
         "snailrace",
         "starboard",
         "text",
