@@ -81,7 +81,7 @@ class DominosCoupons(commands.Cog):
         embed = discord.Embed(
             title="Domino's Coupons",
             url=COUPONESE_DOMINOS_URL,
-            description=f"Keywords: {keywords}",
+            description=f"Keywords: *{keywords}*" if keywords else None,
             timestamp=datetime.now(),
         )
         for coupon in coupons:
