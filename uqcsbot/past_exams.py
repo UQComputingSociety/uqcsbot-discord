@@ -75,7 +75,7 @@ class PastExams(commands.Cog):
             exam = past_exams[0]
             embed = discord.Embed(
                 title=f"Past exam for {course_code.upper()}",
-                description=f"**{exam.year} {exam.semester}**: {exam.link}",
+                description=f"[{exam.year} {exam.semester}]({exam.link})",
             )
             embed.set_footer(
                 text="The above link will require a UQ SSO login to access."
@@ -97,9 +97,9 @@ class PastExams(commands.Cog):
         )
         for exam in past_exams:
             embed.add_field(
-                name=f"{exam.year} {exam.semester}",
-                value=exam.link,
-                inline=False,
+                name="",
+                value=f"[{exam.year} {exam.semester}]({exam.link})",
+                inline=True,
             )
         embed.set_footer(text="The above links will require a UQ SSO login to access.")
         await interaction.edit_original_response(embed=embed)
