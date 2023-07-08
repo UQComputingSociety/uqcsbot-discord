@@ -78,16 +78,16 @@ class Morse(commands.Cog):
         """
 
         # Sanitise invalid characters from the message
-        message = morse.sanitise_illegals(message)
+        message = Morse.sanitise_illegals(message)
 
         # Sanitise message for discord emotes
-        message = morse.sanitise_emotes(message)
+        message = Morse.sanitise_emotes(message)
 
         # Convert all chars to lower case
         message = message.upper()
 
         # Then check they are valid morse code ascii
-        invalid = morse.check(message)
+        invalid = Morse.check(message)
         if invalid != 0:
             await interaction.response.send_message(
                 f"Invalid morse code character/s in string: {invalid}"
@@ -95,7 +95,7 @@ class Morse(commands.Cog):
             return
 
         # encrypt message
-        response = morse.encrypt_to_morse(message)
+        response = Morse.encrypt_to_morse(message)
 
         # Check if response is too long
         if len(response) > 2000:
@@ -137,7 +137,7 @@ class Morse(commands.Cog):
         return message
 
     @staticmethod
-    def check(message):
+    def check(message: str):
         ret = ""
         for letter in message:
             if letter not in MorseCodeDict:
@@ -147,7 +147,7 @@ class Morse(commands.Cog):
         return 0
 
     @staticmethod
-    def encrypt_to_morse(message):
+    def encrypt_to_morse(message: str):
         cipher = ""
         for letter in message:
             cipher += MorseCodeDict[letter] + "  "
