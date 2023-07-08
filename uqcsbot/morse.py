@@ -88,7 +88,7 @@ class Morse(commands.Cog):
 
         # Then check they are valid morse code ascii
         invalid = Morse.check(message)
-        if invalid != 0:
+        if invalid != "":
             await interaction.response.send_message(
                 f"Invalid morse code character/s in string: {invalid}"
             )
@@ -137,17 +137,17 @@ class Morse(commands.Cog):
         return message
 
     @staticmethod
-    def check(message: str):
+    def check(message: str) -> str:
         ret = ""
         for letter in message:
             if letter not in MorseCodeDict:
                 ret += letter
         if len(ret) != 0:
             return ret
-        return 0
+        return ""
 
     @staticmethod
-    def encrypt_to_morse(message: str):
+    def encrypt_to_morse(message: str) -> str:
         cipher = ""
         for letter in message:
             cipher += MorseCodeDict[letter] + "  "
