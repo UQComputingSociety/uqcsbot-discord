@@ -127,7 +127,7 @@ class Morse(commands.Cog):
         """
 
         # Regex to match emotes.
-        emotes: List[str] = re.findall("<a?:\w+:\d+>", message)
+        emotes: List[str] = re.findall(r"<a?:\w+:\d+>", message)
 
         # Replace each emote with its name.
         for emote in emotes:
