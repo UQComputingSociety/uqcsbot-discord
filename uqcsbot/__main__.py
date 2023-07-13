@@ -56,6 +56,7 @@ async def main():
         "manage_cogs",
         "member_counter",
         "minecraft",
+        "morse",
         "past_exams",
         "phonetics",
         "remindme",
