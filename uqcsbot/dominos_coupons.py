@@ -46,13 +46,14 @@ class DominosCoupons(commands.Cog):
         """
         Returns a list of dominos coupons
         """
-        await interaction.response.defer(thinking=True)
-
         if number_of_coupons < 1 or number_of_coupons > MAX_COUPONS:
-            await interaction.edit_original_response(
-                content=f"You can't have that many coupons. Try a number between 1 and {MAX_COUPONS}."
+            await interaction.response.send_message(
+                content=f"You can't have that many coupons. Try a number between 1 and {MAX_COUPONS}.",
+                ephemeral=True,
             )
             return
+        await interaction.response.defer(thinking=True)
+
         try:
             coupons = _get_coupons(number_of_coupons, ignore_expiry, keywords.split())
         except RequestException as error:
@@ -81,7 +82,7 @@ class DominosCoupons(commands.Cog):
         embed = discord.Embed(
             title="Domino's Coupons",
             url=COUPONESE_DOMINOS_URL,
-            description=f"Keywords: {keywords}",
+            description=f"Keywords: *{keywords}*" if keywords else None,
             timestamp=datetime.now(),
         )
         for coupon in coupons:
