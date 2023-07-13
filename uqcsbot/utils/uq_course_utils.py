@@ -4,7 +4,7 @@ from datetime import datetime
 from dateutil import parser
 from bs4 import BeautifulSoup, element
 from functools import partial
-from typing import List, Dict, Optional, Iterable, Literal, Tuple
+from typing import List, Dict, Optional, Literal, Tuple
 import json
 
 BASE_COURSE_URL = "https://my.uq.edu.au/programs-courses/course.html?course_code="
@@ -422,7 +422,7 @@ def get_past_exams(course_code: str) -> List[Exam]:
         return []
     exam_list_json = exam_list_json[0]
 
-    exam_list = []
+    exam_list: List[Exam] = []
     for exam_json in exam_list_json:
         year = int(exam_json[0]["examYear"])
         # Semesters are given as "Sem.1", so we will change this to "Sem 1"
