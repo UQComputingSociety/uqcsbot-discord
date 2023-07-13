@@ -5,8 +5,7 @@ import discord
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
-
-GENERAL_CHANNEL = "general"
+from typing import List
 
 
 class WorkingOn(commands.Cog):
@@ -19,7 +18,7 @@ class WorkingOn(commands.Cog):
     async def workingon(self):
         """5pm ping for 2 lucky server members to share what they have been working on."""
         members = list(self.bot.get_all_members())
-        message = []
+        message: List[str] = []
 
         while len(message) < 2:
             chosen = choice(members)
@@ -30,10 +29,12 @@ class WorkingOn(commands.Cog):
                 )
 
         general_channel = discord.utils.get(
-            self.bot.uqcs_server.channels, name=GENERAL_CHANNEL
+            self.bot.uqcs_server.channels, name=self.bot.GENERAL_CNAME
         )
 
-        if general_channel is not None:
+        if general_channel is not None and isinstance(
+            general_channel, discord.TextChannel
+        ):
             await general_channel.send(
                 "\n".join(message),
                 allowed_mentions=discord.AllowedMentions(
@@ -41,7 +42,9 @@ class WorkingOn(commands.Cog):
                 ),
             )
         else:
-            logging.warning(f"Could not find required channel #{GENERAL_CHANNEL}")
+            logging.warning(
+                f"Could not find required channel #{self.bot.GENERAL_CNAME}"
+            )
 
 
 async def setup(bot: UQCSBot):

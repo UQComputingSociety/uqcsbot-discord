@@ -1,10 +1,13 @@
-import discord, asyncio
+import discord
 from discord import app_commands, ui
 
 from discord.ext import commands
 from uqcsbot.bot import UQCSBot
 
 import uqcsbot.utils.snailrace_utils as snail
+from typing_extensions import TypeVar
+
+V = TypeVar("V", bound="SnailRaceView", covariant=True)
 
 
 # Trying out Discord buttons for Snail Race Interactions
@@ -18,8 +21,12 @@ class SnailRaceView(discord.ui.View):
         Called when the view times out. This will deactivate the buttons and
         begine the race.
         """
+        if self.raceState.open_interaction is None:
+            return
+
         for child in self.children:
-            child.disabled = True
+            if isinstance(child, discord.ui.Button):
+                child.disabled = True
         await self.raceState.open_interaction.edit_original_response(
             content=snail.SNAILRACE_ENTRY_CLOSE, view=self
         )
@@ -27,8 +34,11 @@ class SnailRaceView(discord.ui.View):
 
     @ui.button(label="Enter Race", style=discord.ButtonStyle.primary)
     async def button_callback(
-        self, interaction: discord.Interaction, button: discord.ui.Button
+        self, interaction: discord.Interaction, button: discord.ui.Button[V]
     ):
+        if not isinstance(interaction.user, discord.Member):
+            return
+
         action = self.raceState.add_racer(interaction.user)
 
         if action == snail.SnailRaceJoinAdded:

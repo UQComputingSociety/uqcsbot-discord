@@ -1,6 +1,6 @@
 from difflib import SequenceMatcher
 from json import loads
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Set, TypedDict, Union
 from urllib.error import HTTPError
 from urllib.request import urlopen
 from xml.etree.ElementTree import fromstring
@@ -11,6 +11,23 @@ from discord.ext import commands
 from requests import get
 
 from uqcsbot.bot import UQCSBot
+
+
+class Parameters(TypedDict):
+    categories: Set[str]
+    mechanics: Set[str]
+    subranks: Dict[Any, Any]
+    identity: str
+    min_players: int
+    max_players: int
+    name: str
+    score: Union[str, None]
+    users: Union[str, None]
+    rank: str
+    description: Union[str, None]
+    image: Union[str, None]
+    min_time: str
+    max_time: str
 
 
 class Gaming(commands.Cog):
@@ -36,18 +53,21 @@ class Gaming(commands.Cog):
             return None
 
         # filters for the closest name match
-        match = {}
+        match: Dict[str, float] = {}
         for item in results:
-            if item.get("id") is None:
+            item_id = item.get("id")
+            if item_id is None:
                 continue
             for element in item:
                 if element.tag == "name":
-                    match[item.get("id")] = SequenceMatcher(
-                        None, search_name, element.get("value")
+                    match[item_id] = SequenceMatcher(
+                        None,
+                        search_name,
+                        (x if (x := element.get("value")) is not None else ""),
                     ).ratio()
-        return max(match, key=match.get)
+        return max(match, key=lambda x: match.get(x, 0))
 
-    def get_board_game_parameters(self, identity: str) -> Optional[Dict[str, str]]:
+    def get_board_game_parameters(self, identity: str) -> Optional[Parameters]:
         """
         returns the various parameters of a board game from bgg
         """
@@ -57,28 +77,39 @@ class Gaming(commands.Cog):
         if query.status_code != 200:
             return None
         result = fromstring(query.text)[0]
-        parameters: Dict[str, Any] = {}
-        parameters["categories"] = set()
-        parameters["mechanics"] = set()
-        parameters["subranks"] = {}
-        parameters["identity"] = identity
+        parameters: Parameters = {
+            "categories": set(),
+            "mechanics": set(),
+            "subranks": {},
+            "identity": identity,
+            "min_players": -1,
+            "max_players": -1,
+            "name": "",
+            "score": None,
+            "users": None,
+            "rank": "",
+            "description": None,
+            "image": None,
+            "min_time": "",
+            "max_time": "",
+        }
 
         for element in result:
             tag = element.tag
             tag_name = element.attrib.get("name")
-            tag_value = element.attrib.get("value")
+            tag_value = element.attrib.get("value", "")
             tag_type = element.attrib.get("type")
             tag_text = element.text
 
             # sets the range of players
             if tag == "poll" and tag_name == "suggested_numplayers":
-                players = set()
+                players: Set[int] = set()
                 for option in element:
-                    numplayers = option.attrib.get("numplayers")
+                    numplayers = option.attrib.get("numplayers", "0")
                     votes = 0
 
                     for result in option:
-                        numvotes = int(result.attrib.get("numvotes"))
+                        numvotes = int(result.attrib.get("numvotes", "0"))
                         direction = (
                             -1 if result.attrib.get("value") == "Not Recommended" else 1
                         )
@@ -95,12 +126,12 @@ class Gaming(commands.Cog):
                     parameters["max_players"] = max(players)
 
             # sets the backup min players
-            if tag == "minplayers":
-                parameters.setdefault("min_players", int(tag_value))
+            if tag == "minplayers" and parameters["min_players"] == -1:
+                parameters["min_players"] = int(tag_value)
 
             # sets the backup max players
-            if tag == "maxplayers":
-                parameters.setdefault("max_players", int(tag_value))
+            if tag == "maxplayers" and parameters["max_players"] == -1:
+                parameters["max_players"] = int(tag_value)
 
             # sets the name of the board game
             elif tag == "name" and tag_type == "primary":
@@ -118,7 +149,7 @@ class Gaming(commands.Cog):
             elif tag == "statistics":
                 for statistic in element[0]:
                     stat_tag = statistic.tag
-                    stat_value = statistic.attrib.get("value")
+                    stat_value = statistic.attrib.get("value", "")
                     if stat_tag == "average":
                         try:
                             parameters["score"] = str(round(float(stat_value), 2))
@@ -129,7 +160,7 @@ class Gaming(commands.Cog):
                     if stat_tag == "ranks":
                         for genre in statistic:
                             genre_name = genre.attrib.get("name")
-                            genre_value = genre.attrib.get("value")
+                            genre_value = genre.attrib.get("value", "")
                             if genre_name == "boardgame" and genre_value.isnumeric():
                                 position = int(genre_value)
                                 # gets the ordinal suffix
@@ -141,7 +172,7 @@ class Gaming(commands.Cog):
                                 ]
                                 parameters["rank"] = f"{position:d}{suffix:s}"
                             elif genre_value.isnumeric():
-                                friendlyname = genre.attrib.get("friendlyname")
+                                friendlyname = genre.attrib.get("friendlyname", "")
                                 # removes "game" as last word
                                 friendlyname = " ".join(friendlyname.split(" ")[:-1])
                                 position = int(genre_value)
@@ -170,7 +201,7 @@ class Gaming(commands.Cog):
 
         return parameters
 
-    def format_board_game_parameters(self, parameters: Dict[str, str]) -> discord.Embed:
+    def format_board_game_parameters(self, parameters: Parameters) -> discord.Embed:
         embed = discord.Embed(title=parameters.get("name", ":question:"))
         embed.add_field(
             name="Summary",
@@ -198,12 +229,14 @@ class Gaming(commands.Cog):
                     f"• Ranked {value:s} in the {key:s} genre.\n"
                     for key, value in parameters.get("subranks", {}).items()
                 )
-                + f"Categories: {', '.join(parameters.get('categories', set())):s}\n"
-                f"Mechanics: {', '.join(parameters.get('mechanics', set())):s}\n"
+                + f"Categories: {', '.join(parameters['categories']):s}\n"
+                + f"Mechanics: {', '.join(parameters['mechanics']):s}\n"
             ),
         )
         max_message_length = 1000
-        description = parameters.get("description", ":question:")
+        description: str = (
+            x if (x := parameters["description"]) is not None else ":question:"
+        )
         if len(description) > max_message_length:
             description = description[:max_message_length] + "\u2026"
         embed.add_field(name="Description", inline=False, value=description)

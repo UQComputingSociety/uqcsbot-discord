@@ -159,10 +159,6 @@ class Member:
 class Advent(commands.Cog):
     CHANNEL_NAME = "contests"
 
-    # Session cookie (will expire in approx 30 days).
-    # See: https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables#aoc_session_id
-    SESSION_ID: str = ""
-
     def __init__(self, bot: UQCSBot):
         self.bot = bot
         self.bot.schedule_task(
@@ -183,8 +179,10 @@ class Advent(commands.Cog):
             month=12,
         )
 
-        if os.environ.get("AOC_SESSION_ID") is not None:
-            SESSION_ID = os.environ.get("AOC_SESSION_ID")
+        # Session cookie (will expire in approx 30 days).
+        # See: https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables#aoc_session_id
+        if (session := os.environ.get("AOC_SESSION_ID")) is not None:
+            self.SESSION_ID = session
         else:
             raise FatalErrorWithLog(
                 bot, "Unable to find AoC session ID. Not loading advent cog."
