@@ -5,7 +5,8 @@ from dateutil import parser
 from bs4 import BeautifulSoup
 from functools import partial
 from binascii import hexlify
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Iterable
+import json
 
 BASE_COURSE_URL = "https://my.uq.edu.au/programs-courses/course.html?course_code="
 BASE_ASSESSMENT_URL = (
@@ -14,6 +15,7 @@ BASE_ASSESSMENT_URL = (
 )
 BASE_CALENDAR_URL = "http://www.uq.edu.au/events/calendar_view.php?category_id=16&year="
 OFFERING_PARAMETER = "offer"
+BASE_PAST_EXAMS_URL = "https://api.library.uq.edu.au/v1/exams/search/"
 
 
 class DateSyntaxException(Exception):
@@ -255,3 +257,48 @@ def get_parsed_assessment_item(assessment_item):
     # Thus, this bit of code will keep only the weight portion of the field.
     weight = get_element_inner_html(weight).strip().split("<br/>")[0]
     return (course_name, task, due_date, weight)
+
+
+class Exam:
+    """
+    Stores the information of a past exam, including its year, semester and link.
+    """
+
+    def __init__(self, year: int, semester: str, link: str) -> None:
+        self.year = year
+        self.semester = semester
+        self.link = link
+
+
+def get_past_exams_page_url(course_code: str) -> str:
+    """
+    Returns the URL of the UQ library past exam page
+    """
+    return BASE_PAST_EXAMS_URL + course_code
+
+
+def get_past_exams(course_code: str) -> List[Exam]:
+    """
+    Takes the course code and generates each result in the format:
+    ('year Sem X:', link)
+    """
+    url = get_past_exams_page_url(course_code)
+    http_response = requests.get(url)
+    if http_response.status_code != requests.codes.ok:
+        raise HttpException(url, http_response.status_code)
+    # The UQ library API has some funky nested lists within the output, so there will be a a few "[0]" lying about
+    exam_list_json = json.loads(http_response.content)["papers"]
+
+    # Check if the course code exists
+    if not exam_list_json:
+        return []
+    exam_list_json = exam_list_json[0]
+
+    exam_list = []
+    for exam_json in exam_list_json:
+        year = int(exam_json[0]["examYear"])
+        # Semesters are given as "Sem.1", so we will change this to "Sem 1"
+        semester = exam_json[0]["examPeriod"].replace(".", " ")
+        link = exam_json[0]["paperUrl"]
+        exam_list.append(Exam(year, semester, link))
+    return exam_list
