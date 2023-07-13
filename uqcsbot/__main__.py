@@ -53,6 +53,7 @@ async def main():
         "intros",
         "jobs_bulletin",
         "latex",
+        "manage_cogs",
         "member_counter",
         "minecraft",
         "phonetics",
