@@ -21,14 +21,25 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install Poetry
+      
+      - name: Check for cached poetry
+        id: cached-poetry
+        uses: actions/cache@v3
+        with:
+          path: .poetry
+          key: poetry-${{ runner.os }}-${{ env.POETRY_VERSION }}
+      
+      - name: Install poetry on cache miss
+        if: steps.cached-poetry.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
         with:
           version: ${{ env.POETRY_VERSION }}
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
+      
+      - name: Ensure poetry on path
+        run: echo "$HOME/.poetry/bin" >> $GITHUB_PATH
 
       - name: Check for cached dependencies
         id: cached-poetry-dependencies
@@ -41,7 +52,7 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
 
-      - name: Install everything else
+      - name: Install main project
         run: poetry install --no-interaction
 
       - name: Test with pytest
