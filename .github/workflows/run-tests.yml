@@ -18,6 +18,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+        # Local action that tries to cache as much of python & poetry as possible
       - name: Setup environment
         uses: ./.github/workflows/setup-python
         with:
@@ -35,6 +36,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
+        # Local action that tries to cache as much of python & poetry as possible
       - name: Setup environment
         uses: ./.github/workflows/setup-python
         with:

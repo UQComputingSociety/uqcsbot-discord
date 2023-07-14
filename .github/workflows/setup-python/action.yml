@@ -28,14 +28,17 @@ runs:
       uses: actions/cache@v3
       with:
         path: ~/.local
-        key: venv-${{ runner.os }}-${{ inputs.python-version }}-${{ inputs.poetry-version }}
+        # poetry depends on OS, python version, and poetry version
+        key: poetry-${{ runner.os }}-${{ inputs.python-version }}-${{ inputs.poetry-version }}
     
     - name: Install poetry on cache miss
+      # we don't need an `if:` here because poetry checks if it's already installed
       uses: snok/install-poetry@v1
       with:
         version: ${{ inputs.poetry-version }}
         virtualenvs-create: true
         virtualenvs-in-project: true
+        virtualenvs-path: "~/.venv"
         installer-parallel: true
     
     - name: Ensure poetry is on PATH
@@ -50,7 +53,8 @@ runs:
       uses: actions/cache@v3
       with:
         path: ~/.venv
-        key: venv-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+        # poetry dependencies depend on OS, python version, poetry version, and repository lockfile
+        key: poetry-deps-${{ runner.os }}-${{ inputs.python-version }}-${{ inputs.poetry-version }}-${{ hashFiles('**/poetry.lock') }}
 
     - name: Install dependencies on cache miss
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
