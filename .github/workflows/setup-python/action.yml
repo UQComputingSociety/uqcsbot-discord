@@ -17,6 +17,7 @@ runs:
     # ------
     - name: Setup Python
       uses: actions/setup-python@v4
+      shell: bash
       with:
         python-version: ${{ inputs.python-version }}
     
@@ -26,12 +27,14 @@ runs:
     - name: Check for cached poetry binary
       id: cached-poetry-binary
       uses: actions/cache@v3
+      shell: bash
       with:
         path: ~/.local
         key: venv-${{ runner.os }}-${{ inputs.python-version }}-${{ inputs.poetry-version }}
     
     - name: Install poetry on cache miss
       uses: snok/install-poetry@v1
+      shell: bash
       with:
         version: ${{ inputs.poetry-version }}
         virtualenvs-create: true
@@ -40,6 +43,7 @@ runs:
     
     - name: Ensure poetry is on PATH
       run: echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+      shell: bash
 
     # ------
     # Get library dependencies (hopefully from cache)
@@ -47,6 +51,7 @@ runs:
     - name: Check for cached dependencies
       id: cached-poetry-dependencies
       uses: actions/cache@v3
+      shell: bash
       with:
         path: ~/.venv
         key: venv-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
@@ -54,9 +59,11 @@ runs:
     - name: Install dependencies on cache miss
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root
+      shell: bash
 
     # ------
     # Finalise install
     # ------
     - name: Install main project
       run: poetry install --no-interaction
+      shell: bash
