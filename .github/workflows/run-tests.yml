@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup environment
-        uses: ./.github/workflows/setup-python.yml
+        uses: ./.github/workflows/setup-python
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup environment
-        uses: ./.github/workflows/setup-python.yml
+        uses: ./.github/workflows/setup-python
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
