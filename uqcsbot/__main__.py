@@ -60,6 +60,7 @@ async def main():
         "past_exams",
         "phonetics",
         "remindme",
+        "repos",
         "snailrace",
         "starboard",
         "text",
