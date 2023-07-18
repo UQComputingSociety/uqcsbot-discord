@@ -40,10 +40,6 @@ runs:
         virtualenvs-in-project: true
         virtualenvs-path: '**/.venv'
         installer-parallel: true
-
-    - name: Debugging GH actions is wicked silly
-      run: ls -al
-      shell: bash
     
     - name: Ensure poetry is on PATH
       run: echo "$HOME/.poetry/bin" >> $GITHUB_PATH
