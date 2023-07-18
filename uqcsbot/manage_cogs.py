@@ -26,7 +26,7 @@ class ManageCogs(commands.Cog):
     async def manage_cogs(
         self,
         interaction: discord.Interaction,
-        action: Literal["load", "unload", "reload", "unload-all"],
+        action: Literal["load", "unload", "reload", "load-all", "unload-all", "reload-all"],
         cog: str,
     ):
         """
