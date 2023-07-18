@@ -38,8 +38,12 @@ runs:
         version: ${{ inputs.poetry-version }}
         virtualenvs-create: true
         virtualenvs-in-project: true
-        virtualenvs-path: "~/.venv"
+        virtualenvs-path: '**/.venv'
         installer-parallel: true
+
+    - name: Debugging GH actions is wicked silly
+      run: ls -al
+      shell: bash
     
     - name: Ensure poetry is on PATH
       run: echo "$HOME/.poetry/bin" >> $GITHUB_PATH
@@ -52,7 +56,7 @@ runs:
       id: cached-poetry-dependencies
       uses: actions/cache@v3
       with:
-        path: ~/.venv
+        path: '**/.venv'
         # poetry dependencies depend on OS, python version, poetry version, and repository lockfile
         key: poetry-deps-${{ runner.os }}-${{ inputs.python-version }}-${{ inputs.poetry-version }}-${{ hashFiles('**/poetry.lock') }}
 
