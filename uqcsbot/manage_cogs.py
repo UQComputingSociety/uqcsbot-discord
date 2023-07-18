@@ -55,7 +55,7 @@ class ManageCogs(commands.Cog):
                             await self.bot.unload_extension(f"uqcsbot.{x}")
                     else:
                         raise RuntimeError(f"Unknown cog group {cog}")
-                case "load-all":
+                case "reload-all":
                     if (cogs := COG_GROUPS.get(cog)) is not None:
                         for x in cogs:
                             await self.bot.reload_extension(f"uqcsbot.{x}")
