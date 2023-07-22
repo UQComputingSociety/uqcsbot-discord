@@ -18,6 +18,7 @@ SQLAlchemy = {version = "^2.0.12", extras = ["postgresql_psycopg2binary"]}
 humanize = "^4.3"
 aiohttp = "^3.8"
 aio-mc-rcon = "^3.2.0"
+PyYAML = "^6.0"
 
 [tool.poetry.scripts]
 botdev = "dev.cli:main"
@@ -45,7 +46,6 @@ exclude = [
     "**/error_handler.py",
     "**/events.py",
     "**/gaming.py",
-    "**/haiku.py",
     "**/member_counter.py",
     "**/remindme.py",
     "**/snailrace.py",
