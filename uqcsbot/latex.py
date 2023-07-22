@@ -25,12 +25,16 @@ class Latex(commands.Cog):
         # Check that the image can be found, otherwise it is likely that the equation is invalid
         status_code = requests.get(url).status_code
         if status_code == requests.codes.bad_request:
-            await interaction.edit_original_response(content=f"Invalid equation: {input}")
+            await interaction.edit_original_response(
+                content=f"Invalid equation: {input}"
+            )
             return
         elif status_code != requests.codes.ok:
-            await interaction.edit_original_response(content=f"Could not reach CodeCogs to render LaTeX")
+            await interaction.edit_original_response(
+                content=f"Could not reach CodeCogs to render LaTeX"
+            )
             return
-        
+
         embed = discord.Embed(
             colour=discord.Colour.blue(),
             title=f'Latex render for "{input}"',
