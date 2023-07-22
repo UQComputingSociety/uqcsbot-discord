@@ -93,7 +93,7 @@ prefixes_needing_extra_syllable: [
     # Words that have "io" pronounced as two syllables
     "audio", "radio", "period", "mario",
     # Words that have "oe" pronounced as two syllables
-    "poet",
+    "poet", "poem",
     # Words that have "oi" pronounced as two syllables
     "heroic",
     # Words that have "oo" pronounced as two syllables
