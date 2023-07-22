@@ -51,9 +51,7 @@ exclude = [
     "**/snailrace.py",
     "**/starboard.py",
     "**/uptime.py",
-    "**/whatsdue.py",
     "**/working_on.py",
     "**/utils/command_utils.py",
     "**/utils/snailrace_utils.py",
-    "**/utils/uq_course_utils.py"
 ]
