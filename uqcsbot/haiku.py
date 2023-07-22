@@ -2,13 +2,13 @@ import re
 from typing import Final, Dict, List, Tuple
 from yaml import load, Loader
 import random
+import logging
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
-from uqcsbot.utils.err_log_utils import FatalErrorWithLog
 
 SYLLABLE_RULES_PATH: Final[str] = "uqcsbot/static/syllable_rules.yaml"
 ALLOWED_CHANNEL_NAMES: Final[List[str]] = [
@@ -21,7 +21,7 @@ ALLOWED_CHANNEL_NAMES: Final[List[str]] = [
     "yelling",
 ]
 YELLING_CHANNEL_NAME: Final[str] = "yelling"
-HAIKU_BASE_PROBABILITY: float = 0.5
+HAIKU_BASE_PROBABILITY: float = 0.4
 # How much "more likely" (as determined by _increase_probability) a haiku is if it has punctuation at the end of a line.
 HAIKU_PUNCTUATION_PROBABILITY_INCREASE: float = 1.6
 # Words that increase the probability of a haiku, and the amount they increase the probability by (as determined by _increase_probability)
@@ -43,21 +43,25 @@ syllable_exceptions: Dict[str, int] = {}
 # Accents and "equivalent" characters that they should be replaced with for syllable counting purposes
 accent_replacements: Dict[str, str] = {}
 
-with open(SYLLABLE_RULES_PATH, "r", encoding="utf-8") as syllable_rules_file:
-    syllable_rules = load(syllable_rules_file, Loader=Loader)
-# beginswith and endswith both require tuples, so turn all lists into tuples
-for rule_name, rule_specification in syllable_rules.items():
-    if isinstance(rule_specification, list):
-        affixes[rule_name] = tuple(rule_specification)  # type: ignore
-    elif isinstance(rule_specification, dict):
-        match rule_name:
-            case "exceptions":
-                syllable_exceptions = rule_specification
-            case "accents":
-                accent_replacements = rule_specification
-            case _:
-                # We will catch this on __init__ of the cog. We cannot deal with this error now via FatalErrorWithLog, as the bot may not have loaded enough
-                pass
+try:
+    with open(SYLLABLE_RULES_PATH, "r", encoding="utf-8") as syllable_rules_file:
+        syllable_rules = load(syllable_rules_file, Loader=Loader)
+    # beginswith and endswith both require tuples, so turn all lists into tuples
+    for rule_name, rule_specification in syllable_rules.items():
+        if isinstance(rule_specification, list):
+            affixes[rule_name] = tuple(rule_specification)  # type: ignore
+        elif isinstance(rule_specification, dict):
+            match rule_name:
+                case "exceptions":
+                    syllable_exceptions = rule_specification
+                case "accents":
+                    accent_replacements = rule_specification
+                case _:
+                    # We will catch this on __init__ of the cog. We cannot deal with this error now via FatalErrorWithLog, as the bot may not have loaded enough
+                    pass
+except:
+    # We will catch this on __init__ of the cog. We cannot deal with this error now via FatalErrorWithLog, as the bot may not have loaded enough
+    pass
 
 
 class Haiku(commands.Cog):
@@ -68,9 +72,8 @@ class Haiku(commands.Cog):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
         if affixes == {} or syllable_exceptions == {} or accent_replacements == {}:
-            raise FatalErrorWithLog(
-                bot,
-                f"The syllable rules (used for haiku detection) could not be found in {SYLLABLE_RULES_PATH}. Haiku detection will not work.",
+            raise RuntimeError(
+                f"The syllable rules (used for haiku detection) could not be found in {SYLLABLE_RULES_PATH} or did not follow the required format. Haiku detection will not work."
             )
 
     @commands.Cog.listener()
@@ -318,4 +321,7 @@ def _number_of_syllables_in_word(word: str) -> int:
 
 
 async def setup(bot: UQCSBot):
-    await bot.add_cog(Haiku(bot))
+    try:
+        await bot.add_cog(Haiku(bot))
+    except RuntimeError as e:
+        logging.error(e)
