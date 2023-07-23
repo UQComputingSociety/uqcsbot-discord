@@ -1,4 +1,3 @@
-import pytest
 from uqcsbot.haiku import _number_of_syllables_in_word, _find_haiku
 
 
@@ -251,6 +250,59 @@ def test_number_of_syllables_in_word():
         "imbued": 2,
         "silhouette": 3,
         "epitome": 4,
+        "forte": 2,
+        "daybed": 2,
+        "jaded": 2,
+        "naked": 2,
+        "resume": 2,
+        "biped": 2,
+        "anyone": 3,
+        "schism": 2,
+        "less": 1,
+        "mist": 1,
+        "fish": 1,
+        "Wostershire": 3,
+        "Frappe": 2,
+        "livestream": 2,
+        "pikelet": 2,
+        "meringue": 2,
+        "vague": 1,
+        "any": 2,
+        "video": 3,
+        "area": 3,
+        "media": 3,
+        "previous": 3,
+        "experience": 4,
+        "audio": 3,
+        "areas": 3,
+        "radio": 3,
+        "safety": 2,
+        "association": 5,
+        "period": 3,
+        "style": 1,
+        "centre": 2,
+        "via": 2,
+        "videos": 3,
+        "player": 2,
+        "india": 3,
+        "created": 3,
+        "abusing": 3,
+        "acne": 2,
+        "acquire": 2,
+        "accompaniment": 5,
+        "amusing": 3,
+        "rhythm": 2,
+        "mario": 3,
+        "punctuation": 4,
+        "variation": 4,
+        "ivy": 2,
+        "era": 2,
+        "metre": 2,
+        "slayer": 2,
+        "create": 2,
+        "algorithm": 4,
+        "the": 1,
+        "poem": 2,
     }
     for word, expected_syllable_count in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
@@ -279,7 +331,7 @@ def test_find_haiku():
         "wow I can't believe that it's haiku poetry day already guys",  # enchi#8880
         "Rhyme's overrated Haikus\n let you have some fun\n Plus they have good tune",  # NotRealAqua#6969
         "I could tell you more\n But with less words or lots more\n And you would feel them",  # Anti-Matter#1740
-        "Random syllables?\n Perhaps we need more Lovecraft\n Really random tongue",  # lsenjov#4288
+        "Random syllables?\n Perhaps we need more Lovecraft\n Really random tongue",  # lsenjov#4288 
         "something blah blah blah\n insert random words right here\n blah blah blah deez nuts",  # numberri#4096
     ]
     false_cases = [
@@ -287,12 +339,14 @@ def test_find_haiku():
         "neither is this",  # indium#6908
         "this is far too long to be a haiku, you should not accept this",  # indium#6908
         "when a haiku; kinda fits but has a word; at the end too longer",  # indium#6908
-        'ive tried these as emergency "feed me now" meals and theyre so bland',  # villuna#6251
+        "ive tried these as emergency \"feed me now\" meals and theyre so bland",  # villuna#6251
         "Lovecraft my dear\n The bot is well confused\n Stop confusing it",  # lsenjov#4288
         "someone's getting it sooner and someone's getting it later :^)",  # Madeline#8084
-        "socially inept people? in MY computer science discord server",  # miri#2222
+        "socially inept people? in MY computer science discord server", # miri#2222
     ]
     for haiku in true_cases:
-        assert _find_haiku(haiku)
+        is_haiku, _ = _find_haiku(haiku)
+        assert is_haiku
     for text in false_cases:
-        assert not _find_haiku(text)
+        is_haiku, _ = _find_haiku(text)
+        assert not is_haiku
