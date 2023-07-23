@@ -302,6 +302,7 @@ def test_number_of_syllables_in_word():
         "create": 2,
         "algorithm": 4,
         "the": 1,
+        "poem": 2,
     }
     for word, expected_syllable_count in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
