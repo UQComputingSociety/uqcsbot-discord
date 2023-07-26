@@ -40,7 +40,7 @@ class Latex(commands.Cog):
             title = f'LaTeX render for "{input[:220]}..."'
         else:
             title = f'LaTeX render for "{input}"'
-            
+
         embed = discord.Embed(
             colour=discord.Colour.blue(),
             title=title,
