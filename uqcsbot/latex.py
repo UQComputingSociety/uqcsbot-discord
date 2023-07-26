@@ -35,9 +35,15 @@ class Latex(commands.Cog):
             )
             return
 
+        # Will error if embed title is greater than 256 characters
+        if len(input) >= 256 - len('LaTeX render for ""...'):
+            title = f'LaTeX render for "{input[:220]}..."'
+        else:
+            title = f'LaTeX render for "{input}"'
+            
         embed = discord.Embed(
             colour=discord.Colour.blue(),
-            title=f'Latex render for "{input}"',
+            title=title,
         ).set_image(url=f"{url}")
 
         await interaction.edit_original_response(embed=embed)
