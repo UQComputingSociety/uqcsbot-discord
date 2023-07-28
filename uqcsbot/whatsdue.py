@@ -1,6 +1,6 @@
 from datetime import datetime
 import logging
-from typing import Optional
+from typing import Optional, Callable, Literal, Dict
 
 import discord
 from discord import app_commands
@@ -11,9 +11,19 @@ from uqcsbot.utils.uq_course_utils import (
     CourseNotFoundException,
     HttpException,
     ProfileNotFoundException,
+    AssessmentItem,
     get_course_assessment,
     get_course_assessment_page,
 )
+
+AssessmentSortType = Literal["Date", "Course Name", "Weight"]
+SORT_METHODS: Dict[
+    AssessmentSortType, Callable[[AssessmentItem], int | str | datetime]
+] = {
+    "Date": (lambda item: item.get_parsed_due_date()[0]),
+    "Course Name": (lambda item: item.course_name),
+    "Weight": (lambda item: item.get_weight_as_int() or 0),
+}
 
 
 class WhatsDue(commands.Cog):
@@ -27,26 +37,20 @@ class WhatsDue(commands.Cog):
         semester="The semester to get assessment for. Defaults to what UQCSbot believes is the current semester.",
         campus="The campus the course is held at. Defaults to St Lucia. Note that many external courses are 'hosted' at St Lucia.",
         mode="The mode of the course. Defaults to Internal.",
-        course1="Course code",
-        course2="Course code",
-        course3="Course code",
-        course4="Course code",
-        course5="Course code",
-        course6="Course code",
+        courses="Course codes seperated by spaces",
+        sort_order="The order to sort courses by. Defualts to Date.",
+        reverse_sort="Whether to reverse the sort order. Defaults to false.",
     )
     async def whatsdue(
         self,
         interaction: discord.Interaction,
-        course1: str,
-        course2: Optional[str],
-        course3: Optional[str],
-        course4: Optional[str],
-        course5: Optional[str],
-        course6: Optional[str],
+        courses: str,
         fulloutput: bool = False,
         semester: Optional[Offering.SemesterType] = None,
         campus: Offering.CampusType = "St Lucia",
         mode: Offering.ModeType = "Internal",
+        sort_order: AssessmentSortType = "Date",
+        reverse_sort: bool = False,
     ):
         """
         Returns all the assessment for a given list of course codes that are scheduled to occur.
@@ -55,8 +59,7 @@ class WhatsDue(commands.Cog):
 
         await interaction.response.defer(thinking=True)
 
-        possible_courses = [course1, course2, course3, course4, course5, course6]
-        course_names = [c.upper() for c in possible_courses if c != None]
+        course_names = [c.upper() for c in courses.split()]
         offering = Offering(semester=semester, campus=campus, mode=mode)
 
         # If full output is not specified, set the cutoff to today's date.
@@ -80,11 +83,11 @@ class WhatsDue(commands.Cog):
             description="*WARNING: Assessment information may vary/change/be entirely different! Use at your own discretion. Check your ECP for a true list of assessment.*",
         )
         if assessment:
+            assessment.sort(key=SORT_METHODS[sort_order], reverse=reverse_sort)
             for assessment_item in assessment:
-                course, task, due, weight = assessment_item
                 embed.add_field(
-                    name=course,
-                    value=f"`{weight}` {task} **({due})**",
+                    name=assessment_item.course_name,
+                    value=f"`{assessment_item.weight}` {assessment_item.task} **({assessment_item.due_date})**",
                     inline=False,
                 )
         elif fulloutput:
