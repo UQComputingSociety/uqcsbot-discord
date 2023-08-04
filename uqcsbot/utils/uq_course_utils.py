@@ -3,7 +3,7 @@ from requests.exceptions import RequestException
 from datetime import datetime
 from dateutil import parser
 from bs4 import BeautifulSoup, element
-from typing import List, Dict, Optional, Literal
+from typing import List, Dict, Optional, Literal, Tuple
 from dataclasses import dataclass
 import json
 import re
@@ -147,6 +147,20 @@ class AssessmentItem:
             # parse them in future. Will require manual detection + parsing.
             return True
         return end_datetime >= cutoff if end_datetime else start_datetime >= cutoff
+
+    def is_before(self, cutoff: datetime):
+        """
+        Returns whether the assessment occurs before the given cutoff.
+        """
+        try:
+            start_datetime, _ = self.get_parsed_due_date()
+        except DateSyntaxException:
+            # TODO bot.logger.error(e.message)
+            # If we can't parse a date, we're better off keeping it just in case.
+            # TODO(mitch): Keep track of these instances to attempt to accurately
+            # parse them in future. Will require manual detection + parsing.
+            return True
+        return start_datetime <= cutoff
 
     def get_weight_as_int(self):
         """
@@ -339,7 +353,7 @@ def get_course_assessment_page(
 
 def get_course_assessment(
     course_names: List[str],
-    cutoff: Optional[datetime] = None,
+    cutoff: Tuple[Optional[datetime], Optional[datetime]] = (None, None),
     assessment_url: Optional[str] = None,
     offering: Optional[Offering] = None,
 ) -> List[AssessmentItem]:
@@ -362,8 +376,12 @@ def get_course_assessment(
     assessment = assessment_table.findAll("tr")[1:]
     parsed_assessment = map(get_parsed_assessment_item, assessment)
     # If no cutoff is specified, set cutoff to UNIX epoch (i.e. filter nothing).
-    cutoff = cutoff or datetime.min
-    filtered_assessment = filter(lambda item: item.is_after(cutoff), parsed_assessment)
+    cutoff_min = cutoff[0] or datetime.min
+    cutoff_max = cutoff[1] or datetime.max
+    filtered_assessment = filter(
+        lambda item: item.is_after(cutoff_min) and item.is_before(cutoff_max),
+        parsed_assessment,
+    )
     return list(filtered_assessment)
 
 
