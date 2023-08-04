@@ -125,7 +125,7 @@ class WhatsDue(commands.Cog):
                 for course_name in course_names
             ]
             embed.add_field(
-                name="Potential ECP Link",
+                name=f"Potential ECP {'Link' if len(course_names) == 1 else 'Links'}",
                 value=" ".join(ecp_links)
                 + "\nNote that these may not be the correct ECPs. Check the year and offering type.",
             )
