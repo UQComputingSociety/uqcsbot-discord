@@ -287,14 +287,14 @@ def get_course_profile_url(
     return url
 
 
-def get_course_profile_id(course_name: str, offering: Optional[Offering]):
+def get_course_profile_id(course_name: str, offering: Optional[Offering] = None) -> int:
     """
     Returns the ID to the latest course profile for the given course.
     """
     profile_url = get_course_profile_url(course_name, offering=offering)
     # The profile url looks like this
     # https://course-profiles.uq.edu.au/student_section_loader/section_1/100728
-    return profile_url[profile_url.rindex("/") + 1 :]
+    return int(profile_url[profile_url.rindex("/") + 1 :])
 
 
 def get_current_exam_period():
@@ -331,7 +331,8 @@ def get_course_assessment_page(
     url to the assessment table for the provided courses
     """
     profile_ids = map(
-        lambda course: get_course_profile_id(course, offering=offering), course_names
+        lambda course: str(get_course_profile_id(course, offering=offering)),
+        course_names,
     )
     return BASE_ASSESSMENT_URL + ",".join(profile_ids)
 
