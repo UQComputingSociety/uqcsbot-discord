@@ -75,6 +75,8 @@ class Haiku(commands.Cog):
             raise RuntimeError(
                 f"The syllable rules (used for haiku detection) could not be found in {SYLLABLE_RULES_PATH} or did not follow the required format. Haiku detection will not work."
             )
+        # Initially set allowed_channels to be empty incase a message is recived before on_ready has completed
+        self.allowed_channels = []
 
     @commands.Cog.listener()
     async def on_ready(self):
