@@ -296,7 +296,7 @@ def _number_of_syllables_in_word(word: str) -> int:
     # Accounts for silent "e" at the ends of words
     if (
         word.endswith("e")
-        and not word.endswith(("ae", "ee", "ie", "oe", "ue"))
+        and not word.endswith(("ae", "ee", "ie", "oe", "ue", "ye"))
         and _number_of_vowel_groups(word.removesuffix("e")) > 0
     ):
         number_of_syllables -= 1
@@ -312,6 +312,7 @@ def _number_of_syllables_in_word(word: str) -> int:
     # Deal with exceptions from the given prefix and suffix lists
     if word.startswith(affixes["prefixes_needing_extra_syllable"]):
         number_of_syllables += 1
+    print(f"{word} {number_of_syllables}")
     if word.startswith(affixes["prefixes_needing_one_less_syllable"]):
         number_of_syllables -= 1
     if word.endswith(affixes["suffixes_needing_one_more_syllable"]):

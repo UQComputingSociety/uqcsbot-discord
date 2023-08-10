@@ -8,6 +8,7 @@ exceptions: {
     "bsod": 4,
     "uq": 2,
     "uqcs": 4,
+    "yt": 2,
 }
 
 # Letters to be replaced
@@ -75,7 +76,7 @@ prefixes_needing_extra_syllable: [
     "wouldnt",
     # Words ending in "e" that is considered silent, when it is not.
     "maybe", "cafe", "naive", "recipe", "abalone", "marscapone", "epitome",
-    "forte", "frappe", "eye", "acne",   
+    "forte", "frappe", "acne",   
     # Words starting with "real", "read", "reap", "rear", "reed", "reel", "reign" (see prefixes_needing_one_less_syllable) that use "re" as a prefix
     # Note that "realit" covers all words with root "reality"
     "realign", "realit", "reallocat", "readdres", "readjust", "reapp", "rearm",
@@ -163,6 +164,8 @@ suffixes_needing_one_more_syllable: [
     "ual",
     # The suffix "rior" contains two syllables in most words. For example "posterior" and "superior".
     "rior",
+    # The suffix "ium" usually contains two syllables. For example "chromium", "gymnasium" and "aquarium"
+    "ium",
     # The suffix "phe" is pronounced as a syllable, for example "apostrophe".
     "phe",
     # Words ending in "tre" have it pronounced as "ter", for example "metre" and "centre"
@@ -193,6 +196,8 @@ suffixes_needing_one_less_syllable: [
     "aisle", "isle",
     # Words containing "ue" at the end acting as a silent "e"
     "tongue", "meringue", "merengue", "vague", 
+    # Words containing "ium" at the end acting as a single syllable
+    "belgium",
 ]
 
 # REMOVED SUFFIXES
