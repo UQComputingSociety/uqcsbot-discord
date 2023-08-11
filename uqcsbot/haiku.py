@@ -75,6 +75,8 @@ class Haiku(commands.Cog):
             raise RuntimeError(
                 f"The syllable rules (used for haiku detection) could not be found in {SYLLABLE_RULES_PATH} or did not follow the required format. Haiku detection will not work."
             )
+        # Initially set allowed_channels to be empty incase a message is recived before on_ready has completed
+        self.allowed_channels = []
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -294,7 +296,7 @@ def _number_of_syllables_in_word(word: str) -> int:
     # Accounts for silent "e" at the ends of words
     if (
         word.endswith("e")
-        and not word.endswith(("ae", "ee", "ie", "oe", "ue"))
+        and not word.endswith(("ae", "ee", "ie", "oe", "ue", "ye"))
         and _number_of_vowel_groups(word.removesuffix("e")) > 0
     ):
         number_of_syllables -= 1
@@ -310,6 +312,7 @@ def _number_of_syllables_in_word(word: str) -> int:
     # Deal with exceptions from the given prefix and suffix lists
     if word.startswith(affixes["prefixes_needing_extra_syllable"]):
         number_of_syllables += 1
+    print(f"{word} {number_of_syllables}")
     if word.startswith(affixes["prefixes_needing_one_less_syllable"]):
         number_of_syllables -= 1
     if word.endswith(affixes["suffixes_needing_one_more_syllable"]):
