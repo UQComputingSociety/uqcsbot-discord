@@ -25,7 +25,7 @@ More information for currently implemented environment variables can be found on
 
 Once you have a .env file, you can run the following command to start the bot:
 
-```sh
+```bash
 poetry run botdev
 ```
 
@@ -75,7 +75,7 @@ poetry run black uqcsbot
 Individual files can also be styled with:
 
 ```bash
-poetry run pyright uqcsbot/file.py
+poetry run black uqcsbot/file.py
 ```
 
 ## Static Type Checks
