@@ -4,13 +4,13 @@ from typing import Tuple, List
 from zoneinfo import ZoneInfo
 
 import discord
-from discord import app_commands
+from discord import app_commands, Colour
 from discord.ext import commands
 from sqlalchemy.sql.expression import and_
 
 from uqcsbot import models
 from uqcsbot.utils.err_log_utils import FatalErrorWithLog
-
+from uqcsbot.bot import UQCSBot
 
 class BlacklistedMessageError(Exception):
     # always caught. used to differentiate "starboard message doesn't exist" and "starboard message is blacklisted"
@@ -20,10 +20,11 @@ class BlacklistedMessageError(Exception):
 class Starboard(commands.Cog):
     SB_CHANNEL_NAME = "starboard"
     EMOJI_NAME = "starhaj"
+    EMOJI_BACKUP_NAME = "star"
     MODLOG_CHANNEL_NAME = "admin-alerts"
     BRISBANE_TZ = ZoneInfo("Australia/Brisbane")
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: UQCSBot):
         self.bot = bot
         self.base_threshold = int(os.environ.get("SB_BASE_THRESHOLD"))
         self.big_threshold = int(os.environ.get("SB_BIG_THRESHOLD"))
@@ -54,6 +55,15 @@ class Starboard(commands.Cog):
         "starhaj". If this assumption stops holding, we may need to move back to IDs (cringe)
         """
         self.starboard_emoji = discord.utils.get(self.bot.emojis, name=self.EMOJI_NAME)
+        if self.starboard_emoji is None:
+            await self.bot.admin_alert(
+                title="Starboard",
+                description="Unable to find :starhaj:\nUsing backup emoji :star:",
+                colour=Colour.red(),
+            )
+
+            self.starboard_emoji = discord.utils.get(self.bot.emojis, name=self.EMOJI_BACKUP_NAME)
+
         self.starboard_channel = discord.utils.get(
             self.bot.get_all_channels(), name=self.SB_CHANNEL_NAME
         )
