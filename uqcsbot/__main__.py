@@ -47,6 +47,7 @@ async def main():
         "error_handler",
         "events",
         "gaming",
+        "hackathon",
         "haiku",
         "holidays",
         "hoogle",
