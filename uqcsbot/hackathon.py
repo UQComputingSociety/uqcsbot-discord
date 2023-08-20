@@ -36,7 +36,6 @@ class Hackathon(commands.Cog):
         Provides the time until the start or end of the next hackathon.
         """
         now = datetime.now(tz=ZoneInfo("Australia/Brisbane"))
-        print(self.start_time - now)
         if self.start_time == None or self.end_time == None:
             await interaction.response.send_message(
                 "Could not process or find the time of the next/current hackathon."
