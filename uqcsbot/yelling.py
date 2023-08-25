@@ -2,14 +2,16 @@ import discord
 from discord.ext import commands
 from random import choice, random
 import re
-from typing import List, NamedTuple, Optional, Union
+
+from uqcsbot.bot import UQCSBot
 from uqcsbot.models import YellingBans
 from datetime import timedelta
+
 
 class Yelling(commands.Cog):
     CHANNEL_NAME = "yelling"
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: UQCSBot):
         self.bot = bot
         self.bot.schedule_task(
             self.clear_bans, trigger="cron", hour=17, timezone="Australia/Brisbane"
@@ -48,9 +50,10 @@ class Yelling(commands.Cog):
         # check if minuscule in message, and if so, post response
         if self.contains_lowercase(text):
             await msg.reply(self.generate_response(text))
-            await self.handle_bans(msg.author)
+            if isinstance(msg.author, discord.Member):
+                await self.handle_bans(msg.author)
 
-    async def handle_bans(self, author: discord.User):
+    async def handle_bans(self, author: discord.Member):
         db_session = self.bot.create_db_session()
         yellingbans_query = db_session.query(YellingBans)
         for i in yellingbans_query:
@@ -64,7 +67,7 @@ class Yelling(commands.Cog):
         db_session.commit()
         db_session.close()
 
-        await author.timeout(timedelta(seconds=(15*2**value)), reason="#yelling")
+        await author.timeout(timedelta(seconds=(15 * 2**value)), reason="#yelling")
 
     async def clear_bans(self):
         db_session = self.bot.create_db_session()
@@ -76,8 +79,6 @@ class Yelling(commands.Cog):
                 i.value -= 1
         db_session.commit()
         db_session.close()
-
-        
 
     def clean_text(self, message: str) -> str:
         """Cleans text of links, emoji, and any character escaping."""
@@ -162,5 +163,5 @@ class Yelling(commands.Cog):
         return choice(possible) if possible else ""
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: UQCSBot):
     await bot.add_cog(Yelling(bot))
