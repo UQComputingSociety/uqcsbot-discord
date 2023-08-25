@@ -55,15 +55,17 @@ class Yelling(commands.Cog):
 
     async def handle_bans(self, author: discord.Member):
         db_session = self.bot.create_db_session()
-        yellingbans_query = db_session.query(YellingBans)
-        for i in yellingbans_query:
-            if i.user_id == author.id:
-                value = i.value
-                i.value += 1
-                break
-        else:
+        yellingbans_query = (
+            db_session.query(YellingBans)
+            .filter(YellingBans.user_id == author.id)
+            .one_or_none()
+        )
+        if yellingbans_query is None:
             value = 0
             db_session.add(YellingBans(user_id=author.id, value=1))
+        else:
+            value = yellingbans_query.value
+            yellingbans_query.value += 1
         db_session.commit()
         db_session.close()
 
