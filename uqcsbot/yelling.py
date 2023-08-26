@@ -33,6 +33,8 @@ class Yelling(commands.Cog):
 
         if self.contains_lowercase(text):
             await new.reply(self.generate_response(text))
+            if isinstance(new.author, discord.Member):
+                await self.handle_bans(new.author)
 
     @commands.Cog.listener()
     async def on_message(self, msg: discord.Message):
