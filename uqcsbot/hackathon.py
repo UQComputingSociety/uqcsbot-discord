@@ -76,7 +76,7 @@ def countdown_string(time: timedelta):
     Provides the time in a countdown format
     """
     days = time.days
-    hours = time.seconds // 36000
+    hours = time.seconds // 3600
     minutes = (time.seconds // 60) % 60
     seconds = time.seconds % 60
 

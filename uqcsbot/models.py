@@ -70,3 +70,12 @@ class Starboard(Base):
     sent: Mapped[Optional[int]] = mapped_column(
         "sent", BigInteger, primary_key=True, nullable=True, unique=True
     )
+
+
+class YellingBans(Base):
+    __tablename__ = "yellingbans"
+
+    user_id: Mapped[int] = mapped_column(
+        "user_id", BigInteger, primary_key=True, nullable=False
+    )
+    value: Mapped[int] = mapped_column("value", BigInteger, nullable=False)
