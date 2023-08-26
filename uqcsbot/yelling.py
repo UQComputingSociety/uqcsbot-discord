@@ -1,11 +1,57 @@
 import discord
+from typing import List, Dict, Callable, Any
 from discord.ext import commands
 from random import choice, random
 import re
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import YellingBans
+
 from datetime import timedelta
+from functools import wraps
+
+
+def yelling_exemptor(input_args: List[str] = ["text"]) -> Callable[..., Any]:
+    def handler(func: Callable[..., Any]):
+        @wraps(func)
+        async def wrapper(
+            cogself: commands.Cog, *args: List[Any], **kwargs: Dict[str, Any]
+        ):
+            bot = cogself.bot  # type: ignore
+            interaction = None
+            text = "".join([str(kwargs.get(i, "") or "") for i in input_args])
+            if text == "":
+                await func(bot, *args, **kwargs)
+                return
+            for a in args:
+                if isinstance(a, discord.interactions.Interaction):
+                    interaction = a
+                    break
+            if interaction is None:
+                await func(bot, *args, **kwargs)
+                return
+            if not hasattr(interaction, "channel"):
+                await func(bot, *args, **kwargs)
+                return
+            if interaction.channel is None:
+                await func(bot, *args, **kwargs)
+                return
+            if interaction.channel.type != discord.ChannelType.text:
+                await func(bot, *args, **kwargs)
+                return
+            if interaction.channel.name != "yelling":
+                await func(bot, *args, **kwargs)
+                return
+            if not Yelling.contains_lowercase(text):
+                await func(bot, *args, **kwargs)
+                return
+            await interaction.response.send_message(str(discord.utils.get(bot.emojis, name="disapproval") or ""))  # type: ignore
+            if isinstance(interaction.user, discord.Member):
+                await Yelling.external_handle_bans(bot, interaction.user)  # type: ignore
+
+        return wrapper
+
+    return handler
 
 
 class Yelling(commands.Cog):
@@ -54,6 +100,25 @@ class Yelling(commands.Cog):
             await msg.reply(self.generate_response(text))
             if isinstance(msg.author, discord.Member):
                 await self.handle_bans(msg.author)
+
+    @staticmethod
+    async def external_handle_bans(bot: UQCSBot, author: discord.Member):
+        db_session = bot.create_db_session()
+        yellingbans_query = (
+            db_session.query(YellingBans)
+            .filter(YellingBans.user_id == author.id)
+            .one_or_none()
+        )
+        if yellingbans_query is None:
+            value = 0
+            db_session.add(YellingBans(user_id=author.id, value=1))
+        else:
+            value = yellingbans_query.value
+            yellingbans_query.value += 1
+        db_session.commit()
+        db_session.close()
+
+        await author.timeout(timedelta(seconds=(15 * 2**value)), reason="#yelling")
 
     async def handle_bans(self, author: discord.Member):
         db_session = self.bot.create_db_session()
@@ -104,7 +169,8 @@ class Yelling(commands.Cog):
 
         return text
 
-    def contains_lowercase(self, message: str) -> bool:
+    @staticmethod
+    def contains_lowercase(message: str) -> bool:
         """Checks if message contains any lowercase characters"""
         return any(char.islower() for char in message)
 
@@ -125,7 +191,9 @@ class Yelling(commands.Cog):
                 "IT’S ON THE LEFT OF THE “A” KEY!",
                 "FORMER PRESIDENT THEODORE ROOSEVELT’S FOREIGN POLICY IS A SHAM!",
                 "#YELLING IS FOR EXTERNAL SCREAMING!",
-                f"DID YOU SAY \n>>>{self.mutate_minuscule(text)}".upper(),
+                f"DID YOU SAY \n{self.mutate_minuscule(text)}".upper().replace(
+                    "\n", "\n> "
+                ),
                 f"WHAT IS THE MEANING OF THIS ARCANE SYMBOL “{self.random_minuscule(text)}”‽"
                 + " I RECOGNISE IT NOT!",
             ]

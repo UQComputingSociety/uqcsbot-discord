@@ -2,6 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from uqcsbot.yelling import yelling_exemptor
+
 
 class EmoteNotFoundError(Exception):
     def __init__(self, emote: str, *args: object) -> None:
@@ -71,6 +73,7 @@ class VoteyThumbs(commands.Cog):
 
     @app_commands.command(name="voteythumbs")
     @app_commands.describe(question="The question that shall be voted upon")
+    @yelling_exemptor(input_args=["question"])
     async def voteythumbs_command(
         self, interaction: discord.Interaction, question: str
     ):
