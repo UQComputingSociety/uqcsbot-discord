@@ -1,8 +1,13 @@
-from typing import Literal
+from typing import Literal, List, Dict
 
 import discord
 from discord import app_commands
 from discord.ext import commands
+
+COG_GROUPS: Dict[str, List[str]] = {
+    "cron": ["working_on", "holidays"],
+    "db": ["starboard", "remindme", "advent", "minecraft"],
+}
 
 
 class ManageCogs(commands.Cog):
@@ -21,7 +26,9 @@ class ManageCogs(commands.Cog):
     async def manage_cogs(
         self,
         interaction: discord.Interaction,
-        action: Literal["load", "unload", "reload"],
+        action: Literal[
+            "load", "unload", "reload", "load-all", "unload-all", "reload-all"
+        ],
         cog: str,
     ):
         """
@@ -36,6 +43,24 @@ class ManageCogs(commands.Cog):
                     await self.bot.unload_extension(f"uqcsbot.{cog}")
                 case "reload":
                     await self.bot.reload_extension(f"uqcsbot.{cog}")
+                case "load-all":
+                    if (cogs := COG_GROUPS.get(cog)) is not None:
+                        for x in cogs:
+                            await self.bot.load_extension(f"uqcsbot.{x}")
+                    else:
+                        raise RuntimeError(f"Unknown cog group {cog}")
+                case "unload-all":
+                    if (cogs := COG_GROUPS.get(cog)) is not None:
+                        for x in cogs:
+                            await self.bot.unload_extension(f"uqcsbot.{x}")
+                    else:
+                        raise RuntimeError(f"Unknown cog group {cog}")
+                case "reload-all":
+                    if (cogs := COG_GROUPS.get(cog)) is not None:
+                        for x in cogs:
+                            await self.bot.reload_extension(f"uqcsbot.{x}")
+                    else:
+                        raise RuntimeError(f"Unknown cog group {cog}")
         except Exception as error:
             # Many errors can be caught during loading/unloading/reloading the bot, so it would be painful to separate by exception type
             await interaction.response.send_message(
