@@ -10,6 +10,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
+from uqcsbot.yelling import yelling_exemptor
 
 
 MAX_COUPONS = 10  # Prevents abuse
@@ -36,6 +37,7 @@ class DominosCoupons(commands.Cog):
         ignore_expiry="Indicates to include coupons that have expired. Defaults to True.",
         keywords="Words to search for within the coupon. All coupons descriptions will mention at least one keyword.",
     )
+    @yelling_exemptor(input_args=["keywords"])
     async def dominoscoupons(
         self,
         interaction: discord.Interaction,

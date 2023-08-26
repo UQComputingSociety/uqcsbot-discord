@@ -6,6 +6,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from uqcsbot.yelling import yelling_exemptor
+
 from uqcsbot.utils.uq_course_utils import (
     Offering,
     CourseNotFoundException,
@@ -33,6 +35,9 @@ class WhatsDue(commands.Cog):
         course4="Course code",
         course5="Course code",
         course6="Course code",
+    )
+    @yelling_exemptor(
+        input_args=["course1", "course2", "course3", "course4", "course5", "course6"]
     )
     async def whatsdue(
         self,

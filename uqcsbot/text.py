@@ -6,6 +6,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from uqcsbot.yelling import yelling_exemptor
+
 
 async def encoding_autocomplete(
     interaction: discord.Interaction, current: str
@@ -70,6 +72,7 @@ class Text(commands.Cog):
         message="Input string", encoding="Character encoding to use, defaults to UTF-8"
     )
     @app_commands.autocomplete(encoding=encoding_autocomplete)
+    @yelling_exemptor(input_args=["message"])
     async def binify(
         self,
         interaction: discord.Interaction,
@@ -112,6 +115,7 @@ class Text(commands.Cog):
     @app_commands.describe(
         message="Text to shift", distance="Distance to shift, defaults to 13"
     )
+    @yelling_exemptor(input_args=["message"])
     async def caesar(
         self,
         interaction: discord.Interaction,
@@ -140,6 +144,7 @@ class Text(commands.Cog):
         message="Input string", encoding="Character encoding to use, defaults to UTF-8"
     )
     @app_commands.autocomplete(encoding=encoding_autocomplete)
+    @yelling_exemptor(input_args=["message"])
     async def hexify(
         self,
         interaction: discord.Interaction,
@@ -213,6 +218,7 @@ class Text(commands.Cog):
 
     @app_commands.command(name="mock")
     @app_commands.describe(text="Text to mock")
+    @yelling_exemptor()
     async def mock_command(self, interaction: discord.Interaction, text: str):
         """mOckS ThE pRovIdEd teXT."""
 
@@ -231,6 +237,7 @@ class Text(commands.Cog):
 
     @app_commands.command(name="scare")
     @app_commands.describe(text='Text to "scare"')
+    @yelling_exemptor()
     async def scare_command(self, interaction: discord.Interaction, text: str):
         """
         "adds" "scary" "quotes" "around" "the" "provided" "text"
@@ -258,6 +265,7 @@ class Text(commands.Cog):
 
     @app_commands.command(name="zalgo")
     @app_commands.describe(text="Input text")
+    @yelling_exemptor()
     async def zalgo_command(self, interaction: discord.Interaction, text: str):
         """
         Ȃd͍̋͗̃d͒̈́s̒͢ ̅̂̚͏̞̩ͅZͩ̆a̦̐ͭ́l̠̫̈́̐g̡͗ͯo̝̱̽ ̮̰͊c̢̞ͬh̩ͤ̑a̡̫̟͐̽̌r̪̭͇̓a̘͕̣c͓̐́t̠̂̈̓e̳̣̣͂̉r͓͗s͉̞͝ t̙͓̊ͨoͭ ̋̽͊t̛̖̮̊͋hͤ̂͏̯̺͚e̷͖̩̙̿ ͇̩̕ğ̵̟̘̼i̢͙̜v̲ͫ͘e͐͐͆̕n͟ ̭͋͢ͅt͐͆̀e̝̱͑͛x̝̲t͇͕

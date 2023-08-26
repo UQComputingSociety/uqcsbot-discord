@@ -9,6 +9,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
+from uqcsbot.yelling import yelling_exemptor
 
 SYLLABLE_RULES_PATH: Final[str] = "uqcsbot/static/syllable_rules.yaml"
 ALLOWED_CHANNEL_NAMES: Final[List[str]] = [
@@ -110,6 +111,7 @@ class Haiku(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(word="Word to syllable check")
+    @yelling_exemptor(input_args=["word"])
     async def syllables(self, interaction: discord.Interaction, word: str):
         """Checks the number of syllables in a given word."""
         if " " not in word:

@@ -5,6 +5,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from uqcsbot.yelling import yelling_exemptor
+
 
 class Latex(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -12,6 +14,7 @@ class Latex(commands.Cog):
 
     @app_commands.command(description="Renders the given LaTeX")
     @app_commands.describe(input="LaTeX to render")
+    @yelling_exemptor(input_args=["input"])
     async def latex(self, interaction: discord.Interaction, input: str):
         # since bot prohibits empty prompts, checking len==0 seems redundant
         await interaction.response.defer(thinking=True)
