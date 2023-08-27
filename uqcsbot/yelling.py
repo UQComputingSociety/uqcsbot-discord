@@ -3,6 +3,8 @@ from typing import List, Dict, Callable, Any
 from discord.ext import commands
 from random import choice, random
 import re
+from urllib.request import urlopen
+from urllib.error import URLError
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import YellingBans
@@ -161,9 +163,14 @@ class Yelling(commands.Cog):
         )
 
         # slightly more permissive version of discord's url regex, matches absolutely anything between http(s):// and whitespace
-        text = re.sub(
-            r"https?:\/\/[^\s]+", lambda m: m.group(0).upper(), text, flags=re.UNICODE
-        )
+        for url in re.findall(r"https?:\/\/[^\s]+", text, flags=re.UNICODE):
+            try:
+                resp = urlopen(url)
+            except (ValueError, URLError):
+                continue
+            if 400 <= resp.code <= 499:
+                continue
+            text = text.replace(url, url.upper())
 
         text = text.replace("&gt;", ">").replace("&lt;", "<").replace("&amp;", "&")
 
