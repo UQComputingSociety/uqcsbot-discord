@@ -132,3 +132,6 @@ dmypy.json
 *.db
 **/.DS_STORE
 .vscode/*
+
+# (per-user) configs for pyright
+pyrightconfig.json
