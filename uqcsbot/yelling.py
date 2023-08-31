@@ -49,7 +49,9 @@ def yelling_exemptor(input_args: List[str] = ["text"]) -> Callable[..., Any]:
                 return
             await interaction.response.send_message(str(discord.utils.get(bot.emojis, name="disapproval") or ""))  # type: ignore
             if isinstance(interaction.user, discord.Member):
-                await Yelling.external_handle_bans(bot, interaction.user)  # type: ignore
+                banned = await Yelling.external_handle_bans(bot, interaction.user)  # type: ignore
+                if not banned:
+                    await interaction.response.send_message(str(discord.utils.get(bot.emojis, name="coup") or ""))  # type: ignore
 
         return wrapper
 
@@ -82,7 +84,9 @@ class Yelling(commands.Cog):
         if self.contains_lowercase(text):
             await new.reply(self.generate_response(text))
             if isinstance(new.author, discord.Member):
-                await self.handle_bans(new.author)
+                banned = await self.handle_bans(new.author)
+                if not banned:
+                    await new.reply(str(discord.utils.get(bot.emojis, name="disapproval") or ""))  # type: ignore
 
     @commands.Cog.listener()
     async def on_message(self, msg: discord.Message):
@@ -101,10 +105,13 @@ class Yelling(commands.Cog):
         if self.contains_lowercase(text):
             await msg.reply(self.generate_response(text))
             if isinstance(msg.author, discord.Member):
-                await self.handle_bans(msg.author)
+                banned = await self.handle_bans(msg.author)
+                if not banned:
+                    await msg.reply(str(discord.utils.get(bot.emojis, name="disapproval") or ""))  # type: ignore
 
     @staticmethod
-    async def external_handle_bans(bot: UQCSBot, author: discord.Member):
+    async def external_handle_bans(bot: UQCSBot, author: discord.Member) -> bool:
+        success = True
         db_session = bot.create_db_session()
         yellingbans_query = (
             db_session.query(YellingBans)
@@ -120,9 +127,14 @@ class Yelling(commands.Cog):
         db_session.commit()
         db_session.close()
 
-        await author.timeout(timedelta(seconds=(15 * 2**value)), reason="#yelling")
+        try:
+            await author.timeout(timedelta(seconds=(15 * 2**value)), reason="#yelling")
+        except discord.Forbidden:
+            success = False
+        return success
 
-    async def handle_bans(self, author: discord.Member):
+    async def handle_bans(self, author: discord.Member) -> bool:
+        success = True
         db_session = self.bot.create_db_session()
         yellingbans_query = (
             db_session.query(YellingBans)
@@ -138,12 +150,19 @@ class Yelling(commands.Cog):
         db_session.commit()
         db_session.close()
 
-        await author.timeout(timedelta(seconds=(15 * 2**value)), reason="#yelling")
+        try:
+            await author.timeout(timedelta(seconds=(15 * 2**value)), reason="#yelling")
+        except discord.Forbidden:
+            success = False
+        return success
 
     async def clear_bans(self):
         db_session = self.bot.create_db_session()
         yellingbans_query = db_session.query(YellingBans)
         for i in yellingbans_query:
+            user = await self.bot.fetch_user(i.user_id)
+            if any(role.name == "Committee" for role in user.roles):
+                continue
             if i.value <= 1:
                 db_session.delete(i)
             else:
