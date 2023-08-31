@@ -128,7 +128,9 @@ class Yelling(commands.Cog):
         db_session.close()
 
         try:
-            await author.timeout(timedelta(seconds=(15 * 2**value)), reason="#yelling")
+            await author.timeout(
+                timedelta(seconds=(15 * 2**value)), reason="#yelling"
+            )
         except discord.Forbidden:
             success = False
         return success
@@ -151,7 +153,9 @@ class Yelling(commands.Cog):
         db_session.close()
 
         try:
-            await author.timeout(timedelta(seconds=(15 * 2**value)), reason="#yelling")
+            await author.timeout(
+                timedelta(seconds=(15 * 2**value)), reason="#yelling"
+            )
         except discord.Forbidden:
             success = False
         return success
@@ -160,8 +164,8 @@ class Yelling(commands.Cog):
         db_session = self.bot.create_db_session()
         yellingbans_query = db_session.query(YellingBans)
         for i in yellingbans_query:
-            user = await self.bot.fetch_user(i.user_id)
-            if any(role.name == "Committee" for role in user.roles):
+            member = await self.bot.uqcs_server.fetch_member(i.user_id)
+            if any(role.name == "Committee" for role in member.roles):
                 continue
             if i.value <= 1:
                 db_session.delete(i)
