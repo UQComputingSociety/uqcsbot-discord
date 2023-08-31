@@ -156,7 +156,7 @@ class Yelling(commands.Cog):
 
         # ignore emoji and links
         text = re.sub(
-            r":[\w\-\+\~]+:",
+            r"<(?P<animated>a?):(?P<name>\w{2,32}):(?P<id>\d{18,22})>",
             lambda m: m.group(0).upper(),
             message,
             flags=re.UNICODE,
