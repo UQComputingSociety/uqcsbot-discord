@@ -1,5 +1,4 @@
-
-from typing import Optional, Literal, List 
+from typing import Optional, Literal, List
 
 import re
 
@@ -8,11 +7,12 @@ from discord import app_commands
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
+from uqcsbot.yelling import yelling_exemptor
 
 # Max length of the message to be displayed per line in the bubble.
 CowsayWrapLength = 40
 
-# Type Alias for Cow Eyes 
+# Type Alias for Cow Eyes
 CowsayMoodType = Literal[
     "Normal",
     "Borg",
@@ -38,8 +38,8 @@ CowsayEyes = dict(
     Youthful="..",
 )
 
-class Cowsay(commands.Cog):
 
+class Cowsay(commands.Cog):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
 
@@ -50,13 +50,14 @@ class Cowsay(commands.Cog):
         tongue="Whether the cow should show its tongue (optional, default to False)",
         tux="Display the Linux Tux instead of the cow. Tux doesn't show tongue. (optional, default to False)",
     )
+    @yelling_exemptor(input_args=["message"])
     async def cowsay_command(
-        self, 
-        interaction: discord.Interaction, 
-        message: str, 
-        mood: Optional[CowsayMoodType] = "Normal", 
+        self,
+        interaction: discord.Interaction,
+        message: str,
+        mood: Optional[CowsayMoodType] = "Normal",
         tongue: Optional[bool] = False,
-        tux: Optional[bool] = False
+        tux: Optional[bool] = False,
     ) -> None:
         """
         Returns a cow or tux saying the given message.
@@ -84,7 +85,7 @@ class Cowsay(commands.Cog):
             return
 
         await interaction.response.send_message(response)
-    
+
     @app_commands.command(name="cowthink")
     @app_commands.describe(
         message="The message that the cow will think (max 1000 chars)",
@@ -92,13 +93,14 @@ class Cowsay(commands.Cog):
         tongue="Whether the cow should show its tongue (optional, default to False)",
         tux="Display the Linux Tux instead of the cow. Tux doesn't show tongue. (optional, default to False)",
     )
+    @yelling_exemptor(input_args=["message"])
     async def cowthink_command(
-        self, 
-        interaction: discord.Interaction, 
-        message: str, 
-        mood: Optional[CowsayMoodType] = "Normal", 
+        self,
+        interaction: discord.Interaction,
+        message: str,
+        mood: Optional[CowsayMoodType] = "Normal",
         tongue: Optional[bool] = False,
-        tux: Optional[bool] = False
+        tux: Optional[bool] = False,
     ) -> None:
         """
         Returns a cow or tux thinking the given message.
@@ -116,9 +118,11 @@ class Cowsay(commands.Cog):
             return
 
         # Construct the ascii art + message
-        ascii_art = self.draw_cow(mood, tongue, True) if not tux else self.draw_tux(mood, True)
+        ascii_art = (
+            self.draw_cow(mood, tongue, True) if not tux else self.draw_tux(mood, True)
+        )
         bubble = Cowsay.construct_bubble(message, CowsayWrapLength, True)
-        
+
         # Format the response and check if it's too long
         response = f"```{bubble}{ascii_art}```"
         if len(response) > 2000:
@@ -128,10 +132,10 @@ class Cowsay(commands.Cog):
         await interaction.response.send_message(response)
 
     def draw_cow(
-        self, 
-        mood: Optional[CowsayMoodType] = "Normal", 
+        self,
+        mood: Optional[CowsayMoodType] = "Normal",
         tongue: Optional[bool] = False,
-        thinking: bool = False
+        thinking: bool = False,
     ) -> str:
         """
         Returns cow ascii art with different eyes based on the mood and sticks
@@ -139,9 +143,9 @@ class Cowsay(commands.Cog):
         """
 
         # Set the tongue if the cow is dead or if the tongue is set to True.
-        tongue = "U" if tongue or mood == "Dead" else " "
+        tongue_out = "U" if tongue or mood == "Dead" else " "
 
-        # Set the bubble connection based on whether the cow is thinking or 
+        # Set the bubble connection based on whether the cow is thinking or
         # speaking.
         bubble_connect = "o" if thinking else "\\"
 
@@ -153,17 +157,15 @@ class Cowsay(commands.Cog):
         cow_eyes = CowsayEyes[mood]
 
         # Draw the cow.
-        cow  = f"        {bubble_connect}   ^__^\n"
-        cow += f"         {bubble_connect}  ({cow_eyes})\_______\n"
-        cow += f"            (__)\       )\/\ \n"
-        cow += f"             {tongue}  ||----w |\n"
+        cow = f"        {bubble_connect}   ^__^\n"
+        cow += f"         {bubble_connect}  ({cow_eyes})\\_______\n"
+        cow += f"            (__)\\       )\\/\\ \n"
+        cow += f"             {tongue_out}  ||----w |\n"
         cow += f"                ||     ||\n"
         return cow
 
     def draw_tux(
-        self,
-        mood: Optional[CowsayMoodType] = "Normal",
-        thinking: bool = False
+        self, mood: Optional[CowsayMoodType] = "Normal", thinking: bool = False
     ) -> str:
         """
         Returns tux ascii art with different eyes based on the mood.
@@ -177,20 +179,20 @@ class Cowsay(commands.Cog):
         cow_eyes = CowsayEyes[mood]
         tux_eyes = f"{cow_eyes[0]}_{cow_eyes[1]}"
 
-        # Set the bubble connection based on whether the tux is thinking or 
+        # Set the bubble connection based on whether the tux is thinking or
         # speaking.
         bubble_connect = "o" if thinking else "\\"
 
         # Draw the tux.
-        tux  = f"   {bubble_connect} \n"
+        tux = f"   {bubble_connect} \n"
         tux += f"    {bubble_connect} \n"
         tux += f"        .--. \n"
         tux += f"       |{tux_eyes} | \n"
         tux += f"       |:_/ | \n"
-        tux += f"      //   \ \ \n"
+        tux += f"      //   \\ \\ \n"
         tux += f"     (|     | ) \n"
-        tux += f"    /'\_   _/`\ \n"
-        tux += f"    \___)=(___/ \n"
+        tux += f"    /'\\_   _/`\\ \n"
+        tux += f"    \\___)=(___/ \n"
         return tux
 
     @staticmethod
@@ -205,7 +207,7 @@ class Cowsay(commands.Cog):
 
         # replace code blocks with their sanitised equivalent
         message = message.replace("```", "'''")
-        
+
         return message
 
     @staticmethod
@@ -216,13 +218,13 @@ class Cowsay(commands.Cog):
         """
 
         # Regex to match emotes.
-        emotes: List[str] = re.findall("<a?:\w+:\d+>", message)
+        emotes: List[str] = re.findall(r"<a?:\w+:\d+>", message)
 
         # Replace each emote with its name.
         for emote in emotes:
             emote_name: str = emote.split(":")[1].strip()
             message = message.replace(emote, f":{emote_name}:")
-        
+
         return message
 
     @staticmethod
@@ -234,7 +236,7 @@ class Cowsay(commands.Cog):
         lines: List[str] = []
         line: str = ""
         words: List[str] = message.split()
-        
+
         index: int = 0
         while index < len(words):
             word: str = words[index]
@@ -243,7 +245,7 @@ class Cowsay(commands.Cog):
             # As requested by the audience, you can manually break lines by
             # adding "\n" anywhere in the message and it will be respected.
             if "\\n" in word:
-                parts: str = word.split("\\n", 1)
+                parts = word.split("\\n", 1)
 
                 # The `\n` is by itself, so start a new line.
                 if parts[0] == "" and parts[1] == "":
@@ -251,15 +253,15 @@ class Cowsay(commands.Cog):
                     line = ""
                     continue
                 elif parts[1] == "":
-                    # The `\n` was at the end of the word, so add the current 
+                    # The `\n` was at the end of the word, so add the current
                     # part to the current line and start a new line
                     lines.append((line + parts[0]).rstrip())
                     line = ""
                     continue
                 else:
-                    # The `\n` was in the middle of the word, or end. So add 
+                    # The `\n` was in the middle of the word, or end. So add
                     # the first part to the current line and start a new line.
-                    # Then add the second part to the list of words to be 
+                    # Then add the second part to the list of words to be
                     # processed.
                     words.insert(index, parts[1])
 
@@ -267,16 +269,16 @@ class Cowsay(commands.Cog):
                     lines.append((line + parts[0]).rstrip())
                     line = ""
                     continue
-            
-            # If the word is longer than the wrap length, cut it and add it to 
+
+            # If the word is longer than the wrap length, cut it and add it to
             # the list of words to be processed.
             if len(word) > wrap:
                 # Cut the word to the remaining space on the line.
-                cut_word: str = word[:(wrap - len(line))]
+                cut_word = word[: (wrap - len(line))]
 
                 # Add the rest of the word to the list of words to be processed.
-                words.insert(index, word[len(cut_word):])
-                
+                words.insert(index, word[len(cut_word) :])
+
                 # Add the cut word to the current line and start a new line.
                 lines.append((line + cut_word).rstrip())
                 line = ""
@@ -298,7 +300,7 @@ class Cowsay(commands.Cog):
         """
         Constructs a speech bubble around the given message.
         """
-        
+
         # Word wrap the message to max width.
         lines = Cowsay.word_wrap(message, wrap)
 
@@ -308,7 +310,7 @@ class Cowsay(commands.Cog):
         # Build the body of the speech bubble.
         body = ""
         if thought:
-            body = Cowsay.construct_thought_bubble_body(lines, width) 
+            body = Cowsay.construct_thought_bubble_body(lines, width)
         else:
             body = Cowsay.construct_say_bubble_body(lines, width)
 
@@ -334,9 +336,9 @@ class Cowsay(commands.Cog):
             for line in lines[1:-1]:
                 body += f"| {line.ljust(length)} |\n"
             body += f"\\ {lines[-1].ljust(length)} /\n"
-        
+
         return body
-        
+
     @staticmethod
     def construct_thought_bubble_body(lines: List[str], length: int) -> str:
         """
@@ -349,6 +351,7 @@ class Cowsay(commands.Cog):
             body += f"( {line.ljust(length)} )\n"
 
         return body
+
 
 async def setup(bot: UQCSBot):
     cog = Cowsay(bot)

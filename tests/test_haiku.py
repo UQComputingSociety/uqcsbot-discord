@@ -1,8 +1,5 @@
-import pytest
-from uqcsbot.haiku import (
-    _number_of_syllables_in_word,
-    _find_haiku
-)
+# For testing private methods, we need to tell pyright to be quiet
+from uqcsbot.haiku import _number_of_syllables_in_word, _find_haiku # pyright: ignore [reportPrivateUsage]
 
 
 def test_number_of_syllables_in_word():
@@ -254,8 +251,67 @@ def test_number_of_syllables_in_word():
         "imbued": 2,
         "silhouette": 3,
         "epitome": 4,
+        "forte": 2,
+        "daybed": 2,
+        "jaded": 2,
+        "naked": 2,
+        "resume": 2,
+        "biped": 2,
+        "anyone": 3,
+        "schism": 2,
+        "less": 1,
+        "mist": 1,
+        "fish": 1,
+        "Wostershire": 3,
+        "Frappe": 2,
+        "livestream": 2,
+        "pikelet": 2,
+        "meringue": 2,
+        "vague": 1,
+        "any": 2,
+        "video": 3,
+        "area": 3,
+        "media": 3,
+        "previous": 3,
+        "experience": 4,
+        "audio": 3,
+        "areas": 3,
+        "radio": 3,
+        "safety": 2,
+        "association": 5,
+        "period": 3,
+        "style": 1,
+        "centre": 2,
+        "via": 2,
+        "videos": 3,
+        "player": 2,
+        "india": 3,
+        "created": 3,
+        "abusing": 3,
+        "acne": 2,
+        "acquire": 2,
+        "accompaniment": 5,
+        "amusing": 3,
+        "rhythm": 2,
+        "mario": 3,
+        "punctuation": 4,
+        "variation": 4,
+        "ivy": 2,
+        "era": 2,
+        "metre": 2,
+        "slayer": 2,
+        "create": 2,
+        "algorithm": 4,
+        "the": 1,
+        "poem": 2,
+        "Chromium": 3,
+        "YT": 2,
+        "Bayes": 1,
+        "yes": 1,
+        "theorem": 2,
+        "stadium": 3,
     }
-    for (word, expected_syllable_count) in test_cases.items():
+    for word, expected_syllable_count in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
 
 
@@ -296,6 +352,8 @@ def test_find_haiku():
         "socially inept people? in MY computer science discord server", # miri#2222
     ]
     for haiku in true_cases:
-        assert _find_haiku(haiku)
+        is_haiku, _ = _find_haiku(haiku)
+        assert is_haiku
     for text in false_cases:
-        assert not _find_haiku(text)
+        is_haiku, _ = _find_haiku(text)
+        assert not is_haiku

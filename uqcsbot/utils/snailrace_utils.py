@@ -19,8 +19,13 @@ SNAILRACE_MAX_STEP = 15
 SNAILRACE_MIN_STEP = 2
 
 # Messages
-SNAILRACE_ENTRY_ERR = "There is currently a race going on! Please wait until the current race finishes."
-SNAILRACE_ENTRY_MSG = "The race is currently open for entry! Entry is open for the next %s seconds" % SNAILRACE_OPEN_TIME
+SNAILRACE_ENTRY_ERR = (
+    "There is currently a race going on! Please wait until the current race finishes."
+)
+SNAILRACE_ENTRY_MSG = (
+    "The race is currently open for entry! Entry is open for the next %s seconds"
+    % SNAILRACE_OPEN_TIME
+)
 SNAILRACE_ENTRY_CLOSE = "Entry is now closed. Let's race!"
 SNAILRACE_JOIN = "%s has Joined the Race!"
 SNAILRACE_ALREADY_JOINED = "%s is already a part of the race."
@@ -35,6 +40,7 @@ SnailRaceJoinAdded = 0
 SnailRaceJoinAlreadyJoined = 1
 SnailRaceJoinRaceFull = 2
 
+
 class SnailRacer:
     def __init__(self, member: discord.Member, racer_id: int):
         self.member = member
@@ -42,7 +48,7 @@ class SnailRacer:
 
         self.position = 0
         self.step_number = 0
-    
+
     def step(self):
         # Calculate the number of positions the snail will take this step
         speed = random.randint(SNAILRACE_MIN_STEP, SNAILRACE_MAX_STEP)
@@ -55,8 +61,10 @@ class SnailRacer:
     def __str__(self):
         # Calculate the index of the snail emoji in the track
         index = min(
-            int((self.position / SNAILRACE_TRACK_LENGTH) * SNAILRACE_TRACK_LENGTH_CHARS), 
-            SNAILRACE_TRACK_LENGTH_CHARS - 1
+            int(
+                (self.position / SNAILRACE_TRACK_LENGTH) * SNAILRACE_TRACK_LENGTH_CHARS
+            ),
+            SNAILRACE_TRACK_LENGTH_CHARS - 1,
         )
 
         # Create the track string
@@ -76,15 +84,18 @@ class SnailRaceState:
     def __init__(self):
         self.race_start_time = datetime.datetime.now()
         self.racing = False
-        
+
         self.racers = []
         self.open_interaction = None
 
     def is_racing(self) -> bool:
-
         # Calculate max race time with a 5 second bias
-        max_race_len = SNAILRACE_OPEN_TIME + (SNAILRACE_STEP_TIME * SNAILRACE_TRACK_LENGTH) + 5
-        if (datetime.datetime.now() - self.race_start_time).total_seconds() >= max_race_len:
+        max_race_len = (
+            SNAILRACE_OPEN_TIME + (SNAILRACE_STEP_TIME * SNAILRACE_TRACK_LENGTH) + 5
+        )
+        if (
+            datetime.datetime.now() - self.race_start_time
+        ).total_seconds() >= max_race_len:
             self.close_race()
 
         return self.racing
@@ -112,7 +123,7 @@ class SnailRaceState:
 
         self.racers.append(SnailRacer(racer, len(self.racers) + 1))
         return SnailRaceJoinAdded
-    
+
     async def race_start(self):
         await self._start_racing(self.open_interaction)
 
@@ -133,22 +144,27 @@ class SnailRaceState:
         while not all(r.position >= SNAILRACE_TRACK_LENGTH for r in self.racers):
             for r in self.racers:
                 r.step()
-           
+
             # Build the board and edit the race message with the new board
             board = str(SNAILRACE_BOARD % "\n".join(str(r) for r in self.racers))
             race_msg = await race_msg.edit(content=board)
 
             # Wait a second before the next step
             await asyncio.sleep(SNAILRACE_STEP_TIME)
-        
+
         # Find who won
         min_steps = min(r.step_number for r in self.racers)
-        winners = list(map(lambda r: r.member.mention, filter(lambda r: r.step_number == min_steps, self.racers)))
+        winners = list(
+            map(
+                lambda r: r.member.mention,
+                filter(lambda r: r.step_number == min_steps, self.racers),
+            )
+        )
 
         # Conclude the race and send the winner
         if len(winners) == 1:
             await interaction.channel.send(SNAILRACE_WINNER % winners[0])
-        else: 
+        else:
             await interaction.channel.send(SNAILRACE_WINNER_TIE % ", ".join(winners))
 
         self.close_race()

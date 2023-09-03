@@ -1,6 +1,7 @@
 import logging
 import os
-from typing import List
+from typing import List, Optional, Tuple, Any, Callable, Coroutine
+
 import discord
 from discord.ext import commands
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -8,44 +9,58 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 from aiohttp import web
+from pytz import timezone
 
-ADMIN_ALERTS = "admin-alerts"
+"""
+TODO: TYPE ISSUES IN THIS FILE:
+    - apscheduler has no stubs. They're planned for the 4.0 release... in the future.
+    - aiohttp handler witchery
+"""
+
 
 class UQCSBot(commands.Bot):
-    """ An extended bot client to add extra functionality. """
+    """An extended bot client to add extra functionality."""
 
-    # Checks for an Azure specific environment variable, if it exists we're running as prod.
-    SERVER_ID = 813324385179271168 if os.environ.get("WEBSITE_SITE_NAME") != None else 836589565237264415
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self._scheduler = AsyncIOScheduler()
         self.start_time = datetime.now()
 
-    def schedule_task(self, func, *args, **kwargs):
-        """ Schedule a function to be run at a later time. A wrapper for apscheduler add_job. """
+        # Important channel names & constants go here
+        self.ADMIN_ALERTS_CNAME = "admin-alerts"
+        self.GENERAL_CNAME = "general"
+        self.BOT_TIMEZONE = timezone("Australia/Brisbane")
+
+        self.uqcs_server: discord.Guild
+
+    def schedule_task(
+        self, func: Callable[..., Coroutine[Any, Any, None]], *args: Any, **kwargs: Any
+    ):
+        """Schedule a function to be run at a later time. A wrapper for apscheduler add_job."""
         self._scheduler.add_job(func, *args, **kwargs)
 
     def set_db_engine(self, db_engine: Engine):
-        """ Creates a sessionmaker from the provided database engine which can be called from commands. """
+        """Creates a sessionmaker from the provided database engine which can be called from commands."""
         self.create_db_session = sessionmaker(bind=db_engine)
 
     async def setup_hook(self):
         await self.web_server()
 
     async def admin_alert(
-        self, 
-        title: str, 
-        colour: discord.Colour, 
-        description: str = None, 
-        footer: str = None, 
-        fields: List[tuple] = None, 
-        fields_inline: bool = True
+        self,
+        title: str,
+        colour: discord.Colour,
+        description: Optional[str] = None,
+        footer: Optional[str] = None,
+        fields: Optional[List[Tuple[str, str]]] = None,
+        fields_inline: bool = True,
     ):
-        """ Sends an alert to the admin channel for logging. """
-        admin_channel = discord.utils.get(self.uqcs_server.channels, name=ADMIN_ALERTS)
+        """Sends an alert to the admin channel for logging."""
+        admin_channel = discord.utils.get(
+            self.uqcs_server.channels, name=self.ADMIN_ALERTS_CNAME
+        )
 
-        if admin_channel == None:
+        if admin_channel == None or not isinstance(admin_channel, discord.TextChannel):
             return
 
         admin_message = discord.Embed(title=title, colour=colour)
@@ -53,7 +68,9 @@ class UQCSBot(commands.Bot):
             admin_message.description = description
         if fields:
             for field in fields:
-                admin_message.add_field(name=field[0], value=field[1], inline=fields_inline)
+                admin_message.add_field(
+                    name=field[0], value=field[1], inline=fields_inline
+                )
         if footer:
             admin_message.set_footer(text=footer)
 
@@ -66,19 +83,32 @@ class UQCSBot(commands.Bot):
             return web.Response(text="UQCSbot is running")
 
         app = web.Application()
-        app.router.add_get('/', handle)
+        app.router.add_get("/", handle)
         runner = web.AppRunner(app)
         await runner.setup()
-        self.site = web.TCPSite(runner, '0.0.0.0', 8080)
+        self.site = web.TCPSite(runner, "0.0.0.0", 8080)
         await self.site.start()
 
     async def on_ready(self):
-        """ Once the bot is loaded and has connected, run these commands first. """
+        """Once the bot is loaded and has connected, run these commands first."""
         self._scheduler.start()
-        logging.info(f"Bot online and logged in: [Name=\"{self.user.name}\", ID={self.user.id}]")
-        
+
+        if (user := self.user) is None:
+            raise RuntimeError("Ready... but not logged in!")
+        self.safe_user = user
+
+        logging.info(
+            f'Bot online and logged in: [Name="{self.safe_user.id}", ID={self.safe_user.id}]'
+        )
+
         # Get the UQCS server object and store it centrally
-        self.uqcs_server = self.get_guild(self.SERVER_ID)
+        if (server_id := os.environ.get("SERVER_ID")) is None:
+            raise RuntimeError("Server ID is not set!")
+        if (server := self.get_guild(int(server_id))) is None:
+            raise RuntimeError("Unable to find server with id {server_id}")
+        self.uqcs_server: discord.Guild = server
+
+        logging.info(f"Active in the {self.uqcs_server} server.")
 
         # Sync the app comamand tree with servers.
         await self.tree.sync()

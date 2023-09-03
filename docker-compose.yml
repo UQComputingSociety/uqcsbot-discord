@@ -4,7 +4,9 @@ services:
 
   # Build the local Dockerfile to run UQCSbot itself.
   uqcsbot:
-    build: .
+    build: 
+      context: .
+      target: dev
     env_file: 
       - .env    
     restart: "unless-stopped"
@@ -12,6 +14,9 @@ services:
       - "8080:8080"
     depends_on:
       - database
+    volumes:
+      # Mount the uqcsbot folder so rebuilds aren't required when code is updated.
+      - ./uqcsbot:/app/uqcsbot 
 
   # Build a database container for UQCSbot to use.
   database:

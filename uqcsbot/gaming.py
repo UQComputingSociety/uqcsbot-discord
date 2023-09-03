@@ -1,7 +1,6 @@
 from difflib import SequenceMatcher
-from html import unescape
 from json import loads
-from typing import Optional
+from typing import Optional, Dict, Any
 from urllib.error import HTTPError
 from urllib.request import urlopen
 from xml.etree.ElementTree import fromstring
@@ -12,23 +11,25 @@ from discord.ext import commands
 from requests import get
 
 from uqcsbot.bot import UQCSBot
-from uqcsbot.utils.command_utils import loading_status
+from uqcsbot.yelling import yelling_exemptor
 
 
 class Gaming(commands.Cog):
     """
-    Various gaming related commands 
+    Various gaming related commands
     """
+
     def __init__(self, bot: UQCSBot):
         self.bot = bot
 
-    @classmethod
     def get_bgg_id(self, search_name: str) -> Optional[str]:
         """
         returns the bgg id, searching by name
         """
-        query = get(f"https://www.boardgamegeek.com/xmlapi2/"
-                    + f"search?type=boardgame,boardgameexpansion&query={search_name:s}")
+        query = get(
+            f"https://www.boardgamegeek.com/xmlapi2/"
+            + f"search?type=boardgame,boardgameexpansion&query={search_name:s}"
+        )
         if query.status_code != 200:
             return None
         results = fromstring(query.text)
@@ -42,16 +43,18 @@ class Gaming(commands.Cog):
                 continue
             for element in item:
                 if element.tag == "name":
-                    match[item.get("id")] = SequenceMatcher(None, search_name,
-                                                            element.get("value")).ratio()
+                    match[item.get("id")] = SequenceMatcher(
+                        None, search_name, element.get("value")
+                    ).ratio()
         return max(match, key=match.get)
 
-    @classmethod
-    def get_board_game_parameters(self, identity: str) -> Optional[dict]:
+    def get_board_game_parameters(self, identity: str) -> Optional[Dict[str, str]]:
         """
         returns the various parameters of a board game from bgg
         """
-        query = get(f"https://www.boardgamegeek.com/xmlapi2/thing?stats=1&id={identity:s}")
+        query = get(
+            f"https://www.boardgamegeek.com/xmlapi2/thing?stats=1&id={identity:s}"
+        )
         if query.status_code != 200:
             return None
         result = fromstring(query.text)[0]
@@ -77,7 +80,9 @@ class Gaming(commands.Cog):
 
                     for result in option:
                         numvotes = int(result.attrib.get("numvotes"))
-                        direction = -1 if result.attrib.get("value") == "Not Recommended" else 1
+                        direction = (
+                            -1 if result.attrib.get("value") == "Not Recommended" else 1
+                        )
                         votes += numvotes * direction
 
                     if votes > 0:
@@ -129,8 +134,12 @@ class Gaming(commands.Cog):
                             if genre_name == "boardgame" and genre_value.isnumeric():
                                 position = int(genre_value)
                                 # gets the ordinal suffix
-                                suffix = "tsnrhtdd"[(position/10 % 10 != 1) *
-                                                    (position % 10 < 4) * position % 10::4]
+                                suffix = "tsnrhtdd"[
+                                    (position / 10 % 10 != 1)
+                                    * (position % 10 < 4)
+                                    * position
+                                    % 10 :: 4
+                                ]
                                 parameters["rank"] = f"{position:d}{suffix:s}"
                             elif genre_value.isnumeric():
                                 friendlyname = genre.attrib.get("friendlyname")
@@ -138,9 +147,15 @@ class Gaming(commands.Cog):
                                 friendlyname = " ".join(friendlyname.split(" ")[:-1])
                                 position = int(genre_value)
                                 # gets the ordinal suffix
-                                suffix = "tsnrhtdd"[(position/10 % 10 != 1) *
-                                                    (position % 10 < 4) * position % 10::4]
-                                parameters["subranks"][friendlyname] = f"{position:d}{suffix:s}"
+                                suffix = "tsnrhtdd"[
+                                    (position / 10 % 10 != 1)
+                                    * (position % 10 < 4)
+                                    * position
+                                    % 10 :: 4
+                                ]
+                                parameters["subranks"][
+                                    friendlyname
+                                ] = f"{position:d}{suffix:s}"
 
             # sets the discription
             elif tag == "description":
@@ -156,39 +171,54 @@ class Gaming(commands.Cog):
 
         return parameters
 
-    @classmethod
-    def format_board_game_parameters(self, parameters: dict) -> discord.Embed:
+    def format_board_game_parameters(self, parameters: Dict[str, str]) -> discord.Embed:
         embed = discord.Embed(title=parameters.get("name", ":question:"))
-        embed.add_field(name="Summary", inline=False,
-                        value=(f"A board game for {parameters.get('min_players', ':question:')}"
-                               + (f" to {parameters.get('max_players', ':question:')}"
-                                  if parameters.get('min_players') != parameters.get('max_players')
-                                  else "")
-                               + " players, with a playing time of "
-                               + f" {parameters.get('min_time', ':question:'):s} minutes"
-                               + ("" if parameters.get('min_time') == parameters.get('max_time')
-                                  else f" to {parameters.get('max_time', ':question:'):s} minutes")
-                               + ".\n"
-                               f"Rated {parameters.get('score', ':question:'):s}/10 by"
-                               + f" {parameters.get('users', ':question:'):s} users.\n"
-                               f"Ranked {parameters.get('rank', ':question:'):s} overall "
-                               + "on _Board Game Geek_.\n"
-                               + "".join(f"• Ranked {value:s} in the {key:s} genre.\n"
-                                         for key, value in parameters.get("subranks", {}).items()) +
-                               f"Categories: {', '.join(parameters.get('categories', set())):s}\n"
-                               f"Mechanics: {', '.join(parameters.get('mechanics', set())):s}\n"))
+        embed.add_field(
+            name="Summary",
+            inline=False,
+            value=(
+                f"A board game for {parameters.get('min_players', ':question:')}"
+                + (
+                    f" to {parameters.get('max_players', ':question:')}"
+                    if parameters.get("min_players") != parameters.get("max_players")
+                    else ""
+                )
+                + " players, with a playing time of "
+                + f" {parameters.get('min_time', ':question:'):s} minutes"
+                + (
+                    ""
+                    if parameters.get("min_time") == parameters.get("max_time")
+                    else f" to {parameters.get('max_time', ':question:'):s} minutes"
+                )
+                + ".\n"
+                f"Rated {parameters.get('score', ':question:'):s}/10 by"
+                + f" {parameters.get('users', ':question:'):s} users.\n"
+                f"Ranked {parameters.get('rank', ':question:'):s} overall "
+                + "on _Board Game Geek_.\n"
+                + "".join(
+                    f"• Ranked {value:s} in the {key:s} genre.\n"
+                    for key, value in parameters.get("subranks", {}).items()
+                )
+                + f"Categories: {', '.join(parameters.get('categories', set())):s}\n"
+                f"Mechanics: {', '.join(parameters.get('mechanics', set())):s}\n"
+            ),
+        )
         max_message_length = 1000
-        description = parameters.get('description', ':question:')
+        description = parameters.get("description", ":question:")
         if len(description) > max_message_length:
-            description = description[:max_message_length] + u"\u2026"
+            description = description[:max_message_length] + "\u2026"
         embed.add_field(name="Description", inline=False, value=description)
-        embed.add_field(name="Board Game Geek Link", inline=False,
-                        value=f"https://boardgamegeek.com/boardgame/{parameters.get('identity'):s}")
-        embed.set_thumbnail(url=parameters.get('image'))
+        embed.add_field(
+            name="Board Game Geek Link",
+            inline=False,
+            value=f"https://boardgamegeek.com/boardgame/{parameters.get('identity'):s}",
+        )
+        embed.set_thumbnail(url=parameters.get("image"))
         return embed
 
     @app_commands.command()
     @app_commands.describe(board_game="Board game to search for")
+    @yelling_exemptor(input_args=["board_game"])
     async def bgg(self, interaction: discord.Interaction, board_game: str):
         """
         Gets the details of the provided board game from Board Game Geek
@@ -197,12 +227,16 @@ class Gaming(commands.Cog):
 
         identity = self.get_bgg_id(board_game)
         if identity is None:
-            await interaction.edit_original_response("Could not find board game with that name.")
+            await interaction.edit_original_response(
+                content="Could not find board game with that name."
+            )
             return
 
         parameters = self.get_board_game_parameters(identity)
         if parameters is None:
-            await interaction.edit_original_response("Something has gone wrong.")
+            await interaction.edit_original_response(
+                content="Something has gone wrong."
+            )
             return
 
         embed = self.format_board_game_parameters(parameters)
@@ -210,6 +244,7 @@ class Gaming(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(card="Card to search for")
+    @yelling_exemptor(input_args=["card"])
     async def scry(self, interaction: discord.Interaction, card: Optional[str]):
         """
         Returns the Magic: the Gathering card that matches (partially or
@@ -219,7 +254,9 @@ class Gaming(commands.Cog):
 
         # random card if no argument
         if card:
-            request = "https://api.scryfall.com/cards/named?fuzzy=" + card.replace(" ", "+")
+            request = "https://api.scryfall.com/cards/named?fuzzy=" + card.replace(
+                " ", "+"
+            )
         else:
             request = "https://api.scryfall.com/cards/random"
 
@@ -230,22 +267,32 @@ class Gaming(commands.Cog):
             # will 404 if cannot find a unique result
             if e.code == 404:
                 fault = loads(e.read())
-                if fault.get('type') == "ambiguous":
-                    await interaction.edit_original_response("Request 404'd; Multiple Possible Cards")
+                if fault.get("type") == "ambiguous":
+                    await interaction.edit_original_response(
+                        content="Request 404'd; Multiple Possible Cards"
+                    )
                 else:
-                    await interaction.edit_original_response("Request 404'd; No Cards Found")
+                    await interaction.edit_original_response(
+                        content="Request 404'd; No Cards Found"
+                    )
                 return
-            await interaction.edit_original_response(str(e))
+            await interaction.edit_original_response(content=str(e))
             return
 
-        card = loads(response.read())
-        if 'image_uris' in card:
+        card_obj: Any = loads(response.read())
+        if "image_uris" in card_obj:
             # single faced cards
-            await interaction.edit_original_response(content=card['image_uris']['png'])
+            await interaction.edit_original_response(
+                content=card_obj["image_uris"]["png"]
+            )
         else:
             # double faced cards
-            await interaction.edit_original_response(content="\n".join(face['image_uris']['png'] for face in card['card_faces']))
+            await interaction.edit_original_response(
+                content="\n".join(
+                    face["image_uris"]["png"] for face in card_obj["card_faces"]
+                )
+            )
 
-async def setup(bot: commands.Bot):
+
+async def setup(bot: UQCSBot):
     await bot.add_cog(Gaming(bot))
-

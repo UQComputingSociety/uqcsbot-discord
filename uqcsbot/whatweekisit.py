@@ -9,6 +9,8 @@ from math import ceil
 from bs4 import BeautifulSoup
 from discord.ext import commands
 
+from uqcsbot.yelling import yelling_exemptor
+
 # Endpoint that contains a table of semester dates
 MARKUP_CALENDAR_URL: str = "https://systems-training.its.uq.edu.au/systems/student-systems/electronic-course-profile-system/design-or-edit-course-profile/academic-calendar-teaching-week"
 DATE_FORMAT = "%d/%m/%Y"
@@ -37,7 +39,9 @@ def string_to_date(date: str) -> datetime:
         Returns:
             Stringified date
     """
-    return datetime.strptime(date, DATE_FORMAT).replace(tzinfo=ZoneInfo("Australia/Brisbane"))
+    return datetime.strptime(date, DATE_FORMAT).replace(
+        tzinfo=ZoneInfo("Australia/Brisbane")
+    )
 
 
 def get_semester_times(markup: str) -> List[Semester]:
@@ -116,7 +120,10 @@ class WhatWeekIsIt(commands.Cog):
         self.bot = bot
 
     @app_commands.command()
-    @app_commands.describe(date="Date to lookup in the format of %d/%m/%Y (defaults to today)")
+    @app_commands.describe(
+        date="Date to lookup in the format of %d/%m/%Y (defaults to today)"
+    )
+    @yelling_exemptor(input_args=["date"])
     async def whatweekisit(self, interaction: discord.Interaction, date: Optional[str]):
         """
         Sends information about which semester, week and weekday it is.
@@ -131,12 +138,16 @@ class WhatWeekIsIt(commands.Cog):
             try:
                 check_date = string_to_date(date)
             except ValueError:
-                await interaction.edit_original_response(content=f"Specified date should be in format `{DATE_FORMAT}`")
+                await interaction.edit_original_response(
+                    content=f"Specified date should be in format `{DATE_FORMAT}`"
+                )
                 return
 
         calendar_page = requests.get(MARKUP_CALENDAR_URL)
         if calendar_page.status_code != requests.codes.ok:
-            await interaction.edit_original_response(content="An error occurred, please try again.")
+            await interaction.edit_original_response(
+                content="An error occurred, please try again."
+            )
 
         semesters = get_semester_times(calendar_page.text)
 
