@@ -48,7 +48,9 @@ def yelling_exemptor(input_args: List[str] = ["text"]) -> Callable[..., Any]:
             if not Yelling.contains_lowercase(text):
                 await func(cogself, *args, **kwargs)
                 return
-            await interaction.response.send_message(str(discord.utils.get(bot.emojis, name="disapproval") or ""))
+            await interaction.response.send_message(
+                str(discord.utils.get(bot.emojis, name="disapproval") or "")
+            )
             if isinstance(interaction.user, discord.Member):
                 await Yelling.external_handle_bans(bot, interaction.user)
 
