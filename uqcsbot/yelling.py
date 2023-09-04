@@ -7,6 +7,7 @@ from urllib.request import urlopen
 from urllib.error import URLError
 
 from uqcsbot.bot import UQCSBot
+from uqcsbot.cog import UQCSBotCog
 from uqcsbot.models import YellingBans
 
 from datetime import timedelta
@@ -17,39 +18,41 @@ def yelling_exemptor(input_args: List[str] = ["text"]) -> Callable[..., Any]:
     def handler(func: Callable[..., Any]):
         @wraps(func)
         async def wrapper(
-            cogself: commands.Cog, *args: List[Any], **kwargs: Dict[str, Any]
+            cogself: UQCSBotCog, *args: List[Any], **kwargs: Dict[str, Any]
         ):
-            bot = cogself.bot  # type: ignore
+            bot = cogself.bot
             interaction = None
             text = "".join([str(kwargs.get(i, "") or "") for i in input_args])
             if text == "":
-                await func(bot, *args, **kwargs)
+                await func(cogself, *args, **kwargs)
                 return
             for a in args:
                 if isinstance(a, discord.interactions.Interaction):
                     interaction = a
                     break
             if interaction is None:
-                await func(bot, *args, **kwargs)
+                await func(cogself, *args, **kwargs)
                 return
             if not hasattr(interaction, "channel"):
-                await func(bot, *args, **kwargs)
+                await func(cogself, *args, **kwargs)
                 return
             if interaction.channel is None:
-                await func(bot, *args, **kwargs)
+                await func(cogself, *args, **kwargs)
                 return
             if interaction.channel.type != discord.ChannelType.text:
-                await func(bot, *args, **kwargs)
+                await func(cogself, *args, **kwargs)
                 return
             if interaction.channel.name != "yelling":
-                await func(bot, *args, **kwargs)
+                await func(cogself, *args, **kwargs)
                 return
             if not Yelling.contains_lowercase(text):
-                await func(bot, *args, **kwargs)
+                await func(cogself, *args, **kwargs)
                 return
-            await interaction.response.send_message(str(discord.utils.get(bot.emojis, name="disapproval") or ""))  # type: ignore
+            await interaction.response.send_message(
+                str(discord.utils.get(bot.emojis, name="disapproval") or "")
+            )
             if isinstance(interaction.user, discord.Member):
-                await Yelling.external_handle_bans(bot, interaction.user)  # type: ignore
+                await Yelling.external_handle_bans(bot, interaction.user)
 
         return wrapper
 
