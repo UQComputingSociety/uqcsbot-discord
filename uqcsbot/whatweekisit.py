@@ -162,23 +162,25 @@ class WhatWeekIsIt(commands.Cog):
             if date != None:
                 message = f"The week of {date} is in:"
             else:
-                message = choice([
-                    "The week we're in is:",
-                    "The current week is:",
-                    f"It's currently {week_name}:",
-                    f"We're currently in {week_name}:",
-                    "Currently, the week is:",
-                    "Hey, look at the time:",
-                    f"Can you believe that it's already {week_name}:",
-                    "Time flies when you're having fun:",
-                    "Maybe time's just a construct of human perception:",
-                    "Time waits for noone:",
-                    "This week is:",
-                    "It is currently:",
-                    "The week is",
-                    "The week we're currently in is:",
-                    f"Right now we are in {week_name}:",
-                ])
+                message = choice(
+                    [
+                        "The week we're in is:",
+                        "The current week is:",
+                        f"It's currently {week_name}:",
+                        f"We're currently in {week_name}:",
+                        "Currently, the week is:",
+                        "Hey, look at the time:",
+                        f"Can you believe that it's already {week_name}:",
+                        "Time flies when you're having fun:",
+                        "Maybe time's just a construct of human perception:",
+                        "Time waits for noone:",
+                        "This week is:",
+                        "It is currently:",
+                        "The week is",
+                        "The week we're currently in is:",
+                        f"Right now we are in {week_name}:",
+                    ]
+                )
 
             message += f"\n> {weekday}, {week_name} of {semester_name}"
 
