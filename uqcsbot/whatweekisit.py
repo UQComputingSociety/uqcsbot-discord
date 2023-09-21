@@ -166,8 +166,6 @@ class WhatWeekIsIt(commands.Cog):
                     [
                         "The week we're in is:",
                         "The current week is:",
-                        f"It's currently {week_name}:",
-                        f"We're currently in {week_name}:",
                         "Currently, the week is:",
                         "Hey, look at the time:",
                         f"Can you believe that it's already {week_name}:",
@@ -178,7 +176,9 @@ class WhatWeekIsIt(commands.Cog):
                         "It is currently:",
                         "The week is",
                         "The week we're currently in is:",
-                        f"Right now we are in {week_name}:",
+                        f"Right now we are in:",
+                        "Good heavens, would you look at the time:",
+                        "What's the time, mister wolf? It's:",
                     ]
                 )
 
