@@ -166,7 +166,7 @@ class Yelling(commands.Cog):
         )
 
         # slightly more permissive version of discord's url regex, matches absolutely anything between http(s):// and whitespace
-        for url in re.findall(r"https?:\/\/[^\s]+", text, flags=re.UNICODE):
+        for url in re.findall(r"https?:\/\/\S+", text, flags=re.UNICODE):
             try:
                 resp = urlopen(url)
             except (ValueError, URLError):
