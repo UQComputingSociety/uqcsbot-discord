@@ -274,5 +274,11 @@ class Text(commands.Cog):
         await interaction.response.send_message(self.zalgo_common(text))
 
 
+    @commands.Cog.listener("on_message")
+    async def cato(self, message):
+        if message.author.id == 344362666258726912:
+            await message.reply("_Ceterum autem censeo praeses capillum esse delendam_.")
+
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Text(bot))
