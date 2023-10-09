@@ -37,7 +37,7 @@ SORT_METHODS: Dict[
 ] = {
     "Date": sort_by_date,
     "Course Name": (lambda item: item.course_name),
-    "Weight": (lambda item: item.get_weight_as_int() or 0),
+    "Weight": item.get_weight_as_int(),
 }
 
 
