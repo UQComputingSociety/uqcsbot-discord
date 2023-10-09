@@ -141,10 +141,7 @@ class AssessmentItem:
         try:
             start_datetime, end_datetime = self.get_parsed_due_date()
         except DateSyntaxException:
-            # TODO bot.logger.error(e.message)
             # If we can't parse a date, we're better off keeping it just in case.
-            # TODO(mitch): Keep track of these instances to attempt to accurately
-            # parse them in future. Will require manual detection + parsing.
             return True
         return end_datetime >= cutoff if end_datetime else start_datetime >= cutoff
 
@@ -162,7 +159,7 @@ class AssessmentItem:
             return True
         return start_datetime <= cutoff
 
-    def get_weight_as_int(self):
+    def get_weight_as_int(self) -> Optional[int]:
         """
         Trys to get the weight percentage of an assessment as a percentage. Will return None
         if a percentage can not be obtained.
