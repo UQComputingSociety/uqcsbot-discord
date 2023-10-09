@@ -159,14 +159,14 @@ class AssessmentItem:
             return True
         return start_datetime <= cutoff
 
-    def get_weight_as_int(self):
+    def get_weight_as_int(self) -> Optional[int]:
         """
-        Trys to get the weight percentage of an assessment as a percentage. Will return 0
+        Trys to get the weight percentage of an assessment as a percentage. Will return None
         if a percentage can not be obtained.
         """
         if match := re.match(r"\d+", self.weight):
             return int(match.group(0))
-        return 0
+        return None
 
 
 class DateSyntaxException(Exception):
