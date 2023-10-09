@@ -9,6 +9,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
+from uqcsbot.yelling import yelling_exemptor
 
 SYLLABLE_RULES_PATH: Final[str] = "uqcsbot/static/syllable_rules.yaml"
 ALLOWED_CHANNEL_NAMES: Final[List[str]] = [
@@ -75,6 +76,8 @@ class Haiku(commands.Cog):
             raise RuntimeError(
                 f"The syllable rules (used for haiku detection) could not be found in {SYLLABLE_RULES_PATH} or did not follow the required format. Haiku detection will not work."
             )
+        # Initially set allowed_channels to be empty incase a message is recived before on_ready has completed
+        self.allowed_channels = []
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -108,6 +111,7 @@ class Haiku(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(word="Word to syllable check")
+    @yelling_exemptor(input_args=["word"])
     async def syllables(self, interaction: discord.Interaction, word: str):
         """Checks the number of syllables in a given word."""
         if " " not in word:
@@ -294,7 +298,7 @@ def _number_of_syllables_in_word(word: str) -> int:
     # Accounts for silent "e" at the ends of words
     if (
         word.endswith("e")
-        and not word.endswith(("ae", "ee", "ie", "oe", "ue"))
+        and not word.endswith(("ae", "ee", "ie", "oe", "ue", "ye"))
         and _number_of_vowel_groups(word.removesuffix("e")) > 0
     ):
         number_of_syllables -= 1

@@ -1,4 +1,5 @@
-from uqcsbot.haiku import _number_of_syllables_in_word, _find_haiku
+# For testing private methods, we need to tell pyright to be quiet
+from uqcsbot.haiku import _number_of_syllables_in_word, _find_haiku # pyright: ignore [reportPrivateUsage]
 
 
 def test_number_of_syllables_in_word():
@@ -303,6 +304,12 @@ def test_number_of_syllables_in_word():
         "algorithm": 4,
         "the": 1,
         "poem": 2,
+        "Chromium": 3,
+        "YT": 2,
+        "Bayes": 1,
+        "yes": 1,
+        "theorem": 2,
+        "stadium": 3,
     }
     for word, expected_syllable_count in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count

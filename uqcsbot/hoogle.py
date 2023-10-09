@@ -10,6 +10,8 @@ import html
 import re
 import urllib.parse
 
+from uqcsbot.yelling import yelling_exemptor
+
 
 class Hoogle(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -39,6 +41,7 @@ class Hoogle(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(search="Function name or type signature to search for")
+    @yelling_exemptor(input_args=["search"])
     async def hoogle(self, interaction: discord.Interaction, search: str):
         """
         Queries the Hoogle Haskell API search engine, searching Haskell libraries by either function name

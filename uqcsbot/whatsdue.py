@@ -6,6 +6,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from uqcsbot.yelling import yelling_exemptor
+
 from uqcsbot.utils.uq_course_utils import (
     DateSyntaxException,
     Offering,
@@ -57,6 +59,9 @@ class WhatsDue(commands.Cog):
         sort_order="The order to sort courses by. Defualts to Date.",
         reverse_sort="Whether to reverse the sort order. Defaults to false.",
         show_ecp_links="Show the first ECP link for each course page. Defaults to false.",
+    )
+    @yelling_exemptor(
+        input_args=["course1", "course2", "course3", "course4", "course5", "course6"]
     )
     async def whatsdue(
         self,

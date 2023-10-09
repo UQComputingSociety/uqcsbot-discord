@@ -4,6 +4,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from uqcsbot.yelling import yelling_exemptor
+
 
 class ManageCogs(commands.Cog):
     """
@@ -18,6 +20,7 @@ class ManageCogs(commands.Cog):
     @app_commands.describe(
         cog='The cog (i.e. python file) to try to unload. Use python package notation, so no suffix of ".py" and "." between folders: e.g. "manage_cogs".',
     )
+    @yelling_exemptor(input_args=["cog"])
     async def manage_cogs(
         self,
         interaction: discord.Interaction,

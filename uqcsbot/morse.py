@@ -7,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
+from uqcsbot.yelling import yelling_exemptor
 
 # value of all valid ascii values in morse code
 MorseCodeDict = {
@@ -70,6 +71,7 @@ class Morse(commands.Cog):
 
     @app_commands.command(name="morse")
     @app_commands.describe(message="The message to be converted to morse code")
+    @yelling_exemptor(input_args=["message"])
     async def morse_command(
         self, interaction: discord.Interaction, message: str
     ) -> None:
