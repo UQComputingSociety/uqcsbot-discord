@@ -68,7 +68,6 @@ def get_holidays_from_page(holiday_page: str) -> List[Holiday]:
         holiday = Holiday(date, description, url)
         holidays.append(holiday)
 
-
     return holidays
 
 
