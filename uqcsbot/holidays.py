@@ -68,8 +68,6 @@ def get_holidays_from_page(holiday_page: str) -> List[Holiday]:
         holiday = Holiday(date, description, url)
         holidays.append(holiday)
 
-    if holidays == []:
-        logging.warn("Failed to get holidays from page.")
 
     return holidays
 
