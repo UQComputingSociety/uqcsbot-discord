@@ -1,6 +1,5 @@
-from typing import Optional, Literal
+from typing import Optional
 import logging
-from random import choice
 
 import discord
 from discord import app_commands
