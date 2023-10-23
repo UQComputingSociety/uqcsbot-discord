@@ -33,17 +33,30 @@ async def encoding_autocomplete(
 class Text(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.zalgo_menu = app_commands.ContextMenu(
-            name="Zalgo",
-            callback=self.zalgo_context,
+        
+##        self.zalgo_menu = app_commands.ContextMenu(
+##            name="Zalgo",
+##            callback=self.zalgo_context,
+##        )
+##        self.bot.tree.add_command(self.zalgo_menu)
+##
+##        self.mock_menu = app_commands.ContextMenu(
+##            name="Mock",
+##            callback=self.mock_context,
+##        )
+##        self.bot.tree.add_command(self.mock_menu)
+##        
+##        self.rot_13_menu = app_commands.ContextMenu(
+##            name="ROT13",
+##            callback=self.rot_13_context,
+##        )
+##        self.bot.tree.add_command(self.rot_13_menu)
+        
+        self.rot_13_secret_menu = app_commands.ContextMenu(
+            name="ROT13 (Secret)",
+            callback=self.rot_13_secret_context,
         )
-        self.bot.tree.add_command(self.zalgo_menu)
-
-        self.mock_menu = app_commands.ContextMenu(
-            name="Mock",
-            callback=self.mock_context,
-        )
-        self.bot.tree.add_command(self.mock_menu)
+        self.bot.tree.add_command(self.rot_13_secret_menu)
 
         # casualty of the starboard's blacklist/whitelist commands, kept for posterity
         # self.scare_menu = app_commands.ContextMenu(
@@ -273,6 +286,41 @@ class Text(commands.Cog):
 
         await interaction.response.send_message(self.zalgo_common(text))
 
+    def rot_13_cipher(self, text: str) -> str:
+        result = ""
+        for c in text:
+            if "a" <= c <= "m" or "A" <= c <= "M":
+                result += chr(ord(c)+13)
+            elif "n" <= c <= "z" or "N" <= c <= "Z":
+                result += chr(ord(c)-13)
+            else:
+                result += c
+        return result
+
+    @app_commands.command(name="rot_13")
+    @app_commands.describe(text="Input text")
+    @yelling_exemptor()
+    async def rot_13_command(self, interaction: discord.Interaction, text: str):
+        """
+        Encodes the given text with the cunning ROT13 Cipher
+        """
+        await interaction.response.send_message(self.rot_13_cipher(text))
+
+##    async def rot_13_context(
+##        self, interaction: discord.Interaction, message: discord.Message
+##    ):
+##        """
+##        Encodes this message with the cunning ROT13 Cipher
+##        """
+##        await interaction.response.send_message(self.rot_13_cipher(message.content))
+
+    async def rot_13_secret_context(
+        self, interaction: discord.Interaction, message: discord.Message
+    ):
+        """
+        Encodes this message with the cunning ROT13 Cipher, and shows it secretly to the caller
+        """
+        await interaction.response.send_message(self.rot_13_cipher(message.content), ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Text(bot))
