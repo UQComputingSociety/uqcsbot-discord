@@ -13,8 +13,10 @@ BASE_ASSESSMENT_URL = (
     "student_section_report.php?report=assessment&profileIds="
 )
 BASE_CALENDAR_URL = "http://www.uq.edu.au/events/calendar_view.php?category_id=16&year="
-OFFERING_PARAMETER = "offer"
 BASE_PAST_EXAMS_URL = "https://api.library.uq.edu.au/v1/exams/search/"
+# Parameters for the course page
+OFFERING_PARAMETER = "offer"
+YEAR_PARAMETER = "year"
 
 
 class Offering:
@@ -192,23 +194,17 @@ def get_uq_request(
 
 
 def get_course_profile_url(
-    course_name: str, offering: Optional[Offering] = None
+    course_name: str, offering: Optional[Offering] = None, year: Optional[int]
 ) -> str:
     """
-    Returns the URL to the course profile for the given course for a given offering.
-    If no offering is give, will return the first course profile on the course page.
+    Returns the URL to the course profile (ECP) for the given course for a given offering.
+    If no offering or year are given, the first course profile on the course page will be returned.
     """
-    if offering is None:
-        course_url = BASE_COURSE_URL + course_name
-    else:
-        course_url = (
-            BASE_COURSE_URL
-            + course_name
-            + "&"
-            + OFFERING_PARAMETER
-            + "="
-            + offering.get_offering_code()
-        )
+    course_url = BASE_COURSE_URL + course_name
+    if offering:
+        course_url += "&" + OFFERING_PARAMETER + offering.get_offering_code()
+    if year:
+        course_url += "&" + YEAR_PARAMETER + year
 
     http_response = get_uq_request(course_url)
     if http_response.status_code != requests.codes.ok:
