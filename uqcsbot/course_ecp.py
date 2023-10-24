@@ -46,9 +46,9 @@ class CourseECP(commands.Cog):
         await interaction.response.defer(thinking=True)
 
         offering = Offering(semester=semester, campus=campus, mode=mode)
-                
+
         try:
-            course_url = get_course_profile_url(course_code, offering)
+            course_url = get_course_profile_url(course_code, offering, year)
         except HttpException as exception:
             logging.warning(
                 f"Received a HTTP response code {exception.status_code}. Error information: {exception.message}"
@@ -61,14 +61,37 @@ class CourseECP(commands.Cog):
             await interaction.edit_original_response(content=exception.message)
             return
         
-        # Below needs to account for the year, semester, mode and campus offerings,
-        # Currently it just defaults to current offering.
         embed = discord.Embed(
             title=f"Course ECP for {course_code.upper()}",
             url=course_url,
             # Make below considerate of offering.
             # description=f"[{course_code.upper()}]({course_url})",
         )
+
+        if semester:
+            embed.add_field(
+                name="Semester",
+                value = str(semester),
+                inline=False,
+            )
+        if year:
+            embed.add_field(
+                name="Year",
+                value = str(year),
+                inline=False,
+            )
+        if campus:
+            embed.add_field(
+                name="Campus",
+                value = str(campus),
+                inline=False,
+            )
+        if mode:
+            embed.add_field(
+                name="Delivery mode",
+                value = str(mode),
+                inline=False,
+            )
 
         if not course_url:
             await interaction.edit_original_response(

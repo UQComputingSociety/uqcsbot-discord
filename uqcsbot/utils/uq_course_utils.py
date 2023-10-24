@@ -194,7 +194,7 @@ def get_uq_request(
 
 
 def get_course_profile_url(
-    course_name: str, offering: Optional[Offering] = None, year: Optional[int]
+    course_name: str, offering: Optional[Offering] = None, year: Optional[int] = None,
 ) -> str:
     """
     Returns the URL to the course profile (ECP) for the given course for a given offering.
@@ -202,9 +202,9 @@ def get_course_profile_url(
     """
     course_url = BASE_COURSE_URL + course_name
     if offering:
-        course_url += "&" + OFFERING_PARAMETER + offering.get_offering_code()
+        course_url += "&" + OFFERING_PARAMETER + "=" + offering.get_offering_code()
     if year:
-        course_url += "&" + YEAR_PARAMETER + year
+        course_url += "&" + YEAR_PARAMETER + "=" + str(year)
 
     http_response = get_uq_request(course_url)
     if http_response.status_code != requests.codes.ok:
