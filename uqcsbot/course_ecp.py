@@ -1,6 +1,6 @@
 from typing import Optional
 import logging
-
+from datetime import datetime
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -20,35 +20,45 @@ class CourseECP(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(
-        course_code="The course to find a past exam for.",
+        course1="The course to find an ECP for.",
+        course2="The second course to find an ECP for.",
+        course3="The third course to find an ECP for.",
+        course4="The fourth course to find an ECP for.",
         year="The year to find the course ECP for. Defaults to what UQCSbot believes is the current semester.",
         semester="The semester to find the course ECP for. Defaults to what UQCSbot believes is the current semester.",
         campus="The campus the course is held at. Defaults to St Lucia. Defaults to St Lucia. Note that many external courses are 'hosted' at St Lucia.",
         mode="The mode of the course. Defaults to Internal.",
     )
     @yelling_exemptor(
-        input_args=["course_code"]
+        input_args=["course1, course2, course3, course4"]
     )    
     
     async def courseecp(
         self,
         interaction: discord.Interaction,
-        course_code: str,
+        course1: str,
+        course2: Optional[str],
+        course3: Optional[str],
+        course4: Optional[str],
         year: Optional[int] = None,
         semester: Optional[Offering.SemesterType] = None,
         campus: Offering.CampusType = "St Lucia",
         mode: Offering.ModeType = "Internal",
     ):
         """
-        Returns the URL of the ECPs for course codes given.
+        Returns the URL of the ECPs for course codes given. Assumes the same semester and year for the course codes given.
 
         """
         await interaction.response.defer(thinking=True)
 
+        possible_courses = [course1, course2, course3, course4]
+        course_names = [c.upper() for c in possible_courses if c != None]
+        course_name_urls: dict[str,str] = {}
         offering = Offering(semester=semester, campus=campus, mode=mode)
-
+        
         try:
-            course_url = get_course_profile_url(course_code, offering, year)
+            for course in course_names:
+                course_name_urls.update({course: get_course_profile_url(course, offering, year)})
         except HttpException as exception:
             logging.warning(
                 f"Received a HTTP response code {exception.status_code}. Error information: {exception.message}"
@@ -61,41 +71,37 @@ class CourseECP(commands.Cog):
             await interaction.edit_original_response(content=exception.message)
             return
         
+        # If year is none assign it the current year
+        if not year:
+            year = datetime.today().year
+        
+        # If semester is none assign it the current estimated semester
+        if not semester:
+            current_month = datetime.today().month
+            if 2 <= current_month <= 6:
+                semester = "1"
+            elif 7 <= current_month <= 11:
+                semester = "2"
+            else:
+                semester = "Summer"
+
+        # Create the embedded message with the course names and details
         embed = discord.Embed(
-            title=f"Course ECP for {course_code.upper()}",
-            url=course_url,
-            # Make below considerate of offering.
-            # description=f"[{course_code.upper()}]({course_url})",
+            title=f"Course ECP: {', '.join(course_names)}",
+            description=f"For Semester {semester} {year}, {mode}, {campus}"
         )
 
-        if semester:
-            embed.add_field(
-                name="Semester",
-                value = str(semester),
-                inline=False,
-            )
-        if year:
-            embed.add_field(
-                name="Year",
-                value = str(year),
-                inline=False,
-            )
-        if campus:
-            embed.add_field(
-                name="Campus",
-                value = str(campus),
-                inline=False,
-            )
-        if mode:
-            embed.add_field(
-                name="Delivery mode",
-                value = str(mode),
-                inline=False,
-            )
-
-        if not course_url:
+        # Add the ECP urls to the embedded message
+        if course_name_urls:
+            for course in course_name_urls:
+                embed.add_field(
+                    name=f"",
+                    value=f"[{course}]({course_name_urls.get(course)}) ",
+                    inline=False,
+                )
+        else:
             await interaction.edit_original_response(
-                content=f"No ECP could be found for {course_code}. The {course_code}'s ECP might not be available."
+                content=f"No ECP could be found for {course_names}. The {course_names}'s ECP might not be available."
             )
             return
 
