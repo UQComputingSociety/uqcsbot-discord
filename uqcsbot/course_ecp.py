@@ -24,7 +24,7 @@ class CourseECP(commands.Cog):
         course2="The second course to find an ECP for.",
         course3="The third course to find an ECP for.",
         course4="The fourth course to find an ECP for.",
-        year="The year to find the course ECP for. Defaults to what UQCSbot believes is the current semester.",
+        year="The year to find the course ECP for. Defaults to what UQCSbot believes is the current year.",
         semester="The semester to find the course ECP for. Defaults to what UQCSbot believes is the current semester.",
         campus="The campus the course is held at. Defaults to St Lucia. Defaults to St Lucia. Note that many external courses are 'hosted' at St Lucia.",
         mode="The mode of the course. Defaults to Internal.",
@@ -61,7 +61,7 @@ class CourseECP(commands.Cog):
                 course_name_urls.update({course: get_course_profile_url(course, offering, year)})
         except HttpException as exception:
             logging.warning(
-                f"Received a HTTP response code {exception.status_code}. Error information: {exception.message}"
+                f"Received a HTTP response code {exception.status_code} when trying find the course url using get_course_profile_url in course_ecp.py . Error information: {exception.message}"
             )            
             await interaction.edit_original_response(
                 content=f"Could not contact UQ, please try again."
@@ -101,7 +101,7 @@ class CourseECP(commands.Cog):
                 )
         else:
             await interaction.edit_original_response(
-                content=f"No ECP could be found for {course_names}. The {course_names}'s ECP might not be available."
+                content=f"No ECP could be found for the courses: {course_names}. The ECP(s) might not be available."
             )
             return
 
