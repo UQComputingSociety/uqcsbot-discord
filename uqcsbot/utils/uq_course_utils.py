@@ -60,7 +60,7 @@ class Offering:
         if semester is not None:
             self.semester = semester
         else:
-            self.semester = self._estimate_current_semester()
+            self.semester = self.estimate_current_semester()
         self.semester
         self.campus = campus
         self.mode = mode
@@ -94,7 +94,7 @@ class Offering:
         return offering_code_text.encode("utf-8").hex()
 
     @staticmethod
-    def _estimate_current_semester() -> SemesterType:
+    def estimate_current_semester() -> SemesterType:
         """
         Returns an estimate of the current semester (represented by an integer) based on the current month. 3 represents summer semester.
         """

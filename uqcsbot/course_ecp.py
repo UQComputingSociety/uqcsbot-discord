@@ -77,13 +77,7 @@ class CourseECP(commands.Cog):
         
         # If semester is none assign it the current estimated semester
         if not semester:
-            current_month = datetime.today().month
-            if 2 <= current_month <= 6:
-                semester = "1"
-            elif 7 <= current_month <= 11:
-                semester = "2"
-            else:
-                semester = "Summer"
+            semester = Offering.estimate_current_semester()
 
         # Create the embedded message with the course names and details
         embed = discord.Embed(
