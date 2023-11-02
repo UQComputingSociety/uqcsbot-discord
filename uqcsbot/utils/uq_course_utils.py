@@ -3,9 +3,10 @@ from requests.exceptions import RequestException
 from datetime import datetime
 from dateutil import parser
 from bs4 import BeautifulSoup, element
-from functools import partial
 from typing import List, Dict, Optional, Literal, Tuple
+from dataclasses import dataclass
 import json
+import re
 
 BASE_COURSE_URL = "https://my.uq.edu.au/programs-courses/course.html?course_code="
 BASE_ASSESSMENT_URL = (
@@ -105,6 +106,69 @@ class Offering:
             return "2"
         else:
             return "Summer"
+
+
+@dataclass
+class AssessmentItem:
+    course_name: str
+    task: str
+    due_date: str
+    weight: str
+
+    def get_parsed_due_date(self):
+        """
+        Returns the parsed due date for the given assessment item as a datetime
+        object. If the date cannot be parsed, a DateSyntaxException is raised.
+        """
+        if self.due_date == "Examination Period":
+            return get_current_exam_period()
+        parser_info = parser.parserinfo(dayfirst=True)
+        try:
+            # If a date range is detected, attempt to split into start and end
+            # dates. Else, attempt to just parse the whole thing.
+            if " - " in self.due_date:
+                start_date, end_date = self.due_date.split(" - ", 1)
+                start_datetime = parser.parse(start_date, parser_info)
+                end_datetime = parser.parse(end_date, parser_info)
+                return start_datetime, end_datetime
+            due_datetime = parser.parse(self.due_date, parser_info)
+            return due_datetime, due_datetime
+        except Exception:
+            raise DateSyntaxException(self.due_date, self.course_name)
+
+    def is_after(self, cutoff: datetime):
+        """
+        Returns whether the assessment occurs after the given cutoff.
+        """
+        try:
+            start_datetime, end_datetime = self.get_parsed_due_date()
+        except DateSyntaxException:
+            # If we can't parse a date, we're better off keeping it just in case.
+            return True
+        return end_datetime >= cutoff if end_datetime else start_datetime >= cutoff
+
+    def is_before(self, cutoff: datetime):
+        """
+        Returns whether the assessment occurs before the given cutoff.
+        """
+        try:
+            start_datetime, _ = self.get_parsed_due_date()
+        except DateSyntaxException:
+            # TODO bot.logger.error(e.message)
+            # If we can't parse a date, we're better off keeping it just in case.
+            # TODO(mitch): Keep track of these instances to attempt to accurately
+            # parse them in future. Will require manual detection + parsing.
+            return True
+        return start_datetime <= cutoff
+
+    def get_weight_as_int(self) -> Optional[int]:
+        """
+        Trys to get the weight percentage of an assessment as a percentage. Will return None
+        if a percentage can not be obtained.
+        """
+        if match := re.match(r"\d+", self.weight):
+            return int(match.group(0))
+        return None
 
 
 class DateSyntaxException(Exception):
@@ -232,14 +296,14 @@ def get_course_profile_url(
     return url
 
 
-def get_course_profile_id(course_name: str, offering: Optional[Offering]):
+def get_course_profile_id(course_name: str, offering: Optional[Offering] = None) -> int:
     """
     Returns the ID to the latest course profile for the given course.
     """
     profile_url = get_course_profile_url(course_name, offering=offering)
     # The profile url looks like this
     # https://course-profiles.uq.edu.au/student_section_loader/section_1/100728
-    return profile_url[profile_url.rindex("/") + 1 :]
+    return int(profile_url[profile_url.rindex("/") + 1 :])
 
 
 def get_current_exam_period():
@@ -268,44 +332,6 @@ def get_current_exam_period():
     return start_datetime, end_datetime
 
 
-def get_parsed_assessment_due_date(assessment_item: Tuple[str, str, str, str]):
-    """
-    Returns the parsed due date for the given assessment item as a datetime
-    object. If the date cannot be parsed, a DateSyntaxException is raised.
-    """
-    course_name, _, due_date, _ = assessment_item
-    if due_date == "Examination Period":
-        return get_current_exam_period()
-    parser_info = parser.parserinfo(dayfirst=True)
-    try:
-        # If a date range is detected, attempt to split into start and end
-        # dates. Else, attempt to just parse the whole thing.
-        if " - " in due_date:
-            start_date, end_date = due_date.split(" - ", 1)
-            start_datetime = parser.parse(start_date, parser_info)
-            end_datetime = parser.parse(end_date, parser_info)
-            return start_datetime, end_datetime
-        due_datetime = parser.parse(due_date, parser_info)
-        return due_datetime, due_datetime
-    except Exception:
-        raise DateSyntaxException(due_date, course_name)
-
-
-def is_assessment_after_cutoff(assessment: Tuple[str, str, str, str], cutoff: datetime):
-    """
-    Returns whether the assessment occurs after the given cutoff.
-    """
-    try:
-        start_datetime, end_datetime = get_parsed_assessment_due_date(assessment)
-    except DateSyntaxException:
-        # TODO bot.logger.error(e.message)
-        # If we can't parse a date, we're better off keeping it just in case.
-        # TODO(mitch): Keep track of these instances to attempt to accurately
-        # parse them in future. Will require manual detection + parsing.
-        return True
-    return end_datetime >= cutoff if end_datetime else start_datetime >= cutoff
-
-
 def get_course_assessment_page(
     course_names: List[str], offering: Optional[Offering]
 ) -> str:
@@ -314,17 +340,18 @@ def get_course_assessment_page(
     url to the assessment table for the provided courses
     """
     profile_ids = map(
-        lambda course: get_course_profile_id(course, offering=offering), course_names
+        lambda course: str(get_course_profile_id(course, offering=offering)),
+        course_names,
     )
     return BASE_ASSESSMENT_URL + ",".join(profile_ids)
 
 
 def get_course_assessment(
     course_names: List[str],
-    cutoff: Optional[datetime] = None,
+    cutoff: Tuple[Optional[datetime], Optional[datetime]] = (None, None),
     assessment_url: Optional[str] = None,
     offering: Optional[Offering] = None,
-) -> List[Tuple[str, str, str, str]]:
+) -> List[AssessmentItem]:
     """
     Returns all the course assessment for the given
     courses that occur after the given cutoff.
@@ -344,9 +371,12 @@ def get_course_assessment(
     assessment = assessment_table.findAll("tr")[1:]
     parsed_assessment = map(get_parsed_assessment_item, assessment)
     # If no cutoff is specified, set cutoff to UNIX epoch (i.e. filter nothing).
-    cutoff = cutoff or datetime.min
-    assessment_filter = partial(is_assessment_after_cutoff, cutoff=cutoff)
-    filtered_assessment = filter(assessment_filter, parsed_assessment)
+    cutoff_min = cutoff[0] or datetime.min
+    cutoff_max = cutoff[1] or datetime.max
+    filtered_assessment = filter(
+        lambda item: item.is_after(cutoff_min) and item.is_before(cutoff_max),
+        parsed_assessment,
+    )
     return list(filtered_assessment)
 
 
@@ -358,8 +388,8 @@ def get_element_inner_html(dom_element: element.Tag):
 
 
 def get_parsed_assessment_item(
-    assessment_item: element.Tag,
-) -> Tuple[str, str, str, str]:
+    assessment_item_tag: element.Tag,
+) -> AssessmentItem:
     """
     Returns the parsed assessment details for the
     given assessment item table row element.
@@ -369,7 +399,7 @@ def get_parsed_assessment_item(
     This is likely insufficient to handle every course's
     structure, and thus is subject to change.
     """
-    course_name, task, due_date, weight = assessment_item.findAll("div")
+    course_name, task, due_date, weight = assessment_item_tag.findAll("div")
     # Handles courses of the form 'CSSE1001 - Sem 1 2018 - St Lucia - Internal'.
     # Thus, this bit of code will extract the course.
     course_name = course_name.text.strip().split(" - ")[0]
@@ -382,7 +412,7 @@ def get_parsed_assessment_item(
     # Handles weights of the form '30%<br/>Alternative to oral presentation'.
     # Thus, this bit of code will keep only the weight portion of the field.
     weight = get_element_inner_html(weight).strip().split("<br/>")[0]
-    return (course_name, task, due_date, weight)
+    return AssessmentItem(course_name, task, due_date, weight)
 
 
 class Exam:
