@@ -14,6 +14,7 @@ from uqcsbot.utils.uq_course_utils import (
 )
 from uqcsbot.yelling import yelling_exemptor
 
+
 class CourseECP(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -29,10 +30,7 @@ class CourseECP(commands.Cog):
         campus="The campus the course is held at. Defaults to St Lucia. Defaults to St Lucia. Note that many external courses are 'hosted' at St Lucia.",
         mode="The mode of the course. Defaults to Internal.",
     )
-    @yelling_exemptor(
-        input_args=["course1, course2, course3, course4"]
-    )    
-    
+    @yelling_exemptor(input_args=["course1, course2, course3, course4"])
     async def courseecp(
         self,
         interaction: discord.Interaction,
@@ -53,28 +51,30 @@ class CourseECP(commands.Cog):
 
         possible_courses = [course1, course2, course3, course4]
         course_names = [c.upper() for c in possible_courses if c != None]
-        course_name_urls: dict[str,str] = {}
+        course_name_urls: dict[str, str] = {}
         offering = Offering(semester=semester, campus=campus, mode=mode)
-        
+
         try:
             for course in course_names:
-                course_name_urls.update({course: get_course_profile_url(course, offering, year)})
+                course_name_urls.update(
+                    {course: get_course_profile_url(course, offering, year)}
+                )
         except HttpException as exception:
             logging.warning(
                 f"Received a HTTP response code {exception.status_code} when trying find the course url using get_course_profile_url in course_ecp.py . Error information: {exception.message}"
-            )            
+            )
             await interaction.edit_original_response(
                 content=f"Could not contact UQ, please try again."
             )
             return
-        except (CourseNotFoundException, ProfileNotFoundException) as exception:     
+        except (CourseNotFoundException, ProfileNotFoundException) as exception:
             await interaction.edit_original_response(content=exception.message)
             return
-        
+
         # If year is none assign it the current year
         if not year:
             year = datetime.today().year
-        
+
         # If semester is none assign it the current estimated semester
         if not semester:
             semester = Offering.estimate_current_semester()
@@ -82,7 +82,7 @@ class CourseECP(commands.Cog):
         # Create the embedded message with the course names and details
         embed = discord.Embed(
             title=f"Course ECP: {', '.join(course_names)}",
-            description=f"For Semester {semester} {year}, {mode}, {campus}"
+            description=f"For Semester {semester} {year}, {mode}, {campus}",
         )
 
         # Add the ECP urls to the embedded message
@@ -104,6 +104,7 @@ class CourseECP(commands.Cog):
         )
         await interaction.edit_original_response(embed=embed)
         return
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(CourseECP(bot))
