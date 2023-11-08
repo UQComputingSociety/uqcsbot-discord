@@ -1,27 +1,26 @@
-import requests
+import requests, logging
 from requests.exceptions import RequestException
 from datetime import datetime
 from dateutil import parser
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from functools import partial
 from binascii import hexlify
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple, Any
 
-BASE_COURSE_URL = "https://my.uq.edu.au/programs-courses/course.html?course_code="
-BASE_ASSESSMENT_URL = (
+BASE_COURSE_URL: str = "https://my.uq.edu.au/programs-courses/course.html?course_code="
+BASE_ASSESSMENT_URL: str = (
     "https://www.courses.uq.edu.au/"
     "student_section_report.php?report=assessment&profileIds="
 )
-BASE_CALENDAR_URL = "http://www.uq.edu.au/events/calendar_view.php?category_id=16&year="
-OFFERING_PARAMETER = "offer"
-
+BASE_CALENDAR_URL: str = "http://www.uq.edu.au/events/calendar_view.php?category_id=16&year="
+OFFERING_PARAMETER: str = "offer"
 
 class DateSyntaxException(Exception):
     """
     Raised when an unparsable date syntax is encountered.
     """
 
-    def __init__(self, date, course_name):
+    def __init__(self, date: str, course_name: str):
         self.message = f"Could not parse date '{date}' for course '{course_name}'."
         self.date = date
         self.course_name = course_name
@@ -33,7 +32,7 @@ class CourseNotFoundException(Exception):
     Raised when a given course cannot be found for UQ.
     """
 
-    def __init__(self, course_name):
+    def __init__(self, course_name: str):
         self.message = f"Could not find course '{course_name}'."
         self.course_name = course_name
         super().__init__(self.message, self.course_name)
@@ -44,7 +43,7 @@ class ProfileNotFoundException(Exception):
     Raised when a profile cannot be found for a given course.
     """
 
-    def __init__(self, course_name):
+    def __init__(self, course_name: str):
         self.message = f"Could not find profile for course '{course_name}'."
         self.course_name = course_name
         super().__init__(self.message, self.course_name)
@@ -56,14 +55,14 @@ class HttpException(Exception):
     unsuccessful (i.e. not 200 OK) status code.
     """
 
-    def __init__(self, url, status_code):
+    def __init__(self, url: str, status_code: int):
         self.message = f"Received status code {status_code} from '{url}'."
         self.url = url
         self.status_code = status_code
         super().__init__(self.message, self.url, self.status_code)
 
 
-def get_offering_code(semester=None, campus="STLUC", is_internal=True):
+def get_offering_code(semester: int = -1, campus: str = "STLUC", is_internal: bool =True):
     """
     Returns the hex encoded offering string for the given semester and campus.
 
@@ -73,7 +72,8 @@ def get_offering_code(semester=None, campus="STLUC", is_internal=True):
         is_internal {bool} -- True for internal, false for external.
     """
     # TODO: Codes for other campuses.
-    if semester is None:
+    # TODO: Summer Semesters?
+    if semester == -1:
         semester = 1 if datetime.today().month <= 6 else 2
     location = "IN" if is_internal else "EX"
     return hexlify(f"{campus}{semester}{location}".encode("utf-8")).decode("utf-8")
@@ -98,7 +98,7 @@ def get_uq_request(
         raise HttpException(message, 500)
 
 
-def get_course_profile_url(course_name):
+def get_course_profile_url(course_name: str) -> str:
     """
     Returns the URL to the latest course profile for the given course.
     """
@@ -114,10 +114,13 @@ def get_course_profile_url(course_name):
     profile = html.find("a", class_="profile-available")
     if profile is None:
         raise ProfileNotFoundException(course_name)
-    return profile.get("href")
+    if type(profile) is Tag:
+        return str(profile.get("href"))
+    # TODO: Error Handling - Profile is NavigableString
+    return ""
 
 
-def get_course_profile_id(course_name):
+def get_course_profile_id(course_name: str):
     """
     Returns the ID to the latest course profile for the given course.
     """
@@ -153,7 +156,7 @@ def get_current_exam_period():
     return start_datetime, end_datetime
 
 
-def get_parsed_assessment_due_date(assessment_item):
+def get_parsed_assessment_due_date(assessment_item: Tuple[str, Any, str, Any]) -> Tuple[datetime, datetime]:
     """
     Returns the parsed due date for the given assessment item as a datetime
     object. If the date cannot be parsed, a DateSyntaxException is raised.
@@ -176,7 +179,7 @@ def get_parsed_assessment_due_date(assessment_item):
         raise DateSyntaxException(due_date, course_name)
 
 
-def is_assessment_after_cutoff(assessment, cutoff):
+def is_assessment_after_cutoff(assessment: Tuple[str, str, str, str], cutoff: datetime) -> bool:
     """
     Returns whether the assessment occurs after the given cutoff.
     """
@@ -185,6 +188,7 @@ def is_assessment_after_cutoff(assessment, cutoff):
     except DateSyntaxException as e:
         # TODO bot.logger.error(e.message)
         # If we can't parse a date, we're better off keeping it just in case.
+        logging.error(e)
         # TODO(mitch): Keep track of these instances to attempt to accurately
         # parse them in future. Will require manual detection + parsing.
         return True
@@ -196,11 +200,11 @@ def get_course_assessment_page(course_names: List[str]) -> str:
     Determines the course ids from the course names and returns the
     url to the assessment table for the provided courses
     """
-    profile_ids = map(get_course_profile_id, course_names)
+    profile_ids: map[str] = map(get_course_profile_id, course_names)
     return BASE_ASSESSMENT_URL + ",".join(profile_ids)
 
 
-def get_course_assessment(course_names, cutoff=None, assessment_url=None):
+def get_course_assessment(course_names: List[str], cutoff: datetime | None = None, assessment_url: str | None = None):
     """
     Returns all the course assessment for the given
     courses that occur after the given cutoff.
@@ -209,14 +213,18 @@ def get_course_assessment(course_names, cutoff=None, assessment_url=None):
         joined_assessment_url = get_course_assessment_page(course_names)
     else:
         joined_assessment_url = assessment_url
-        http_response = get_uq_request(joined_assessment_url)
+    http_response = get_uq_request(joined_assessment_url)
     if http_response.status_code != requests.codes.ok:
         raise HttpException(joined_assessment_url, http_response.status_code)
     html = BeautifulSoup(http_response.content, "html.parser")
     assessment_table = html.find("table", class_="tblborder")
+    if type(assessment_table) is not Tag:
+        # TODO: Error Handling here
+        return
     # Start from 1st index to skip over the row containing column names.
     assessment = assessment_table.findAll("tr")[1:]
-    parsed_assessment = map(get_parsed_assessment_item, assessment)
+        
+    parsed_assessment: map[Tuple[str, str, str, str]] = map(get_parsed_assessment_item, assessment)
     # If no cutoff is specified, set cutoff to UNIX epoch (i.e. filter nothing).
     cutoff = cutoff or datetime.min
     assessment_filter = partial(is_assessment_after_cutoff, cutoff=cutoff)
@@ -224,14 +232,14 @@ def get_course_assessment(course_names, cutoff=None, assessment_url=None):
     return list(filtered_assessment)
 
 
-def get_element_inner_html(dom_element):
+def get_element_inner_html(dom_element: BeautifulSoup) -> str:
     """
     Returns the inner html for the given element.
     """
     return dom_element.decode_contents(formatter="html")
 
 
-def get_parsed_assessment_item(assessment_item):
+def get_parsed_assessment_item(assessment_item: Tag) -> Tuple[str, str, str, str]:
     """
     Returns the parsed assessment details for the
     given assessment item table row element.
