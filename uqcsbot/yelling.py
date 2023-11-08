@@ -1,7 +1,6 @@
 import discord
 from typing import List, Dict, Callable, Any
 from discord.ext import commands
-from discord._types import ClientT
 from random import choice, random
 import re
 
@@ -11,10 +10,6 @@ from uqcsbot.models import YellingBans
 
 from datetime import timedelta
 from functools import wraps
-
-
-class DodgyType(discord.interactions.InteractionResponse[ClientT]):
-    pass
 
 
 def yelling_exemptor(input_args: List[str] = ["text"]) -> Callable[..., Any]:
@@ -52,7 +47,7 @@ def yelling_exemptor(input_args: List[str] = ["text"]) -> Callable[..., Any]:
                 await func(cogself, *args, **kwargs)
                 return
 
-            assert isinstance((x := interaction.response), DodgyType)
+            x: discord.interactions.InteractionResponse[discord.Client] = interaction.response
             await x.send_message(
                 str(discord.utils.get(bot.emojis, name="disapproval") or "")
             )
