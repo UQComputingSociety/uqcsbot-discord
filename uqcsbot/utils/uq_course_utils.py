@@ -12,8 +12,11 @@ BASE_ASSESSMENT_URL: str = (
     "https://www.courses.uq.edu.au/"
     "student_section_report.php?report=assessment&profileIds="
 )
-BASE_CALENDAR_URL: str = "http://www.uq.edu.au/events/calendar_view.php?category_id=16&year="
+BASE_CALENDAR_URL: str = (
+    "http://www.uq.edu.au/events/calendar_view.php?category_id=16&year="
+)
 OFFERING_PARAMETER: str = "offer"
+
 
 class DateSyntaxException(Exception):
     """
@@ -62,7 +65,9 @@ class HttpException(Exception):
         super().__init__(self.message, self.url, self.status_code)
 
 
-def get_offering_code(semester: int = -1, campus: str = "STLUC", is_internal: bool =True):
+def get_offering_code(
+    semester: int = -1, campus: str = "STLUC", is_internal: bool = True
+):
     """
     Returns the hex encoded offering string for the given semester and campus.
 
@@ -156,7 +161,9 @@ def get_current_exam_period():
     return start_datetime, end_datetime
 
 
-def get_parsed_assessment_due_date(assessment_item: Tuple[str, Any, str, Any]) -> Tuple[datetime, datetime]:
+def get_parsed_assessment_due_date(
+    assessment_item: Tuple[str, Any, str, Any]
+) -> Tuple[datetime, datetime]:
     """
     Returns the parsed due date for the given assessment item as a datetime
     object. If the date cannot be parsed, a DateSyntaxException is raised.
@@ -179,7 +186,9 @@ def get_parsed_assessment_due_date(assessment_item: Tuple[str, Any, str, Any]) -
         raise DateSyntaxException(due_date, course_name)
 
 
-def is_assessment_after_cutoff(assessment: Tuple[str, str, str, str], cutoff: datetime) -> bool:
+def is_assessment_after_cutoff(
+    assessment: Tuple[str, str, str, str], cutoff: datetime
+) -> bool:
     """
     Returns whether the assessment occurs after the given cutoff.
     """
@@ -204,7 +213,11 @@ def get_course_assessment_page(course_names: List[str]) -> str:
     return BASE_ASSESSMENT_URL + ",".join(profile_ids)
 
 
-def get_course_assessment(course_names: List[str], cutoff: datetime | None = None, assessment_url: str | None = None):
+def get_course_assessment(
+    course_names: List[str],
+    cutoff: datetime | None = None,
+    assessment_url: str | None = None,
+):
     """
     Returns all the course assessment for the given
     courses that occur after the given cutoff.
@@ -223,8 +236,10 @@ def get_course_assessment(course_names: List[str], cutoff: datetime | None = Non
         return
     # Start from 1st index to skip over the row containing column names.
     assessment = assessment_table.findAll("tr")[1:]
-        
-    parsed_assessment: map[Tuple[str, str, str, str]] = map(get_parsed_assessment_item, assessment)
+
+    parsed_assessment: map[Tuple[str, str, str, str]] = map(
+        get_parsed_assessment_item, assessment
+    )
     # If no cutoff is specified, set cutoff to UNIX epoch (i.e. filter nothing).
     cutoff = cutoff or datetime.min
     assessment_filter = partial(is_assessment_after_cutoff, cutoff=cutoff)
