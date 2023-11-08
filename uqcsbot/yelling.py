@@ -47,9 +47,9 @@ def yelling_exemptor(input_args: List[str] = ["text"]) -> Callable[..., Any]:
                 await func(cogself, *args, **kwargs)
                 return
 
-            await interaction.response.send_message(
+            await interaction.response.send_message(  # type: ignore
                 str(discord.utils.get(bot.emojis, name="disapproval") or "")
-            )  # type: ignore
+            )
             if isinstance(interaction.user, discord.Member):
                 await Yelling.external_handle_bans(bot, interaction.user)
 
