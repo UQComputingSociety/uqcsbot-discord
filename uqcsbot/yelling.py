@@ -1,10 +1,9 @@
 import discord
-from typing import List, Dict, Callable, Any
+from typing import List, Dict, Callable, Any, Generic
 from discord.ext import commands
+from discord._types import ClientT
 from random import choice, random
 import re
-from urllib.request import urlopen
-from urllib.error import URLError
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.cog import UQCSBotCog
@@ -13,6 +12,8 @@ from uqcsbot.models import YellingBans
 from datetime import timedelta
 from functools import wraps
 
+class DodgyType(discord.interactions.Interaction[ClientT]):
+    pass
 
 def yelling_exemptor(input_args: List[str] = ["text"]) -> Callable[..., Any]:
     def handler(func: Callable[..., Any]):
@@ -27,7 +28,7 @@ def yelling_exemptor(input_args: List[str] = ["text"]) -> Callable[..., Any]:
                 await func(cogself, *args, **kwargs)
                 return
             for a in args:
-                if isinstance(a, discord.interactions.Interaction):
+                if isinstance(a, DodgyType):
                     interaction = a
                     break
             if interaction is None:
@@ -167,12 +168,6 @@ class Yelling(commands.Cog):
 
         # slightly more permissive version of discord's url regex, matches absolutely anything between http(s):// and whitespace
         for url in re.findall(r"https?:\/\/[^\s]+", text, flags=re.UNICODE):
-            try:
-                resp = urlopen(url)
-            except (ValueError, URLError):
-                continue
-            if 400 <= resp.code <= 499:
-                continue
             text = text.replace(url, url.upper())
 
         text = text.replace("&gt;", ">").replace("&lt;", "<").replace("&amp;", "&")
