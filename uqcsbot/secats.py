@@ -8,6 +8,17 @@ import functools
 from typing import Optional
 import logging
 
+# import discord
+# from discord import app_commands
+# from discord.ext import commands
+
+# from uqcsbot.utils.uq_course_utils import (
+#     Offering,
+#     HttpException,
+#     CourseNotFoundException,
+# )
+# from uqcsbot.yelling import yelling_exemptor
+
 
 def binsearch(a, x, key=None):
     """Binary search using bisect_left."""
@@ -18,26 +29,46 @@ def binsearch(a, x, key=None):
         raise ValueError(f"`{x}` is not present within `a`")
 
 
-class SECaTs:
+class SECaTs():
     """Small scrapper class for SECaTs."""
 
     URL = "https://www.pbi.uq.edu.au/clientservices/SECaT/embedChart.aspx"
+    RESPONSES = {
+        "1 Strongly Agree": "#16AA16",
+        "2 Agree": "#52D652",
+        "3 Neither Agree/Disagree": "#F3AC32",
+        "4 Disagree": "#DC4848",
+        "5 Strongly Disagree": "#BE1212",
+    }
+    QUESTIONS = [
+        "Q1: Understand Aims & Goals",
+        "Q2: Intellectually Stimulating",
+        "Q3: Well Structured",
+        "Q4: Learning Materials Assisted",
+        "Q5: Assessment Reqs Clear",
+        "Q6: Received Helpful Feedback",
+        "Q7: Learned a lot",
+        "Q8: Overall Rating",
+    ]
 
     def __init__(self):
+        # self.bot = bot
+        self.headers = {"User-Agent": "UQCS-rogue-testing"}
         self.session = requests.Session()
-        firstPage = self.session.post(self.URL).content
-        self.soup = BeautifulSoup(firstPage, "html.parser")
+        firstPage = self.session.get(self.URL, headers=self.headers).content.decode(
+            "utf8"
+        )
+        soup = BeautifulSoup(firstPage, "html.parser")
 
-        self.viewstategenerator = self.soup.find(
+        self.viewstategenerator = soup.find(
             "input", {"id": "__VIEWSTATEGENERATOR"}
         ).get("value")
-        self.viewstate = self.soup.find("input", {"id": "__VIEWSTATE"}).get("value")
+        self.viewstate = soup.find("input", {"id": "__VIEWSTATE"}).get("value")
 
         self.pattern = re.compile(r"\s*var courseSECATData = (.*?);", re.S)
 
         # Caches
         self.viewstates = {"": self.viewstate}
-        self.secats = {}
 
     def __get_vs(self, eventarg: str) -> str:
         """
@@ -162,8 +193,14 @@ class SECaTs:
     def __extract(self, soup: BeautifulSoup) -> pd.DataFrame:
         for script in soup.find_all("script"):
             if script.string and (match := self.pattern.match(script.string)):
-                return pd.DataFrame(json.loads(match.group(1)))
+                summary = {
+                    "Enrolled": int(soup.find("span", {"id": "lblNoEnrolled"}).text),
+                    "Responses": int(soup.find("span", {"id": "lblNoResponses"}).text),
+                }
+                summary["Response rate"] = summary["Responses"] / summary["Enrolled"]
+                return pd.DataFrame(json.loads(match.group(1))), summary
 
+    @functools.cache
     def get(self, code: str, semester: Optional[str] = None) -> pd.DataFrame:
         r"""
         Get the latest SECaT or the semester corrosponding to the course code.
@@ -187,12 +224,26 @@ class SECaTs:
         return self.__extract(soup)
 
 
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
-import asyncio
+s = SECaTs()
+results, summary = s.get("CSSE2002")
 
-async def main():
-    print('Hello ...')
-    await asyncio.sleep(1)
-    print('... World!')
+fig, axs = plt.subplots(2, 4, sharey=True, figsize=(14, 8))
 
-asyncio.run(main())
+patches = [mpatches.Patch(color=v, label=k) for k, v in SECaTs.RESPONSES.items()]
+
+pivot = results.pivot(index="QUESTION_NAME", columns="ANSWER", values="PERCENT_ANSWER").T
+print(pivot.T)
+for q, ax in zip(SECaTs.QUESTIONS, axs.reshape(-1)):
+    pivot[q].plot.bar(ax=ax, legend=False, color=SECaTs.RESPONSES.values())
+    ax.get_xaxis().set_visible(False)
+    ax.set_title(q)
+    ax.set_ylabel("%")
+
+fig.legend(handles=patches, loc='upper center',
+          fancybox=True, shadow=True, ncol=5)
+fig.tight_layout()
+fig.subplots_adjust(top=0.9)
+plt.show()
