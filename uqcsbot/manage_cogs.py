@@ -5,6 +5,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from uqcsbot.yelling import yelling_exemptor
+from uqcsbot.bot import UQCSBot
 
 
 class ManageCogs(commands.Cog):
@@ -12,11 +13,11 @@ class ManageCogs(commands.Cog):
     Note that most of these commands can make the bot load files to execute. Care should be made to ensure only entrusted users have access.
     """
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: UQCSBot):
         self.bot = bot
 
     @app_commands.command(name="managecogs")
-    @app_commands.default_permissions(manage_guild=True)
+    @app_commands.checks.has_permissions(manage_guild=True)
     @app_commands.describe(
         cog='The cog (i.e. python file) to try to unload. Use python package notation, so no suffix of ".py" and "." between folders: e.g. "manage_cogs".',
     )
@@ -49,5 +50,5 @@ class ManageCogs(commands.Cog):
         await self.bot.tree.sync()
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: UQCSBot):
     await bot.add_cog(ManageCogs(bot))

@@ -113,8 +113,11 @@ class Holidays(commands.Cog):
         Posts a random celebratory day on #general from
         https://www.timeanddate.com/holidays/fun/
         """
+        logging.info("Running daily holiday task")
+
         holiday = get_holiday()
         if holiday is None:
+            logging.info("No holiday was found for today")
             return
 
         general_channel = discord.utils.get(
