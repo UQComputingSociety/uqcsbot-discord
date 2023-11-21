@@ -417,6 +417,7 @@ All other characters will be ignored.
 The arguments for the command have a bit of nuance. They are as follow:
  `prize                   ` - A description of the prize to be given. This will be displayed when the winner is selected and if `/advent previous-winners` is used.
  `start` & `end           ` - The initial and final dates (inclusive) of the time range of the prize. To be eligible to win, participants need to get a star from ode of these days. The weights of the selected winner are determined from this range as well.
+ `weights                 ` - How the winners are selected. For "Equal", each eligible participant has an equal probability of winning. For "Stars", it is as if each user gets a "raffle ticket" for each star they completed within the timeframe, meaning more stars provides a greater chance of winning.
  `number_of_winners       ` - The number of winners to randomly select.
  `allow_repeat_winners    ` -  This allows participants to win multiple times from the same selection if `number_of_winners` is greater than 1. Note that regardless of this option, someone can win multiple times in a year, just not in a single selection.
  `allow_unregistered_users` - This allows Advent of Code accounts that do not have a linked discord account to win. Note that it can be difficult to give out prizes to users that do not have a linked discord.
