@@ -330,7 +330,7 @@ class Advent(commands.Cog):
             case None:
                 await interaction.response.send_message(
                     """
-[Advent of Code](https://adventofcode.com/) is a yearly coding competition that occurs during the first 25 days of december. Coding puzzles are released at 3pm AEST each day, with two stars available for each puzzle. You can spend as long as you like on each puzzle, but UQCS also has a provate leaderboard with prizes on offer.
+[Advent of Code](https://adventofcode.com/) is a yearly coding competition that occurs during the first 25 days of december. Coding puzzles are released at 3pm AEST each day, with two stars available for each puzzle. You can spend as long as you like on each puzzle, but UQCS also has a private leaderboard with prizes on offer.
 
 To join, go to <https://adventofcode.com/> and sign in. The UQCS private leaderboard join code is `989288-0ff5a98d`. To be eligible for prizes, you will also have to link your discord account. This can be done by using the `/advent register` command. Reach out to committee if you are having any issues.
 
@@ -563,8 +563,13 @@ The arguments for the command have a bit of nuance. They are as follow:
             .one_or_none()
         )
         if query is not None:
+            discord_user = self.bot.uqcs_server.get_member(query.discord_userid)
+            if discord_user:
+                discord_ping = discord_user.mention 
+            else:
+                discord_ping = f"someone who doesn't seem to be in the server (discord id = {query.discord_userid})"
             await interaction.edit_original_response(
-                content=f"Advent of Code name `{aoc_name}` is already registered to <@{query.discord_userid}>. Please contact committee if this is your Advent of Code name."
+                content=f"Advent of Code name `{aoc_name}` is already registered to {discord_ping}. Please contact committee if this is your Advent of Code name."
             )
             return
 
@@ -581,7 +586,7 @@ The arguments for the command have a bit of nuance. They are as follow:
         )
         if query is not None:
             await interaction.edit_original_response(
-                content=f"Your discord account (<@{discord_id}>) is already registered to the Advent of Code name `{query.aoc_userid}`. You'll need to unregister to change name."
+                content=f"Your discord account ({interaction.user.mention}) is already registered to the Advent of Code name `{query.aoc_userid}`. You'll need to unregister to change name."
             )
             return
 
@@ -594,10 +599,10 @@ The arguments for the command have a bit of nuance. They are as follow:
         db_session.close()
 
         await interaction.edit_original_response(
-            content=f"Advent of Code name `{aoc_name}` is now registered to <@{discord_id}>."
+            content=f"Advent of Code name `{aoc_name}` is now registered to {interaction.user.mention}."
         )
 
-    @app_commands.default_permissions(manage_guild=True)
+    @app_commands.checks.has_permissions(manage_guild=True)
     @advent_command_group.command(name="register-force")
     @app_commands.describe(
         year="The year of Advent of Code this registration is for.",
@@ -654,8 +659,13 @@ The arguments for the command have a bit of nuance. They are as follow:
             .one_or_none()
         )
         if query is not None:
+            discord_user = self.bot.uqcs_server.get_member(query.discord_userid)
+            if discord_user:
+                discord_ping = discord_user.mention 
+            else:
+                discord_ping = f"someone who doesn't seem to be in the server (discord id = {query.discord_userid})"
             await interaction.edit_original_response(
-                content=f"Advent of Code name `{aoc_name}` is already registered to <@{query.discord_userid}>."
+                content=f"Advent of Code name `{aoc_name}` is already registered to {discord_ping}."
             )
             return
 
@@ -667,8 +677,13 @@ The arguments for the command have a bit of nuance. They are as follow:
         db_session.commit()
         db_session.close()
 
+        discord_user = self.bot.uqcs_server.get_member(discord_id)
+        if discord_user:
+            discord_ping = discord_user.mention 
+        else:
+            discord_ping = f"someone who doesn't seem to be in the server (discord id = {discord_id})"
         await interaction.edit_original_response(
-            content=f"Advent of Code name `{aoc_name}` is now registered to <@{discord_id}> (for {year})."
+            content=f"Advent of Code name `{aoc_name}` is now registered to {discord_ping} (for {year})."
         )
 
     @advent_command_group.command(name="unregister")
@@ -690,7 +705,7 @@ The arguments for the command have a bit of nuance. They are as follow:
         )
         if (query.one_or_none()) is None:
             await interaction.edit_original_response(
-                content=f"Your discord account (<@{discord_id}>) is already unregistered for this year."
+                content=f"Your discord account ({interaction.user.mention}) is already unregistered for this year."
             )
             return
 
@@ -699,10 +714,10 @@ The arguments for the command have a bit of nuance. They are as follow:
         db_session.close()
 
         await interaction.edit_original_response(
-            content=f"<@{discord_id}> is no longer registered to win Advent of Code prizes."
+            content=f"{interaction.user.mention} is no longer registered to win Advent of Code prizes."
         )
 
-    @app_commands.default_permissions(manage_guild=True)
+    @app_commands.checks.has_permissions(manage_guild=True)
     @advent_command_group.command(name="unregister-force")
     @app_commands.describe(
         year="Year that the registration is for",
@@ -716,6 +731,7 @@ The arguments for the command have a bit of nuance. They are as follow:
         For admin use only; assumes you know what you are doing.
         """
         await interaction.response.defer(thinking=True)
+        discord_user = self.bot.uqcs_server.get_member(discord_id)
 
         db_session = self.bot.create_db_session()
         query = db_session.query(AOCRegistrations).filter(
@@ -725,8 +741,12 @@ The arguments for the command have a bit of nuance. They are as follow:
             )
         )
         if (query.one_or_none()) is None:
+            if discord_user:
+                discord_ping = discord_user.mention
+            else:
+                discord_ping = f"who does not seem to be in the server; id = {discord_id}"
             await interaction.edit_original_response(
-                content=f"This discord account (<@{discord_id}>) is already unregistered for this year. Ensure that you enter the users discord id, not discord name or nickname."
+                content=f"This discord account ({discord_ping}) is already unregistered for this year. Ensure that you enter the users discord id, not discord name or nickname."
             )
             return
 
@@ -734,8 +754,12 @@ The arguments for the command have a bit of nuance. They are as follow:
         db_session.commit()
         db_session.close()
 
+        if discord_user:
+            discord_ping = discord_user.mention
+        else:
+            discord_ping = f"A user who does not seem to be in the server (id = {discord_id})"
         await interaction.edit_original_response(
-            content=f"<@{discord_id}> is no longer registered to win Advent of Code prizes for {year}."
+            content=f"{discord_ping} is no longer registered to win Advent of Code prizes for {year}."
         )
 
     @advent_command_group.command(name="previous-winners")
@@ -789,16 +813,18 @@ The arguments for the command have a bit of nuance. They are as follow:
             elif winner.aoc_userid not in registered_AOC_ids:
                 message += f"{name[0]} (unregisted discord) - {winner.prize}"
             else:
-                discord_user = await self.bot.fetch_user(
+                discord_user = self.bot.uqcs_server.get_member(
                     [user.discord_userid for user in registrations][0]
                 )
-                message += f"{name[0]} (@{discord_user.display_name}) - {winner.prize}"
+                discord_ping = f" ({discord_user.display_name})" if discord_user else ""
+                # Don't actually ping as this may be called many times
+                message += f"{name[0]}{discord_ping}  - {winner.prize}"
         db_session.commit()
         db_session.close()
 
         await interaction.edit_original_response(content=message)
 
-    @app_commands.default_permissions(manage_guild=True)
+    @app_commands.checks.has_permissions(manage_guild=True)
     @advent_command_group.command(name="add-winners")
     @app_commands.describe(
         prize="A description of the prize that is being awarded.",
@@ -895,31 +921,29 @@ The arguments for the command have a bit of nuance. They are as follow:
         self._add_winners(winners, year, prize)
 
         distinct_winners = set(winners)
-        if len(distinct_winners) == 1:
-            (winner,) = distinct_winners
-            discord_id = winner.get_discord_userid(self.bot)
-            discord_ping = f" (<@{discord_id})" if discord_id else ""
-            await interaction.edit_original_response(
-                content=f"The results are in! Out of {len(potential_winners)} potential participants, {winner.name}{discord_ping} has recieved a prize from participating in Advent of Code: {prize}"
-            )
-            return
 
         winners_message = ""
         for i, winner in enumerate(distinct_winners):
             discord_id = winner.get_discord_userid(self.bot)
-            discord_ping = f" (<@{discord_id})" if discord_id else ""
+            discord_user = self.bot.uqcs_server.get_member(discord_id) if discord_id else None
+            discord_ping = f" ({discord_user.mention})" if discord_user else ""
             number_of_prizes = len(
                 [member for member in winners if member.id == winner.id]
             )
             prize_multiplier = f" (x{number_of_prizes})" if number_of_prizes > 1 else ""
             winners_message += f"{winner.name}{discord_ping}{prize_multiplier}"
-            winners_message += ", " if i < len(distinct_winners) - 1 else " and "
+            if len(distinct_winners) == 1:
+                pass
+            elif i < len(distinct_winners) - 1:
+                winners_message += ", "
+            else:
+                winners_message += " and "
 
         await interaction.edit_original_response(
             content=f"The results are in! Out of {len(potential_winners)} potential participants, {winners_message} have recieved a prize from participating in Advent of Code: {prize}"
         )
 
-    @app_commands.default_permissions(manage_guild=True)
+    @app_commands.checks.has_permissions(manage_guild=True)
     @advent_command_group.command(name="remove-winner")
     @app_commands.describe(
         id="The database entry id for the winners database that should be deleted."
@@ -1242,9 +1266,10 @@ class LeaderboardColumn:
         def format_name(member: Member, _: int, __: Optional[int]) -> str:
             if not (discord_userid := member.get_discord_userid(bot)):
                 return member.name
-            if not (discord_user := bot.get_user(discord_userid)):
+            if not (discord_user := bot.uqcs_server.get_member(discord_userid)):
                 return member.name
-            return f"{member.name} (@{discord_user.name})"
+            # Don't actually ping as leaderboard is called many times
+            return f"{member.name} (@{discord_user.display_name})"
 
         return LeaderboardColumn(title=("", ""), calculation=format_name)
 
