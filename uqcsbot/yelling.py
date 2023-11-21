@@ -3,8 +3,6 @@ from typing import List, Dict, Callable, Any
 from discord.ext import commands
 from random import choice, random
 import re
-from urllib.request import urlopen
-from urllib.error import URLError
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.cog import UQCSBotCog
@@ -48,7 +46,8 @@ def yelling_exemptor(input_args: List[str] = ["text"]) -> Callable[..., Any]:
             if not Yelling.contains_lowercase(text):
                 await func(cogself, *args, **kwargs)
                 return
-            await interaction.response.send_message(
+
+            await interaction.response.send_message(  # type: ignore
                 str(discord.utils.get(bot.emojis, name="disapproval") or "")
             )
             if isinstance(interaction.user, discord.Member):
@@ -167,12 +166,6 @@ class Yelling(commands.Cog):
 
         # slightly more permissive version of discord's url regex, matches absolutely anything between http(s):// and whitespace
         for url in re.findall(r"https?:\/\/[^\s]+", text, flags=re.UNICODE):
-            try:
-                resp = urlopen(url)
-            except (ValueError, URLError):
-                continue
-            if 400 <= resp.code <= 499:
-                continue
             text = text.replace(url, url.upper())
 
         text = text.replace("&gt;", ">").replace("&lt;", "<").replace("&amp;", "&")
