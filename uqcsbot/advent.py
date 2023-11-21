@@ -120,20 +120,20 @@ class Member:
         total = sum(self.times[day].get(1, 0) for day in ADVENT_DAYS)
         return total if total != 0 else default
 
-    def get_total_time(self, default: int = 0) -> int:
-        """
-        Returns the total time working on stars 1 and 2 for all challenges in a year.
-        The argument default determines the returned value if the total is 0.
-        """
-        total = self.get_total_star1_time() + self.get_total_star2_time()
-        return total if total != 0 else default
-
     def get_total_star2_time(self, default: int = 0) -> int:
         """
         Returns the total time working on just star 2 for all challenges in a year.
         The argument default determines the returned value if the total is 0.
         """
         total = sum(self.times[day].get(2, 0) for day in ADVENT_DAYS)
+        return total if total != 0 else default
+
+    def get_total_time(self, default: int = 0) -> int:
+        """
+        Returns the total time working on stars 1 and 2 for all challenges in a year.
+        The argument default determines the returned value if the total is 0.
+        """
+        total = self.get_total_star1_time() + self.get_total_star2_time()
         return total if total != 0 else default
 
     def get_discord_userid(self, bot: UQCSBot) -> Optional[int]:
@@ -305,22 +305,138 @@ class Advent(commands.Cog):
         name="advent", description="Commands for Advent of Code"
     )
 
+    Command = Literal[
+        "help",
+        "leaderboard",
+        "register",
+        "register-force",
+        "unregister",
+        "unregister-force",
+        "previous-winners",
+        "new-winner",
+        "remove-winner",
+        "leaderboard_style",
+    ]
+
     @advent_command_group.command(name="help")
-    async def help_command(self, interaction: discord.Interaction):
+    @app_commands.describe(command="The command you want to view help about.")
+    async def help_command(
+        self, interaction: discord.Interaction, command: Optional[Command] = None
+    ):
         """
         Print a help message about advent of code.
         """
-        await interaction.response.send_message(
-            "[Advent of Code](https://adventofcode.com/) is a yearly coding competition that occurs during the first 25 days of december. Coding puzzles are released at 3pm AEST each day, with two stars available for each puzzle. You can spend as long as you like on each puzzle, but UQCS also has a provate leaderboard with prizes on offer. TODO.\n\nTo join, go to <https://adventofcode.com/> and sign in. The UQCS private leaderboard join code is `989288-0ff5a98d`. To be eligible for prizes, you will also have to link your discord account. This can be done by using the `/advent register` command. Reach out to committee if you are having any issues."
-        )
+        match command:
+            case None:
+                await interaction.response.send_message(
+                    """
+[Advent of Code](https://adventofcode.com/) is a yearly coding competition that occurs during the first 25 days of december. Coding puzzles are released at 3pm AEST each day, with two stars available for each puzzle. You can spend as long as you like on each puzzle, but UQCS also has a provate leaderboard with prizes on offer.
+
+To join, go to <https://adventofcode.com/> and sign in. The UQCS private leaderboard join code is `989288-0ff5a98d`. To be eligible for prizes, you will also have to link your discord account. This can be done by using the `/advent register` command. Reach out to committee if you are having any issues.
+
+For more help, you can use `/advent help <command name>` to get information about a specific command.
+                    """
+                )
+            case "help":
+                await interaction.response.send_message(
+                    """
+`/advent help` is a help menu for all the Advent of Code commands. If you use `/advent help <command name>` you can see details of a particular command. Not much else to say here, try another command.
+                    """
+                )
+            case "leaderboard":
+                await interaction.response.send_message(
+                    """
+`/advent leaderboard` displays a leaderboard for the Advent of Code challenges. There are two types of leaderboard: for a single day, and for the entire month. These are selected by either providing the `day` option or not. You can also display the leaderboard for a past year or another leaderboard (say another private leaderboard that you have).
+
+There are 6 different sorting options, which do slightly different things depending on whether the leaderboard is for a single day or an entire month. The default sorting method changes on which type of leaderboard you want.
+ `Star 1 Time    ` - For single-day leaderboards, this sorts by the shortest time to get star 1 for the given problem. For monthly leaderboards, this sorts by the shortest total star 1 time for all problems.
+ `Star 2 Time    ` - For single-day leaderboards, this sorts by the shortest time to get just star 2 for the given problem. For monthly leaderboards, this sorts by the shortest total star 2 time for all problems.
+ `Star 1 & 2 Time` - For single-day leaderboards, this sorts by the shortest time to get both stars 1 and 2 for the given problem. For monthly leaderboards, this sorts by the shortest total time working on all the problems.
+ `Total Time     ` - This sorts by the sortest total time working on all the problems. For monthly leaderboards, this is the same as `Star 1 & 2 Time`.
+ `Total Stars    ` - This sorts by the largest number of total stars collected over the month.
+ `Global         ` - This sorts by users global score. Note that this will only show users with global score.
+
+You can also style the leaderboard (i.e. change the columns). The default style will change depending on whether the leaderboard is for a single-day or the entire month, and depending on the sorting method. Styles consist of a string, with each character representing a column. Use `/advent help leaderboard-style` to see the possoble characters.
+                    """
+                )
+            case "leaderboard_style":
+                await interaction.response.send_message(
+                    """
+Not a command, but an option given to the command `/advent leaderboard` controling the columns in the leaderboard. Each character in the given string represents a certain column. The possible characters are:
+The characters in the string can be:
+ `#    ` - Provides a column of the form "XXX)" telling the order for the given leaderboard
+ `1    ` - The time for star 1 for the specific day (daily leaderboards only)
+ `2    ` - The time for star 2 for the specific day (daily leaderboards only)
+ `3    ` - The time for both stars for the specific day (daily leaderboards only)
+ `!    ` - The total time spent on first stars for the whole competition
+ `@    ` - The total time spent on second stars for the whole competition
+ `T    ` - The total time spent overall for the whole competition
+ `*    ` - The total number of stars for the whole competition
+ `L    ` - The local ranking someone has within the UQCS leaderboard
+ `G    ` - The global score someone has
+ `B    ` - A progress bar of the stars each person has
+ `space` - A padding column of a single character
+All other characters will be ignored.
+                    """
+                )
+            case "register":
+                await interaction.response.send_message(
+                    """
+`/advent register` links an Advent of Code account and a discord user so that you are eligble for prizes. Each Advent of Code account and discord account can only be linked to one other account each year. Note that registrations last for only the current year. If you are having any issues with this, message committee to help.
+                    """
+                )
+            case "register-force":
+                await interaction.response.send_message(
+                    """
+`/advent register-force` is an admin-only command to force a registration (i.e. create a registration between any Advent of Code account and Discord user). This can be used for moderation, if someone is having difficulties registering or if you want to register someone for a previous year. This command can break things (such as creating duplicate registrations), so be careful. Exactly one of `aoc_name` or `aoc_id` should be given. Also note that you need to use the Discord ID, not the discord username. If you have developer options enables on your account, this can be found by right clicking on the user and selecting `Copy User ID`.
+                    """
+                )
+            case "unregister":
+                await interaction.response.send_message(
+                    """
+`/advent unregister` unlinks your discord account from the currently linked Advent of Code account. Message committee if you need any help.
+                    """
+                )
+            case "unregister-force":
+                await interaction.response.send_message(
+                    """
+`/advent unregister-force` is an admin-only command that removes a registration from the database. This can be used as a moderation tool, to remove someone who has registered to an Advent of Code account that isn't there. Note that you need to use the Discord ID, not the discord username. If you have developer options enables on your account, this can be found by right clicking on the user and selecting `Copy User ID`.
+                    """
+                )
+            case "previous-winners":
+                await interaction.response.send_message(
+                    """
+`/advent previous-winners` displays the previous winners for a particular year. Note that the records for year prior to 2022 may not be accurate, as the current system was not in use then.
+                    """
+                )
+            case "new-winner":
+                await interaction.response.send_message(
+                    """
+`/advent add-winner` is an admin-only command that allows you to either manually or randomly select winners. Participants will only be eligible to win if they have completed at least one star within the given times. For manual selection, provide an Advent of Code user ID (note that this is not the same as their Advent of Code name), otherwise a random winner will be drawn.
+                    
+The arguments for the command have a bit of nuance. They are as follow:
+ `prize                   ` - A description of the prize to be given. This will be displayed when the winner is selected and if `/advent previous-winners` is used.
+ `start` & `end           ` - The initial and final dates (inclusive) of the time range of the prize. To be eligible to win, participants need to get a star from ode of these days. The weights of the selected winner are determined from this range as well.
+ `number_of_winners       ` - The number of winners to randomly select.
+ `allow_repeat_winners    ` -  This allows participants to win multiple times from the same selection if `number_of_winners` is greater than 1. Note that regardless of this option, someone can win multiple times in a year, just not in a single selection.
+ `allow_unregistered_users` - This allows Advent of Code accounts that do not have a linked discord account to win. Note that it can be difficult to give out prizes to users that do not have a linked discord.
+ `year                    ` - The year the prize is for.
+                    """
+                )
+            case "remove-winner":
+                await interaction.response.send_message(
+                    """
+`/advent remove-winner` is an admin-only command that removes a winner from the database. It uses the database ID (which is distinct from the Advent of code user ID and the Discord user ID). You can find these ids by running `/advent previous-winners show_ids:True`.
+                    """
+                )
 
     @advent_command_group.command(name="leaderboard")
     @app_commands.describe(
-        day="Day of the leaderboard [1-25]. If not given, the leaderboard for all days is given. Incompatable with global.",
+        day="Day of the leaderboard [1-25]. If not given (default), the entire month leaderboard is given.",
         year="Year of the leaderboard. Defaults to this year.",
         code="The leaderboard code. Defaults to the UQCS leaderboard.",
-        sortby='The method to sort the leaderboard. Defaults to "Star 2 Time". Only works for single day leaderboards.',  # TODO
-        leaderboard_style="The display format of the leaderboard.",  # TODO
+        sortby="The method to sort the leaderboard.",
+        leaderboard_style="The display format of the leaderboard. See the help menu for more information.",
     )
     async def leaderboard_command(
         self,
@@ -332,8 +448,13 @@ class Advent(commands.Cog):
         leaderboard_style: Optional[str] = None,
     ):
         """
-        Display the advent of code leaderboard.
+        Display an advent of code leaderboard.
         """
+        if (not day is None) and (day not in ADVENT_DAYS):
+            await interaction.response.send_message(
+                "The day given is not a valid advent of code day."
+            )
+            return
 
         await interaction.response.defer(thinking=True)
 
@@ -384,8 +505,8 @@ class Advent(commands.Cog):
 
         scoreboard_file = io.BytesIO(
             bytes(
-                print_leaderboard(
-                    parse_leaderboard_column_string(leaderboard_style, self.bot),
+                _print_leaderboard(
+                    _parse_leaderboard_column_string(leaderboard_style, self.bot),
                     members,
                     day,
                 ),
@@ -431,23 +552,24 @@ class Advent(commands.Cog):
         member = member[0]
         AOC_id = member.id
 
-        if (
-            query := db_session.query(AOCRegistrations)
+        query = (
+            db_session.query(AOCRegistrations)
             .filter(
                 and_(
                     AOCRegistrations.year == year, AOCRegistrations.aoc_userid == AOC_id
                 )
             )
             .one_or_none()
-        ) is not None:
+        )
+        if query is not None:
             await interaction.edit_original_response(
                 content=f"Advent of Code name `{aoc_name}` is already registered to <@{query.discord_userid}>. Please contact committee if this is your Advent of Code name."
             )
             return
 
         discord_id = interaction.user.id
-        if (
-            query := db_session.query(AOCRegistrations)
+        query = (
+            db_session.query(AOCRegistrations)
             .filter(
                 and_(
                     AOCRegistrations.year == year,
@@ -455,7 +577,8 @@ class Advent(commands.Cog):
                 )
             )
             .one_or_none()
-        ) is not None:
+        )
+        if query is not None:
             await interaction.edit_original_response(
                 content=f"Your discord account (<@{discord_id}>) is already registered to the Advent of Code name `{query.aoc_userid}`. You'll need to unregister to change name."
             )
@@ -477,7 +600,7 @@ class Advent(commands.Cog):
     @advent_command_group.command(name="register-force")
     @app_commands.describe(
         year="The year of Advent of Code this registration is for.",
-        discord_id="The discord ID number of the user.",
+        discord_id="The discord ID number of the user. Note that this is not their username.",
         aoc_name="The name shown on Advent of Code.",
         aoc_id="The AOC id of the user.",
     )
@@ -490,7 +613,7 @@ class Advent(commands.Cog):
         aoc_id: Optional[int] = None,
     ):
         """
-        Forces a registration entry for the given AOC name, year and discord ID (note this is not their username). For admin use only; assumes you know what you are doing. Either aoc_name or aoc_id should be given.
+        Forces a registration entry to be created. For admin use only. Either aoc_name or aoc_id should be given.
         """
         if (aoc_name is None and aoc_id is None) or (
             aoc_name is not None and aoc_id is not None
@@ -520,15 +643,16 @@ class Advent(commands.Cog):
             member = member[0]
             aoc_id = member.id
 
-        if (
-            query := db_session.query(AOCRegistrations)
+        query = (
+            db_session.query(AOCRegistrations)
             .filter(
                 and_(
                     AOCRegistrations.year == year, AOCRegistrations.aoc_userid == aoc_id
                 )
             )
             .one_or_none()
-        ) is not None:
+        )
+        if query is not None:
             await interaction.edit_original_response(
                 content=f"Advent of Code name `{aoc_name}` is already registered to <@{query.discord_userid}>."
             )
@@ -565,7 +689,7 @@ class Advent(commands.Cog):
         )
         if (query.one_or_none()) is None:
             await interaction.edit_original_response(
-                content=f"This discord account (<@{discord_id}>) is already unregistered for this year."
+                content=f"Your discord account (<@{discord_id}>) is already unregistered for this year."
             )
             return
 
@@ -587,7 +711,8 @@ class Advent(commands.Cog):
         self, interaction: discord.Interaction, year: int, discord_id: int
     ):
         """
-        Forces a registration entry to be removed. For admin use only; assumes you know what you are doing.
+        Forces a registration entry to be removed.
+        For admin use only; assumes you know what you are doing.
         """
         await interaction.response.defer(thinking=True)
 
@@ -614,16 +739,21 @@ class Advent(commands.Cog):
 
     @advent_command_group.command(name="previous-winners")
     @app_commands.describe(
-        year="Year to find the previous listed winners for.",
-        show_ids="Whether to show the database ids. Mainly for debugging purposes.",
+        year="Year to find the previous listed winners for. Defaults to the current year.",
+        show_ids="Whether to show the database ids. Mainly for debugging purposes. Defaults to false.",
     )
     async def previous_winners_command(
-        self, interaction: discord.Interaction, year: int, show_ids: bool = False
+        self,
+        interaction: discord.Interaction,
+        year: Optional[int] = None,
+        show_ids: bool = False,
     ):
         """
         List the previous winners of Advent of Code.
         """
         await interaction.response.defer(thinking=True)
+        if year is None:
+            year = datetime.now().year
 
         db_session = self.bot.create_db_session()
         prev_winners = list(
@@ -671,14 +801,14 @@ class Advent(commands.Cog):
     @advent_command_group.command(name="add-winners")
     @app_commands.describe(
         prize="A description of the prize that is being awarded.",
-        start="The initial date (inclusive) to base the weights on",
-        end="The final date (includive) to base the weights on",
-        number_of_winners="The number of winners to select",
-        weights="How to bias the winner selection.",
-        allow_repeat_winners="Allow for winners to be selected that already have won this year. Multiple selected winners will always be distinct.",
-        allow_unregistered_users="Allow winners to be selected from unregistered users (i.e. those who have not linked their discord).",
+        start="The initial date (inclusive) to base the weights on. Defaults to 1.",
+        end="The final date (includive) to base the weights on. Defaults to 25.",
+        number_of_winners="The number of winners to select. Defaults to 1.",
+        weights='How to bias the winner selection. Defaults to "Equal"',
+        allow_repeat_winners="Allow for winners to be selected multiple times. Defaults to False",
+        allow_unregistered_users="Allow winners to be selected from unregistered users. Defaults to False.",
         year="The year the prize is for. Defaults to the current year.",
-        aoc_id="The AOC id of the winner to add, if selecting a winner.",
+        aoc_id="The AOC id of the winner to add, if selecting a winner. Use only if manually selecting a winner.",
     )
     async def add_winners_command(
         self,
@@ -688,7 +818,7 @@ class Advent(commands.Cog):
         end: int = 25,
         number_of_winners: int = 1,
         weights: Literal["Stars", "Equal"] = "Equal",
-        allow_repeat_winners: bool = True,
+        allow_repeat_winners: bool = False,
         allow_unregistered_users: bool = False,
         year: Optional[int] = None,
         aoc_id: Optional[int] = None,
@@ -707,6 +837,7 @@ class Advent(commands.Cog):
                 year,
                 prize,
             )
+            # Note that this message is a bit more dull, as it should only be used for admin reasons.
             await interaction.edit_original_response(
                 content=f"The user with AOC id {aoc_id} has been recorded as winning a prize: {prize}"
             )
@@ -727,9 +858,11 @@ class Advent(commands.Cog):
                 if member.id in registered_AOC_ids
             ]
 
-        required_number_of_potential_winners = (
-            1 if allow_repeat_winners else number_of_winners
-        )
+        if allow_repeat_winners:
+            required_number_of_potential_winners = 1
+        else:
+            required_number_of_potential_winners = number_of_winners
+
         if len(potential_winners) < required_number_of_potential_winners:
             await interaction.edit_original_response(
                 content=f"There were not enough eligible users to select winners (at least {required_number_of_potential_winners} needed; only {len(potential_winners)} found)."
@@ -792,7 +925,8 @@ class Advent(commands.Cog):
     )
     async def remove_winner_command(self, interaction: discord.Interaction, id: int):
         """
-        Remove an AOC winner from the database. Use the show_ids option within previous-winners to get the id.
+        Remove an AOC winner from the database.
+        The show_ids option for previous-winners can get the id.
         """
         await interaction.response.defer(thinking=True)
 
@@ -843,7 +977,9 @@ class Advent(commands.Cog):
         self, year: int, code: int = UQCS_LEADERBOARD, force_refresh: bool = False
     ):
         """
-        Returns the list of members in the leaderboard for the given year and leaderboard code. It will attempt to retrieve from a cache if 15 minutes has not passed. This can be overriden by setting force refresh.
+        Returns the list of members in the leaderboard for the given year and leaderboard code.
+        It will attempt to retrieve from a cache if 15 minutes has not passed.
+        This can be overriden by setting force refresh.
         """
         if (
             force_refresh
@@ -932,6 +1068,10 @@ class Advent(commands.Cog):
     def _random_choices_without_repition(
         self, population: List[Member], weights: List[int], k: int
     ) -> List[Member]:
+        """
+        Selects k people from a list of members, weighted by weights.
+        The weight of a person is like how many tickets they have for the lottery.
+        """
         result: List[Member] = []
         for _ in range(k):
             if sum(weights) == 0:
@@ -1115,20 +1255,20 @@ class LeaderboardColumn:
         return LeaderboardColumn(title=(" ", " "), calculation=lambda _, __, ___: " ")
 
 
-def parse_leaderboard_column_string(s: str, bot: UQCSBot) -> List[LeaderboardColumn]:
+def _parse_leaderboard_column_string(s: str, bot: UQCSBot) -> List[LeaderboardColumn]:
     """
     Create a list of columns corresponding to the given string. The characters in the string can be:
-        # - Provides a column of the form "XXX)" telling the order for the given leaderboard
-        1 - The time for star 1 for the specific day (daily leaderboards only)
-        2 - The time for star 2 for the specific day (daily leaderboards only)
-        3 - The time for both stars for the specific day (dayly leaderboards only)
-        ! - The total time spent on first stars for the whole competition
-        @ - The total time spent on second stars for the whole competition
-        T - The total time spent overall for the whole competition
-        * - The total number of stars for the whole competition
-        L - The local ranking someone has within the UQCS leaderboard
-        G - The global score someone has
-        B - A progress bar of the stars each person has
+        #     - Provides a column of the form "XXX)" telling the order for the given leaderboard
+        1     - The time for star 1 for the specific day (daily leaderboards only)
+        2     - The time for star 2 for the specific day (daily leaderboards only)
+        3     - The time for both stars for the specific day (dayly leaderboards only)
+        !     - The total time spent on first stars for the whole competition
+        @     - The total time spent on second stars for the whole competition
+        T     - The total time spent overall for the whole competition
+        *     - The total number of stars for the whole competition
+        L     - The local ranking someone has within the UQCS leaderboard
+        G     - The global score someone has
+        B     - A progress bar of the stars each person has
         space - A padding column of a single character
         All other characters will be ignored
     """
@@ -1203,7 +1343,7 @@ def _get_member_star_progress_bar(member: Member):
     return "".join(_star_char(len(member.times[day])) for day in ADVENT_DAYS)
 
 
-def print_leaderboard(
+def _print_leaderboard(
     columns: List[LeaderboardColumn], members: List[Member], day: Optional[Day]
 ):
     """
