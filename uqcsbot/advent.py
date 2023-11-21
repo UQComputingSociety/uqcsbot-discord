@@ -565,7 +565,7 @@ The arguments for the command have a bit of nuance. They are as follow:
         if query is not None:
             discord_user = self.bot.uqcs_server.get_member(query.discord_userid)
             if discord_user:
-                discord_ping = discord_user.mention 
+                discord_ping = discord_user.mention
             else:
                 discord_ping = f"someone who doesn't seem to be in the server (discord id = {query.discord_userid})"
             await interaction.edit_original_response(
@@ -661,7 +661,7 @@ The arguments for the command have a bit of nuance. They are as follow:
         if query is not None:
             discord_user = self.bot.uqcs_server.get_member(query.discord_userid)
             if discord_user:
-                discord_ping = discord_user.mention 
+                discord_ping = discord_user.mention
             else:
                 discord_ping = f"someone who doesn't seem to be in the server (discord id = {query.discord_userid})"
             await interaction.edit_original_response(
@@ -679,7 +679,7 @@ The arguments for the command have a bit of nuance. They are as follow:
 
         discord_user = self.bot.uqcs_server.get_member(discord_id)
         if discord_user:
-            discord_ping = discord_user.mention 
+            discord_ping = discord_user.mention
         else:
             discord_ping = f"someone who doesn't seem to be in the server (discord id = {discord_id})"
         await interaction.edit_original_response(
@@ -744,7 +744,9 @@ The arguments for the command have a bit of nuance. They are as follow:
             if discord_user:
                 discord_ping = discord_user.mention
             else:
-                discord_ping = f"who does not seem to be in the server; id = {discord_id}"
+                discord_ping = (
+                    f"who does not seem to be in the server; id = {discord_id}"
+                )
             await interaction.edit_original_response(
                 content=f"This discord account ({discord_ping}) is already unregistered for this year. Ensure that you enter the users discord id, not discord name or nickname."
             )
@@ -757,7 +759,9 @@ The arguments for the command have a bit of nuance. They are as follow:
         if discord_user:
             discord_ping = discord_user.mention
         else:
-            discord_ping = f"A user who does not seem to be in the server (id = {discord_id})"
+            discord_ping = (
+                f"A user who does not seem to be in the server (id = {discord_id})"
+            )
         await interaction.edit_original_response(
             content=f"{discord_ping} is no longer registered to win Advent of Code prizes for {year}."
         )
@@ -925,7 +929,9 @@ The arguments for the command have a bit of nuance. They are as follow:
         winners_message = ""
         for i, winner in enumerate(distinct_winners):
             discord_id = winner.get_discord_userid(self.bot)
-            discord_user = self.bot.uqcs_server.get_member(discord_id) if discord_id else None
+            discord_user = (
+                self.bot.uqcs_server.get_member(discord_id) if discord_id else None
+            )
             discord_ping = f" ({discord_user.mention})" if discord_user else ""
             number_of_prizes = len(
                 [member for member in winners if member.id == winner.id]
