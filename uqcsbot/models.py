@@ -19,7 +19,7 @@ class Base(DeclarativeBase):
 class AOCWinners(Base):
     __tablename__ = "aoc_winners"
 
-    id: Mapped[int] = mapped_column("id", BigInteger, primary_key=True, nullable=False)
+    id: Mapped[int] = mapped_column("id", BigInteger, primary_key=True, nullable=False, autoincrement=True)
     aoc_userid: Mapped[int] = mapped_column("aoc_userid", Integer, nullable=False)
     year: Mapped[int] = mapped_column("year", Integer, nullable=False)
     prize: Mapped[str] = mapped_column("prize", String, nullable=True)
@@ -28,7 +28,7 @@ class AOCWinners(Base):
 class AOCRegistrations(Base):
     __tablename__ = "aoc_registrations"
 
-    id: Mapped[int] = mapped_column("id", BigInteger, primary_key=True, nullable=False)
+    id: Mapped[int] = mapped_column("id", BigInteger, primary_key=True, nullable=False, autoincrement=True)
     aoc_userid: Mapped[int] = mapped_column("aoc_userid", Integer, nullable=False)
     year: Mapped[int] = mapped_column("year", Integer, nullable=False)
     discord_userid: Mapped[int] = mapped_column(
