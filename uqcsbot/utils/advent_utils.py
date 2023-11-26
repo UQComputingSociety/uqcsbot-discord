@@ -22,8 +22,9 @@ EST_TIMEZONE = timezone("US/Eastern")
 # The time to cache results to limit requests to adventofcode.com. Note that 15 minutes is the recomended minimum time.
 CACHE_TIME = timedelta(minutes=15)
 
+
 class InvalidHTTPSCode(Exception):
-    def __init__(self, message, request_code):
+    def __init__(self, message: str, request_code: int):
         super().__init__(message)
         self.request_code = request_code
 
@@ -165,6 +166,7 @@ def _format_seconds_long(seconds: Optional[int]):
 
 def _get_member_star_progress_bar(member: Member):
     return "".join(_star_char(len(member.times[day])) for day in ADVENT_DAYS)
+
 
 class LeaderboardColumn:
     """
@@ -363,6 +365,7 @@ def parse_leaderboard_column_string(s: str, bot: UQCSBot) -> List[LeaderboardCol
     columns.append(LeaderboardColumn.name_column(bot))
     return columns
 
+
 def print_leaderboard(
     columns: List[LeaderboardColumn], members: List[Member], day: Optional[Day]
 ):
@@ -381,4 +384,3 @@ def print_leaderboard(
         )
 
     return leaderboard
-

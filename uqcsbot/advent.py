@@ -1,7 +1,7 @@
 import io
 import logging
 import os
-from datetime import datetime 
+from datetime import datetime
 from random import choices
 from typing import Callable, Dict, Iterable, List, Optional, Literal
 import requests
@@ -15,7 +15,16 @@ from discord.ext import commands
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import AOCRegistrations, AOCWinners
 from uqcsbot.utils.err_log_utils import FatalErrorWithLog
-from uqcsbot.utils.advent_utils import Member, Day, Json, InvalidHTTPSCode, ADVENT_DAYS, CACHE_TIME, parse_leaderboard_column_string, print_leaderboard
+from uqcsbot.utils.advent_utils import (
+    Member,
+    Day,
+    Json,
+    InvalidHTTPSCode,
+    ADVENT_DAYS,
+    CACHE_TIME,
+    parse_leaderboard_column_string,
+    print_leaderboard,
+)
 
 # Leaderboard API URL with placeholders for year and code.
 LEADERBOARD_URL = "https://adventofcode.com/{year}/leaderboard/private/view/{code}.json"
@@ -267,12 +276,16 @@ class Advent(commands.Cog):
             return
         role = discord.utils.get(self.bot.uqcs_server.roles, name=self.bot.AOC_ROLE)
         if role is None:
-            logging.warning(f"The role @{self.bot.AOC_ROLE} could not be found for an Advent of Code puzzle pre-release ping.")
+            logging.warning(
+                f"The role @{self.bot.AOC_ROLE} could not be found for an Advent of Code puzzle pre-release ping."
+            )
             # Still return a message, as it is better to message and not ping than to not message at all.
             ping = ""
         else:
             ping = f"{role.mention} "
-        await channel.send(f"{ping}Today's Advent of Code puzzle is released in 15 minutes.")
+        await channel.send(
+            f"{ping}Today's Advent of Code puzzle is released in 15 minutes."
+        )
 
     async def reminder_released(self):
         """
@@ -291,7 +304,9 @@ class Advent(commands.Cog):
             return
         role = discord.utils.get(self.bot.uqcs_server.roles, name=self.bot.AOC_ROLE)
         if role is None:
-            logging.warning(f"The role @{self.bot.AOC_ROLE} could not be found for an Advent of Code puzzle release ping.")
+            logging.warning(
+                f"The role @{self.bot.AOC_ROLE} could not be found for an Advent of Code puzzle release ping."
+            )
             # Still return a message, as it is better to message and not ping than to not message at all.
             ping = ""
         else:
@@ -317,9 +332,7 @@ class Advent(commands.Cog):
         """
         for winner in winners:
             db_session = self.bot.create_db_session()
-            db_session.add(
-                AOCWinners(aoc_userid=winner.id, year=year, prize=prize)
-            )
+            db_session.add(AOCWinners(aoc_userid=winner.id, year=year, prize=prize))
             db_session.commit()
             db_session.close()
 
@@ -341,7 +354,6 @@ class Advent(commands.Cog):
             weights.pop(index)
 
         return result
-
 
     @advent_command_group.command(name="help")
     @app_commands.describe(command="The command you want to view help about.")
@@ -615,9 +627,7 @@ The arguments for the command have a bit of nuance. They are as follow:
             return
 
         db_session.add(
-            AOCRegistrations(
-                aoc_userid=AOC_id, year=year, discord_userid=discord_id
-            )
+            AOCRegistrations(aoc_userid=AOC_id, year=year, discord_userid=discord_id)
         )
         db_session.commit()
         db_session.close()
@@ -693,9 +703,7 @@ The arguments for the command have a bit of nuance. They are as follow:
             return
 
         db_session.add(
-            AOCRegistrations(
-                aoc_userid=aoc_id, year=year, discord_userid=discord_id
-            )
+            AOCRegistrations(aoc_userid=aoc_id, year=year, discord_userid=discord_id)
         )
         db_session.commit()
         db_session.close()
