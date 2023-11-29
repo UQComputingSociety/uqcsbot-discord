@@ -640,7 +640,7 @@ The arguments for the command have a bit of nuance. They are as follow:
     @advent_command_group.command(name="register-force")
     @app_commands.describe(
         year="The year of Advent of Code this registration is for.",
-        discord_id="The discord ID number of the user. Note that this is not their username.",
+        discord_id_str="The discord ID number of the user. Note that this is not their username.",
         aoc_name="The name shown on Advent of Code.",
         aoc_id="The AOC id of the user.",
     )
@@ -648,13 +648,14 @@ The arguments for the command have a bit of nuance. They are as follow:
         self,
         interaction: discord.Interaction,
         year: int,
-        discord_id: int,
+        discord_id_str: str,  # str as discord can't handle integers this big
         aoc_name: Optional[str] = None,
         aoc_id: Optional[int] = None,
     ):
         """
         Forces a registration entry to be created. For admin use only. Either aoc_name or aoc_id should be given.
         """
+        discord_id = int(discord_id_str)
         if (aoc_name is None and aoc_id is None) or (
             aoc_name is not None and aoc_id is not None
         ):
@@ -752,15 +753,16 @@ The arguments for the command have a bit of nuance. They are as follow:
     @advent_command_group.command(name="unregister-force")
     @app_commands.describe(
         year="Year that the registration is for",
-        discord_id="The discord id to remove. Note that this is not the username.",
+        discord_id_str="The discord id to remove. Note that this is not the username.",
     )
     async def unregister_admin_command(
-        self, interaction: discord.Interaction, year: int, discord_id: int
+        self, interaction: discord.Interaction, year: int, discord_id_str: str
     ):
         """
         Forces a registration entry to be removed.
         For admin use only; assumes you know what you are doing.
         """
+        discord_id = int(discord_id_str)
         await interaction.response.defer(thinking=True)
         discord_user = self.bot.uqcs_server.get_member(discord_id)
 
@@ -930,6 +932,9 @@ The arguments for the command have a bit of nuance. They are as follow:
                 content=f"There were not enough eligible users to select winners (at least {required_number_of_potential_winners} needed; only {len(potential_winners)} found)."
             )
             return
+        number_of_potential_winners = len(
+            potential_winners
+        )  # potential winners will be changed ahead, so we store this value for the award message
 
         match weights:
             case "Stars":
@@ -977,7 +982,7 @@ The arguments for the command have a bit of nuance. They are as follow:
                 winners_message += " and "
 
         await interaction.edit_original_response(
-            content=f"The results are in! Out of {len(potential_winners)} potential participants, {winners_message} have recieved a prize from participating in Advent of Code: {prize}"
+            content=f"The results are in! Out of {number_of_potential_winners} potential participants, {winners_message} have recieved a prize from participating in Advent of Code: {prize}"
         )
 
     @app_commands.checks.has_permissions(manage_guild=True)

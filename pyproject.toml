@@ -41,7 +41,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.pyright]
 strict = ["**"]
 exclude = [
-    "**/advent.py",
     "**/bot.py",
     "**/error_handler.py",
     "**/events.py",

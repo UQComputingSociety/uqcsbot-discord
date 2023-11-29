@@ -30,14 +30,11 @@ class AOCWinners(Base):
 class AOCRegistrations(Base):
     __tablename__ = "aoc_registrations"
 
-    id: Mapped[int] = mapped_column(
-        "id", Integer, primary_key=True, nullable=False, autoincrement=True
+    discord_userid: Mapped[int] = mapped_column(
+        "discord_userid", BigInteger, primary_key=True, nullable=False
     )
     aoc_userid: Mapped[int] = mapped_column("aoc_userid", Integer, nullable=False)
     year: Mapped[int] = mapped_column("year", Integer, nullable=False)
-    discord_userid: Mapped[int] = mapped_column(
-        "discord_userid", BigInteger, nullable=False
-    )
 
 
 class MCWhitelist(Base):
