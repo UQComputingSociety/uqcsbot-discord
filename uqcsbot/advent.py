@@ -1,5 +1,4 @@
 import io
-import logging
 import os
 from datetime import datetime
 from random import choices
@@ -201,6 +200,27 @@ class Advent(commands.Cog):
                 bot, "Unable to find AoC session ID. Not loading advent cog."
             )
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        channel = discord.utils.get(
+            self.bot.uqcs_server.channels, name=self.bot.AOC_CNAME
+        )
+        if isinstance(channel, discord.TextChannel):
+            self.channel = channel
+        else:
+            raise FatalErrorWithLog(
+                self.bot,
+                f"Could not find channel #{self.bot.AOC_CNAME} for advent of code cog.",
+            )
+        role = discord.utils.get(self.bot.uqcs_server.roles, name=self.bot.AOC_ROLE)
+        if isinstance(role, discord.Role):
+            self.role = role
+        else:
+            raise FatalErrorWithLog(
+                self.bot,
+                f"Could not find role @{self.bot.AOC_ROLE} for advent of code cog",
+            )
+
     def _get_leaderboard_json(self, year: int, code: int) -> Json:
         """
         Returns a json dump of the leaderboard
@@ -263,56 +283,16 @@ class Advent(commands.Cog):
         """
         The function used within the AOC reminder 15 minutes before each challenge starts.
         """
-        channel = discord.utils.get(
-            self.bot.uqcs_server.channels, name=self.bot.AOC_CNAME
-        )
-        if channel is None:
-            logging.warning(f"Could not find required channel #{self.bot.AOC_CNAME}")
-            return
-        if not isinstance(channel, discord.TextChannel):
-            logging.warning(
-                f"Channel #{self.bot.AOC_CNAME} was expected to be a text channel, but was not"
-            )
-            return
-        role = discord.utils.get(self.bot.uqcs_server.roles, name=self.bot.AOC_ROLE)
-        if role is None:
-            logging.warning(
-                f"The role @{self.bot.AOC_ROLE} could not be found for an Advent of Code puzzle pre-release ping."
-            )
-            # Still return a message, as it is better to message and not ping than to not message at all.
-            ping = ""
-        else:
-            ping = f"{role.mention} "
-        await channel.send(
-            f"{ping}Today's Advent of Code puzzle is released in 15 minutes."
+        await self.channel.send(
+            f"{self.role.mention}Today's Advent of Code puzzle is released in 15 minutes."
         )
 
     async def reminder_released(self):
         """
         The function used within the AOC reminder when each challenge starts.
         """
-        channel = discord.utils.get(
-            self.bot.uqcs_server.channels, name=self.bot.AOC_CNAME
-        )
-        if channel is None:
-            logging.warning(f"Could not find required channel #{self.bot.AOC_CNAME}")
-            return
-        if not isinstance(channel, discord.TextChannel):
-            logging.warning(
-                f"Channel #{self.bot.AOC_CNAME} was expected to be a text channel, but was not"
-            )
-            return
-        role = discord.utils.get(self.bot.uqcs_server.roles, name=self.bot.AOC_ROLE)
-        if role is None:
-            logging.warning(
-                f"The role @{self.bot.AOC_ROLE} could not be found for an Advent of Code puzzle release ping."
-            )
-            # Still return a message, as it is better to message and not ping than to not message at all.
-            ping = ""
-        else:
-            ping = f"{role.mention} "
-        await channel.send(
-            f"{ping}Today's Advent of Code puzzle has been released. Good luck!"
+        await self.channel.send(
+            f"{self.role.mention}Today's Advent of Code puzzle has been released. Good luck!"
         )
 
     def _get_previous_winner_aoc_ids(self, year: int) -> List[int]:
