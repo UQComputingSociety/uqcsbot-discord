@@ -34,7 +34,7 @@ class Member:
         # The advent of code id
         self.id = id
         # The advent of code name
-        self.name = name
+        self.name = name if name else "Anon"
         # The score of the user on the local leaderboard
         self.local = local
         # The total number of stars the user has collected
