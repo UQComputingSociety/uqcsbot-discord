@@ -16,10 +16,23 @@ class Base(DeclarativeBase):
     pass
 
 
-class AOCWinner(Base):
-    __tablename__ = "aoc_winner"
+class AOCWinners(Base):
+    __tablename__ = "aoc_winners"
 
-    id: Mapped[int] = mapped_column("id", BigInteger, primary_key=True, nullable=False)
+    id: Mapped[int] = mapped_column(
+        "id", Integer, primary_key=True, nullable=False, autoincrement=True
+    )
+    aoc_userid: Mapped[int] = mapped_column("aoc_userid", Integer, nullable=False)
+    year: Mapped[int] = mapped_column("year", Integer, nullable=False)
+    prize: Mapped[str] = mapped_column("prize", String, nullable=True)
+
+
+class AOCRegistrations(Base):
+    __tablename__ = "aoc_registrations"
+
+    discord_userid: Mapped[int] = mapped_column(
+        "discord_userid", BigInteger, primary_key=True, nullable=False
+    )
     aoc_userid: Mapped[int] = mapped_column("aoc_userid", Integer, nullable=False)
     year: Mapped[int] = mapped_column("year", Integer, nullable=False)
 
