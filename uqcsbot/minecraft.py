@@ -92,8 +92,8 @@ class Minecraft(commands.Cog):
             await interaction.response.send_message(response[0])
 
         db_session.close()
-    
-    @app_commands.command() 
+
+    @app_commands.command()
     @app_commands.describe(username="Minecraft username to unwhitelist.")
     @yelling_exemptor(input_args=["username"])
     async def mcunwhitelist(self, interaction: discord.Interaction, username: str):
@@ -114,7 +114,9 @@ class Minecraft(commands.Cog):
             )
         else:
             # Send the RCON command to remove the user from the whitelist
-            response_remove = await self.send_rcon_command(f"whitelist remove {username}")
+            response_remove = await self.send_rcon_command(
+                f"whitelist remove {username}"
+            )
             logging.info(f"[MINECRAFT] whitelist remove {username}: {response_remove}")
 
             # Send the RCON command to kick the player from the server
@@ -133,9 +135,11 @@ class Minecraft(commands.Cog):
                     colour=Colour.red(),  # Use red to indicate removal
                 )
 
-            await interaction.response.send_message(f"{response_remove[0]}\n{response_kick[0]}")
+            await interaction.response.send_message(
+                f"{response_remove[0]}\n{response_kick[0]}"
+            )
 
-        db_session.close()        
+        db_session.close()
 
     mcadmin_group = app_commands.Group(
         name="mcadmin", description="Commands for managing the UQCS Minecraft server"
