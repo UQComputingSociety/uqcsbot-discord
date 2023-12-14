@@ -92,6 +92,50 @@ class Minecraft(commands.Cog):
             await interaction.response.send_message(response[0])
 
         db_session.close()
+    
+    @app_commands.command() 
+    @app_commands.describe(username="Minecraft username to unwhitelist.")
+    @yelling_exemptor(input_args=["username"])
+    async def mcunwhitelist(self, interaction: discord.Interaction, username: str):
+        """Removes a username from the whitelist for the UQCS server."""
+        db_session = self.bot.create_db_session()
+        query = db_session.query(MCWhitelist).filter(
+            MCWhitelist.discord_id == interaction.user.id
+        )
+        is_user_admin = (
+            isinstance(interaction.user, Member)
+            and interaction.user.guild_permissions.manage_guild
+        )
+
+        # If the user has already whitelisted someone, and they aren't an admin deny it.
+        if not is_user_admin and query.count() > 0:
+            await interaction.response.send_message(
+                "You've already whitelisted an account."
+            )
+        else:
+            # Send the RCON command to remove the user from the whitelist
+            response_remove = await self.send_rcon_command(f"whitelist remove {username}")
+            logging.info(f"[MINECRAFT] whitelist remove {username}: {response_remove}")
+
+            # Send the RCON command to kick the player from the server
+            response_kick = await self.send_rcon_command(f"kick {username}")
+            logging.info(f"[MINECRAFT] kick {username}: {response_kick}")
+
+            # If the responses indicate successful removal and kick, remove the database item
+            if "Removed" in response_remove[0] and "Kicked" in response_kick[0]:
+                query.delete()
+                db_session.commit()
+
+                await self.bot.admin_alert(
+                    title="Minecraft Server Unwhitelist",
+                    description=f"{response_remove[0]}\n{response_kick[0]}",
+                    footer=f"Action performed by {interaction.user}",
+                    colour=Colour.red(),  # Use red to indicate removal
+                )
+
+            await interaction.response.send_message(f"{response_remove[0]}\n{response_kick[0]}")
+
+        db_session.close()        
 
     mcadmin_group = app_commands.Group(
         name="mcadmin", description="Commands for managing the UQCS Minecraft server"
@@ -119,7 +163,6 @@ class Minecraft(commands.Cog):
             for split in split_response[1:]:
                 await interaction.followup.send(f"```{split}```")
 
-        # Just to be safe, send this to the admin log channel as well.
         await self.bot.admin_alert(
             title="Minecraft Server Admin Command",
             fields=[
