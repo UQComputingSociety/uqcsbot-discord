@@ -93,6 +93,51 @@ class Minecraft(commands.Cog):
 
         db_session.close()
 
+    @app_commands.command()
+    @app_commands.describe(username="Minecraft username to unwhitelist.")
+    async def mcunwhitelist(self, interaction: discord.Interaction, username: str):
+        """Removes a username from the whitelist for the UQCS server."""
+        db_session = self.bot.create_db_session()
+        is_user_admin = (
+            isinstance(interaction.user, Member)
+            and interaction.user.guild_permissions.manage_guild
+        )
+
+        # If the user has already whitelisted someone, and they aren't an admin deny it.
+        if not is_user_admin:
+            await interaction.response.send_message(
+                "You've already whitelisted an account."
+            )
+        else:
+            # Send the RCON command to remove the user from the whitelist
+            response_remove = await self.send_rcon_command(
+                f"whitelist remove {username}"
+            )
+            logging.info(f"[MINECRAFT] whitelist remove {username}: {response_remove}")
+
+            # Send the RCON command to kick the player from the server
+            response_kick = await self.send_rcon_command(f"kick {username}")
+            logging.info(f"[MINECRAFT] kick {username}: {response_kick}")
+
+            # If the responses indicate successful removal, remove from the database item
+            if "Removed" in response_remove[0]:
+                db_session.query(MCWhitelist).filter(
+                    MCWhitelist.mc_username == username
+                ).delete()
+                db_session.commit()
+
+                await self.bot.admin_alert(
+                    title="Minecraft Server Unwhitelist",
+                    description=response_remove[0],
+                    footer=f"Action performed by {interaction.user}",
+                    colour=Colour.red(),
+                )
+
+            # Display the response to the user in Discord
+            await interaction.response.send_message(response_remove[0])
+
+        db_session.close()
+
     mcadmin_group = app_commands.Group(
         name="mcadmin", description="Commands for managing the UQCS Minecraft server"
     )
