@@ -119,8 +119,6 @@ class Minecraft(commands.Cog):
             response_kick = await self.send_rcon_command(f"kick {username}")
             logging.info(f"[MINECRAFT] kick {username}: {response_kick}")
 
-            # Check this else statement
-
             # If the responses indicate successful removal, remove from the database item
             if "Removed" in response_remove[0]:
                 db_session.query(MCWhitelist).filter(
