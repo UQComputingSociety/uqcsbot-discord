@@ -98,9 +98,6 @@ class Minecraft(commands.Cog):
     async def mcunwhitelist(self, interaction: discord.Interaction, username: str):
         """Removes a username from the whitelist for the UQCS server."""
         db_session = self.bot.create_db_session()
-        query = db_session.query(MCWhitelist).filter(
-            MCWhitelist.discord_id == interaction.user.id
-        )
         is_user_admin = (
             isinstance(interaction.user, Member)
             and interaction.user.guild_permissions.manage_guild
@@ -126,11 +123,7 @@ class Minecraft(commands.Cog):
 
             # If the responses indicate successful removal, remove from the database item
             if "Removed" in response_remove[0]:
-                query = (
-                    db_session.query(MCWhitelist)
-                    .filter(MCWhitelist.mc_username == username)
-                    .delete()
-                )
+                db_session.query(MCWhitelist).filter(MCWhitelist.mc_username == username).delete()
                 db_session.commit()
 
                 await self.bot.admin_alert(
