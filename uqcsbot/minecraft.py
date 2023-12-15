@@ -123,7 +123,9 @@ class Minecraft(commands.Cog):
 
             # If the responses indicate successful removal, remove from the database item
             if "Removed" in response_remove[0]:
-                db_session.query(MCWhitelist).filter(MCWhitelist.mc_username == username).delete()
+                db_session.query(MCWhitelist).filter(
+                    MCWhitelist.mc_username == username
+                ).delete()
                 db_session.commit()
 
                 await self.bot.admin_alert(
