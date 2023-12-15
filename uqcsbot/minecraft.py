@@ -95,7 +95,6 @@ class Minecraft(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(username="Minecraft username to unwhitelist.")
-    @yelling_exemptor(input_args=["username"])
     async def mcunwhitelist(self, interaction: discord.Interaction, username: str):
         """Removes a username from the whitelist for the UQCS server."""
         db_session = self.bot.create_db_session()
@@ -108,7 +107,7 @@ class Minecraft(commands.Cog):
         )
 
         # If the user has already whitelisted someone, and they aren't an admin deny it.
-        if not is_user_admin and query.count() > 0:
+        if not is_user_admin:
             await interaction.response.send_message(
                 "You've already whitelisted an account."
             )
@@ -123,21 +122,26 @@ class Minecraft(commands.Cog):
             response_kick = await self.send_rcon_command(f"kick {username}")
             logging.info(f"[MINECRAFT] kick {username}: {response_kick}")
 
-            # If the responses indicate successful removal and kick, remove the database item
-            if "Removed" in response_remove[0] and "Kicked" in response_kick[0]:
-                query.delete()
+            # Check this else statement
+
+            # If the responses indicate successful removal, remove from the database item
+            if "Removed" in response_remove[0]:
+                query = (
+                    db_session.query(MCWhitelist)
+                    .filter(MCWhitelist.mc_username == username)
+                    .delete()
+                )
                 db_session.commit()
 
                 await self.bot.admin_alert(
                     title="Minecraft Server Unwhitelist",
-                    description=f"{response_remove[0]}\n{response_kick[0]}",
+                    description=response_remove[0],
                     footer=f"Action performed by {interaction.user}",
-                    colour=Colour.red(),  # Use red to indicate removal
+                    colour=Colour.red(),
                 )
 
-            await interaction.response.send_message(
-                f"{response_remove[0]}\n{response_kick[0]}"
-            )
+            # Display the response to the user in Discord
+            await interaction.response.send_message(response_remove[0])
 
         db_session.close()
 
@@ -167,6 +171,7 @@ class Minecraft(commands.Cog):
             for split in split_response[1:]:
                 await interaction.followup.send(f"```{split}```")
 
+        # Just to be safe, send this to the admin log channel as well.
         await self.bot.admin_alert(
             title="Minecraft Server Admin Command",
             fields=[
