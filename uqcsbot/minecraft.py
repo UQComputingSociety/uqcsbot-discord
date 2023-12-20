@@ -4,6 +4,7 @@ from datetime import datetime
 
 import discord
 from aiomcrcon import Client, IncorrectPasswordError, RCONConnectionError  # type: ignore
+from mcstatus import JavaServer
 from discord import Member, app_commands, Colour
 from discord.ext import commands
 
@@ -47,6 +48,27 @@ class Minecraft(commands.Cog):
             return ("The configured password is incorrect.", -1)
 
         return response
+
+    @app_commands.command()
+    async def mcplayers(self, interaction: discord.Interaction):
+        """Returns the number and list of people currently playing on the Minecraft server."""
+        server = JavaServer.lookup(
+            "minecraft.uqcs.org:25605"
+        )  # Does this need to be hard coded?? Is RCON addr/IP the same?
+        status = server.status()  # type: ignore
+
+        # Check if there are players online
+        # Not none so pyright shuts up
+        if status.players.online > 0 and status.players.sample is not None:
+            # Extract player names
+            player_names = [player.name for player in status.players.sample]
+            # Format the list of players
+            players_list = "\n".join(player_names)
+            response_message = f"The server has {status.players.online} player(s) online:\n```\n{players_list}\n```"
+        else:
+            response_message = f"The server has {status.players.online} players online."
+
+        await interaction.response.send_message(response_message)
 
     @app_commands.command()
     @app_commands.describe(username="Minecraft username to whitelist.")
