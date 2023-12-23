@@ -17,6 +17,8 @@ RCON_ADDRESS = os.environ.get("MC_RCON_ADDRESS")
 RCON_PORT = os.environ.get("MC_RCON_PORT")
 RCON_PASSWORD = os.environ.get("MC_RCON_PASSWORD")
 
+MC_PUBLIC_IP = os.environ.get("MC_PUBLIC_IP")
+MC_PUBLIC_PORT = os.environ.get("MC_PUBLIC_PORT")
 
 class Minecraft(commands.Cog):
     def __init__(self, bot: UQCSBot):
@@ -53,7 +55,7 @@ class Minecraft(commands.Cog):
     async def mcplayers(self, interaction: discord.Interaction):
         """Returns the number and list of people currently playing on the Minecraft server."""
         server = JavaServer.lookup(
-            "minecraft.uqcs.org:25605"
+            f"{MC_PUBLIC_IP}:{MC_PUBLIC_PORT}"
         )  # Does this need to be hard coded?? Is RCON addr/IP the same?
         status = server.status()  # type: ignore
 
