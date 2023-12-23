@@ -20,6 +20,7 @@ RCON_PASSWORD = os.environ.get("MC_RCON_PASSWORD")
 MC_PUBLIC_IP = os.environ.get("MC_PUBLIC_IP")
 MC_PUBLIC_PORT = os.environ.get("MC_PUBLIC_PORT")
 
+
 class Minecraft(commands.Cog):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
