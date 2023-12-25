@@ -284,7 +284,10 @@ class Advent(commands.Cog):
         The function used within the AOC reminder 15 minutes before each challenge starts.
         """
         await self.channel.send(
-            f"{self.role.mention}Today's Advent of Code puzzle is released in 15 minutes."
+            f"{self.role.mention} Today's Advent of Code puzzle is released in 15 minutes.",
+            allowed_mentions=discord.AllowedMentions(
+                everyone=False, users=False, roles=True
+            ),
         )
 
     async def reminder_released(self):
@@ -292,7 +295,10 @@ class Advent(commands.Cog):
         The function used within the AOC reminder when each challenge starts.
         """
         await self.channel.send(
-            f"{self.role.mention}Today's Advent of Code puzzle has been released. Good luck!"
+            f"{self.role.mention} Today's Advent of Code puzzle has been released. Good luck!",
+            allowed_mentions=discord.AllowedMentions(
+                everyone=False, users=False, roles=True
+            ),
         )
 
     def _get_previous_winner_aoc_ids(self, year: int) -> List[int]:
@@ -962,7 +968,10 @@ The arguments for the command have a bit of nuance. They are as follow:
                 winners_message += " and "
 
         await interaction.edit_original_response(
-            content=f"The results are in! Out of {number_of_potential_winners} potential participants, {winners_message} have recieved a prize from participating in Advent of Code: {prize}"
+            content=f"The results are in! Out of {number_of_potential_winners} potential participants, {winners_message} have recieved a prize from participating in Advent of Code: {prize}",
+            allowed_mentions=discord.AllowedMentions(
+                everyone=False, users=True, roles=False
+            ),
         )
 
     @app_commands.checks.has_permissions(manage_guild=True)
