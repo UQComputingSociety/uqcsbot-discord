@@ -43,6 +43,7 @@ async def main():
         "basic",
         "cat",
         "cowsay",
+        "course_ecp",
         "dominos_coupons",
         "error_handler",
         "events",

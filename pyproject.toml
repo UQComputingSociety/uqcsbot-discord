@@ -19,6 +19,7 @@ humanize = "^4.3"
 aiohttp = "^3.8"
 aio-mc-rcon = "^3.2.0"
 PyYAML = "^6.0"
+mcstatus = "^11.1.0"
 
 [tool.poetry.scripts]
 botdev = "dev.cli:main"
@@ -41,7 +42,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.pyright]
 strict = ["**"]
 exclude = [
-    "**/advent.py",
     "**/bot.py",
     "**/error_handler.py",
     "**/events.py",

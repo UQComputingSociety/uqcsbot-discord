@@ -29,6 +29,8 @@ class UQCSBot(commands.Bot):
         # Important channel names & constants go here
         self.ADMIN_ALERTS_CNAME = "admin-alerts"
         self.GENERAL_CNAME = "general"
+        self.AOC_CNAME = "cpg"
+        self.AOC_ROLE = "cpg"
         self.BOT_TIMEZONE = timezone("Australia/Brisbane")
 
         self.uqcs_server: discord.Guild
