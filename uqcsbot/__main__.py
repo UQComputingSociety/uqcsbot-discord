@@ -61,6 +61,7 @@ async def main():
         "morse",
         "past_exams",
         "phonetics",
+        "poll",
         "remindme",
         "snailrace",
         "starboard",
