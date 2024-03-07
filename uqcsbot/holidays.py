@@ -27,6 +27,7 @@ HYPE_REACTS = [
     "blobhajHearts",
 ]
 
+
 class Holiday:
     def __init__(self, date: datetime, description: str, url: str) -> None:
         self.date = date
