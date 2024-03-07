@@ -45,7 +45,6 @@ exclude = [
     "**/bot.py",
     "**/events.py",
     "**/gaming.py",
-    "**/member_counter.py",
     "**/remindme.py",
     "**/snailrace.py",
     "**/starboard.py",

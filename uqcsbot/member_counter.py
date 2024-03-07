@@ -7,13 +7,15 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from uqcsbot.bot import UQCSBot
+
 
 class MemberCounter(commands.Cog):
     MEMBER_COUNT_PREFIX = "Member Count: "
     RATE_LIMIT = timedelta(minutes=5)
     NEW_MEMBER_TIME = timedelta(days=7)
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: UQCSBot):
         self.bot = bot
         self.last_rename_time = datetime.now()
         self.waiting_for_rename = False
@@ -43,7 +45,13 @@ class MemberCounter(commands.Cog):
             )
             return
 
+        if self.bot.user is None:
+            logging.warning("Could not find the bot's own id.")
+            return
         bot_member = self.bot.uqcs_server.get_member(self.bot.user.id)
+        if bot_member is None:
+            logging.warning("Could not find the bot's user.")
+            return
         permissions = self.member_count_channel.permissions_for(bot_member)
         if not permissions.manage_channels:
             logging.warning(
@@ -55,17 +63,27 @@ class MemberCounter(commands.Cog):
     @app_commands.command(name="membercount")
     async def member_count(self, interaction: discord.Interaction, force: bool = False):
         """Display the number of members"""
+        if interaction.guild is None:
+            logging.warning(
+                "Could not update member count as could not access members."
+            )
+            return
         new_members = [
             member
             for member in interaction.guild.members
-            if member.joined_at
+            if member.joined_at is not None
+            and member.joined_at
             > datetime.now(tz=ZoneInfo("Australia/Brisbane")) - self.NEW_MEMBER_TIME
         ]
         await interaction.response.send_message(
             f"There are currently {interaction.guild.member_count} members in the UQ Computing Society discord server, with {len(new_members)} joining in the last 7 days."
         )
 
-        if interaction.user.guild_permissions.manage_guild and force:
+        if (
+            isinstance(interaction.user, discord.Member)
+            and interaction.user.guild_permissions.manage_guild
+            and force
+        ):
             # this is dodgy, but the alternative is to restart the bot
             # if it gets caught in a loop of waiting for a broken rename
             self.waiting_for_rename = False
@@ -107,5 +125,5 @@ class MemberCounter(commands.Cog):
         self.waiting_for_rename = False
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: UQCSBot):
     await bot.add_cog(MemberCounter(bot))
