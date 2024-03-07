@@ -11,13 +11,21 @@ from typing import List
 from zoneinfo import ZoneInfo
 
 from uqcsbot.bot import UQCSBot
-from uqcsbot.utils.command_utils import HYPE_REACTS
 
 HOLIDAY_URL = "https://www.timeanddate.com/holidays/fun/"
 HOLIDAY_CSV_PATH = "uqcsbot/static/geek_holidays.csv"
 HOLIDAY_MESSAGE = "Today is {}!"
 GENERAL_CHANNEL = "general"
-
+HYPE_REACTS = [
+    "blahaj",
+    "blobhajHeart",
+    "realheart",
+    "blobhajInnocent",
+    "keen",
+    "bigsippin",
+    "pog_of_greed",
+    "blobhajHearts",
+]
 
 class Holiday:
     def __init__(self, date: datetime, description: str, url: str) -> None:
