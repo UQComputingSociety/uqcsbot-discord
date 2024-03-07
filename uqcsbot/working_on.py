@@ -19,7 +19,7 @@ class WorkingOn(commands.Cog):
     async def workingon(self):
         """5pm ping for 2 lucky server members to share what they have been working on."""
         members = list(self.bot.get_all_members())
-        message = []
+        message: list[str] = []
 
         while len(message) < 2:
             chosen = choice(members)
@@ -33,7 +33,7 @@ class WorkingOn(commands.Cog):
             self.bot.uqcs_server.channels, name=GENERAL_CHANNEL
         )
 
-        if general_channel is not None:
+        if isinstance(general_channel, discord.TextChannel):
             await general_channel.send(
                 "\n".join(message),
                 allowed_mentions=discord.AllowedMentions(
