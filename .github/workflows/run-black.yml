@@ -16,7 +16,7 @@ jobs:
         with:
           options: "--check --verbose"
           src: "./uqcsbot"
-          version: "23.3.0"
+          version: "23.12.1"
 
       - name: Convert logs to artifacts
         uses: actions/upload-artifact@v4
