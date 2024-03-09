@@ -18,12 +18,16 @@ class Cat(commands.Cog):
         """
 
         if randrange(0, 100) == 0:
-            await interaction.response.send_message(
-                r"""   |\      _,,,---,,_       """ + "\n"
-                r"""   /,`.-'`'    -.  ;-;;,_"  """ + "\n"
-                r"""  |,4-  ) )-,_. ,\ (  `'-'" """ + "\n"
-                r""" '---''(_/--'  `-'\_)       """ + "\n"
+            cat = "\n".join(
+                "```"
+                r"""   |\      _,,,---,,_       """,
+                r"""   /,`.-'`'    -.  ;-;;,_"  """,
+                r"""  |,4-  ) )-,_. ,\ (  `'-'" """,
+                r""" '---''(_/--'  `-'\_)       """,
+                "```",
             )
+
+            await interaction.response.send_message(cat)
             return
 
         # ansi colour codes
