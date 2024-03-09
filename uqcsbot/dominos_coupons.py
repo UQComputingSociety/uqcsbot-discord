@@ -59,7 +59,9 @@ class DominosCoupons(commands.Cog):
         try:
             coupons = _get_coupons(number_of_coupons, ignore_expiry, keywords.split())
         except RequestException as error:
-            resp_content = error.response.content if error.response else "No response error given."
+            resp_content = (
+                error.response.content if error.response else "No response error given."
+            )
             logging.warning(
                 f"Could not connect to dominos coupon site ({COUPONESE_DOMINOS_URL}): {resp_content}"
             )
