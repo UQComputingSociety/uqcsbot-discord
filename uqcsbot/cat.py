@@ -13,8 +13,18 @@ class Cat(commands.Cog):
     @app_commands.command()
     async def cat(self, interaction: discord.Interaction):
         """
-        Displays the moss cat. Brings torture to CSSE2310 students.
+        Displays the moss cat and occasionally the lichen cat. Brings torture
+        to CSSE2310 students.
         """
+
+        if randrange(0, 100) == 0:
+            await interaction.response.send_message(
+                r"""   |\      _,,,---,,_       """ + "\n"
+                r"""   /,`.-'`'    -.  ;-;;,_"  """ + "\n"
+                r"""  |,4-  ) )-,_. ,\ (  `'-'" """ + "\n"
+                r""" '---''(_/--'  `-'\_)       """ + "\n"
+            )
+            return
 
         # ansi colour codes
         pink = "\u001b[0;35m"
