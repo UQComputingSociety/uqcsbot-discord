@@ -103,7 +103,8 @@ def get_holiday_page() -> bytes | None:
         response = requests.get(HOLIDAY_URL)
         return response.content
     except RequestException as e:
-        logging.warning(e.response.content)
+        resp_content = e.response.content if e.response else "No response error given."
+        logging.warning(f"(RequestException) Could not fetch {HOLIDAY_URL}: {resp_content}")
 
 
 class Holidays(commands.Cog):
