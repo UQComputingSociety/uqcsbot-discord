@@ -16,6 +16,21 @@ class Cat(commands.Cog):
         Displays the moss cat. Brings torture to CSSE2310 students.
         """
 
+        if randrange(0, 100) == 0:
+            cat = "\n".join(
+                (
+                    "```",
+                    r"""   |\      _,,,---,,_       """,
+                    r"""   /,`.-'`'    -.  ;-;;,_"  """,
+                    r"""  |,4-  ) )-,_. ,\ (  `'-'" """,
+                    r""" '---''(_/--'  `-'\_)       """,
+                    "```",
+                )
+            )
+
+            await interaction.response.send_message(cat)
+            return
+
         # ansi colour codes
         pink = "\u001b[0;35m"
         red = "\u001b[0;31m"
