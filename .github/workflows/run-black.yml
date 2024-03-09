@@ -8,7 +8,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run black
         id: runBlack
@@ -19,7 +19,7 @@ jobs:
           version: "23.3.0"
 
       - name: Convert logs to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always() && (steps.runBlack.outcome == 'failure')
         with:
           name: "black-logs"

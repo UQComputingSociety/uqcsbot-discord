@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
         # Local action that tries to cache as much of python & poetry as possible
       - name: Setup environment
@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
         # Local action that tries to cache as much of python & poetry as possible
       - name: Setup environment
