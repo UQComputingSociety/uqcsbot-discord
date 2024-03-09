@@ -13,8 +13,7 @@ class Cat(commands.Cog):
     @app_commands.command()
     async def cat(self, interaction: discord.Interaction):
         """
-        Displays the moss cat and occasionally the lichen cat. Brings torture
-        to CSSE2310 students.
+        Displays the moss cat. Brings torture to CSSE2310 students.
         """
 
         if randrange(0, 100) == 0:
