@@ -43,15 +43,11 @@ build-backend = "poetry.core.masonry.api"
 strict = ["**"]
 exclude = [
     "**/bot.py",
-    "**/error_handler.py",
     "**/events.py",
     "**/gaming.py",
-    "**/member_counter.py",
     "**/remindme.py",
     "**/snailrace.py",
     "**/starboard.py",
-    "**/uptime.py",
-    "**/working_on.py",
     "**/utils/snailrace_utils.py",
 ]
 
