@@ -189,7 +189,6 @@ class Yelling(commands.Cog):
                 "I CAN’T UNDERSTAND YOU WHEN YOU MUMBLE!",
                 "YOU’RE GONNA NEED TO BE LOUDER!",
                 "WHY ARE YOU SO QUIET‽",
-                "QUIET PEOPLE SHOULD BE DRAGGED OUT INTO THE STREET AND SHOT!",
                 "PLEASE USE YOUR OUTSIDE VOICE!",
                 "IT’S ON THE LEFT OF THE “A” KEY!",
                 "FORMER PRESIDENT THEODORE ROOSEVELT’S FOREIGN POLICY IS A SHAM!",
