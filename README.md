@@ -98,8 +98,6 @@ If this is your first time working on an open source project, we're here to walk
 
 If you're completely new to Git, check out [Atlassian's Git Tutorial site](https://www.atlassian.com/git).
 
-<!-- If you're feeling ready to start working on the repository, check out this tutorial on forking and creating a pull request: ** TODO **  -->
-
 If you're unsure what to work on, check out the [issues labelled good first issue](https://github.com/UQComputingSociety/uqcsbot-discord/labels/good%20first%20issue).
 
 UQCSbot uses the open source [Discord.py project](https://github.com/Rapptz/discord.py), check out the docs at: <https://discordpy.readthedocs.io/>
