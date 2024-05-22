@@ -32,11 +32,14 @@ For more detailed build instructions (including how to build with Docker), see [
 Tests are stored in the `tests` folder and the tests for each file are prefixed with `test_`. Each test should `import pytest` and import the relevant functions from the given part of `uqcsbot`. Tests should mainly focus on cog-specific behaviours and should avoid interacting with discord (say, to detect if a message was sent; see issue [#2](https://github.com/UQComputingSociety/uqcsbot-discord/issues/2#issuecomment-1498967689)).
 
 To run all tests:
-```
+
+```bash
 poetry run pytest
 ```
+
 To run a particular test, say `test_whatweekisit.py`, run:
-```
+
+```bash
 poetry run pytest tests\test_whatweekisit.py
 ```
 
@@ -47,7 +50,6 @@ We use an automated code formatter called [Black](https://black.readthedocs.io/)
 ```bash
 poetry run black uqcsbot
 ```
-
 
 Individual files can also be styled with:
 
@@ -67,12 +69,6 @@ Individual files can also be typechecked with:
 
 ```bash
 poetry run pyright uqcsbot/file.py
-```
-
-## Development Resources
-
-```bash
-poetry run pyright uqcsbot
 ```
 
 ## Development Resources
