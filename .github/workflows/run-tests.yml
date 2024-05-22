@@ -1,0 +1,47 @@
+name: Static Code Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request: []
+
+env: 
+  PYTHON_VERSION: '3.10'
+  POETRY_VERSION: '1.7.1'
+
+jobs:
+  tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+        # Local action that tries to cache as much of python & poetry as possible
+      - name: Setup environment
+        uses: ./.github/workflows/setup-python
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          poetry-version: ${{ env.POETRY_VERSION }}
+        
+      - name: Check with pytest
+        run: poetry run pytest
+
+  types:
+    name: Run typechecking
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+        # Local action that tries to cache as much of python & poetry as possible
+      - name: Setup environment
+        uses: ./.github/workflows/setup-python
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          poetry-version: ${{ env.POETRY_VERSION }}
+
+      - name: Check with pyright
+        run: poetry run pyright uqcsbot

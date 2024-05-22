@@ -22,7 +22,7 @@ class UpTime(commands.Cog):
             self.bot.uqcs_server.channels, name=self.CHANNEL_NAME
         )
 
-        if channel is not None:
+        if isinstance(channel, discord.TextChannel):
             if random.randint(1, 100) == 1:
                 await channel.send("Oopsie, I webooted uwu >_<")
             else:

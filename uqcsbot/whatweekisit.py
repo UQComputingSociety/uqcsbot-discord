@@ -5,9 +5,12 @@ from typing import NamedTuple, List, Tuple, Optional
 from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta
 from math import ceil
+from random import choice
 
 from bs4 import BeautifulSoup
 from discord.ext import commands
+
+from uqcsbot.yelling import yelling_exemptor
 
 # Endpoint that contains a table of semester dates
 MARKUP_CALENDAR_URL: str = "https://systems-training.its.uq.edu.au/systems/student-systems/electronic-course-profile-system/design-or-edit-course-profile/academic-calendar-teaching-week"
@@ -121,6 +124,7 @@ class WhatWeekIsIt(commands.Cog):
     @app_commands.describe(
         date="Date to lookup in the format of %d/%m/%Y (defaults to today)"
     )
+    @yelling_exemptor(input_args=["date"])
     async def whatweekisit(self, interaction: discord.Interaction, date: Optional[str]):
         """
         Sends information about which semester, week and weekday it is.
@@ -155,11 +159,29 @@ class WhatWeekIsIt(commands.Cog):
         else:
             semester_name, week_name, weekday = semester_tuple
 
-            message = (
-                "The week we're in is:"
-                if date == None
-                else f"The week of {date} is in:"
-            )
+            if date != None:
+                message = f"The week of {date} is in:"
+            else:
+                message = choice(
+                    [
+                        "The week we're in is:",
+                        "The current week is:",
+                        "Currently, the week is:",
+                        "Hey, look at the time:",
+                        f"Can you believe that it's already {week_name}:",
+                        "Time flies when you're having fun:",
+                        "Maybe time's just a construct of human perception:",
+                        "Time waits for noone:",
+                        "This week is:",
+                        "It is currently:",
+                        "The week is",
+                        "The week we're currently in is:",
+                        f"Right now we are in:",
+                        "Good heavens, would you look at the time:",
+                        "What's the time, mister wolf? It's:",
+                    ]
+                )
+
             message += f"\n> {weekday}, {week_name} of {semester_name}"
 
         await interaction.edit_original_response(content=message)

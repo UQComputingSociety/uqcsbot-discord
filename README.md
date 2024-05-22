@@ -19,7 +19,7 @@ You'll need to define environment variables to be able to start the bot. The `.e
 
 Once you have a .env file, you can run the following command to start the bot:
 
-```sh
+```bash
 poetry run botdev
 ```
 
@@ -48,9 +48,28 @@ We use an automated code formatter called [Black](https://black.readthedocs.io/)
 poetry run black uqcsbot
 ```
 
+
+Individual files can also be styled with:
+
+```bash
+poetry run black uqcsbot/file.py
+```
+
 ## Static Type Checks
 
-We use [Pyright](https://github.com/microsoft/pyright) to perform static type checks; which all commits should pass. The exception list is within `pyproject.toml` is for legacy code only, as we hope that all new cogs can be made to pass. To run Pyright, run from the root of the repo:
+We use [Pyright](https://github.com/microsoft/pyright) to perform static type checks; which all commits should pass. The exception list within `pyproject.toml` is only to be used for legacy code or libraries with no available typing stubs. We hope that all new cogs can be made to pass - if you're having trouble, ping us on discord and we'll give you a hand. To run Pyright, run from the root of the repo:
+
+```bash
+poetry run pyright uqcsbot
+```
+
+Individual files can also be typechecked with:
+
+```bash
+poetry run pyright uqcsbot/file.py
+```
+
+## Development Resources
 
 ```bash
 poetry run pyright uqcsbot
