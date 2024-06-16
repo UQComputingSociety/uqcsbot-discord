@@ -2,6 +2,8 @@
 
 UQCSbot is our friendly chat bot used on the [UQCS Discord Server](https://discord.uqcs.org). For the UQCSbot used in our Slack team, see [UQCSbot-Slack](https://github.com/uqcomputing/uqcsbot-slack).
 
+For a step-by-step guide to contributing, see the [How To Contribute Code page](https://github.com/UQComputingSociety/uqcsbot-discord/wiki/How-To-Contribute-Code) on the [wiki](https://github.com/UQComputingSociety/uqcsbot-discord/wiki). Brief build and code formatting instructions can also be found below. 
+
 ## Setup & Running Locally
 
 UQCSbot uses [Poetry](https://python-poetry.org/) for dependency management. Once you have Poetry setup on your machine, you can setup and install dependencies by running:
@@ -10,18 +12,10 @@ UQCSbot uses [Poetry](https://python-poetry.org/) for dependency management. Onc
 poetry install
 ```
 
-### Environment Variables
-
-You'll need to define environment variables to be able to start the bot. The `.env.example` file contains a basis for what you can use as a `.env` file. You'll need to create an `.env` file with the required environment variables populated:
+You'll need to define environment variables to be able to start the bot. The `.env.example` file contains a basis for what you can use as a `.env` file (see [Tokens and Environment Variables](https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables) for more information). The following environment variables are required for proper functionality:
 
 * `DISCORD_BOT_TOKEN` for the Discord provided bot token.
 * `POSTGRES_URI_BOT` for the PostgreSQL connection string.
-
-It is recommended that you acquire your own Discord bot token for testing, details can be found in the [Discord Developer Docs](https://discord.com/developers/docs/getting-started#creating-an-app). Make sure you also enable the Server Members Intent and Message Content Intent in your bot settings. Requests can be made to committee for bot testing tokens, but will only be approved on a case by case basis. 
-
-More information for currently implemented environment variables can be found on [this wiki page](https://github.com/UQComputingSociety/uqcsbot-discord/wiki/Tokens-and-Environment-Variables).
-
-### Running the Bot
 
 Once you have a .env file, you can run the following command to start the bot:
 
@@ -29,38 +23,23 @@ Once you have a .env file, you can run the following command to start the bot:
 poetry run botdev
 ```
 
-To shutdown the bot, hit Ctrl+C
+To shutdown the bot, use `CTRL+C`.
 
-<details>
-<summary><b>Alternative Instructions for Docker</b></summary>
-
-UQCSbot is deployed using [Docker](https://docker.com). If you're familiar with it or want to fully simulate the production environment, you can follow these instructions instead.
-
-If you're going to use Docker as your dev environment, make sure you have:
-* [Docker](https://docs.docker.com/engine/install/)
-* [Docker Compose](https://docs.docker.com/compose/install/)
-
-To build and start Docker, you can run: (Note that depending on how Docker is configured, you may need to prepend `sudo`)
-```
-docker-compose up -d --build
-```
-
-To shut down the Docker environment, run:
-```
-docker-compose down
-```
-</details>
+For more detailed build instructions (including how to build with Docker), see [How To Build & Run UQCSbot](https://github.com/UQComputingSociety/uqcsbot-discord/wiki/How-To-Build-&-Run-UQCSbot).
 
 ## Testing
 
 Tests are stored in the `tests` folder and the tests for each file are prefixed with `test_`. Each test should `import pytest` and import the relevant functions from the given part of `uqcsbot`. Tests should mainly focus on cog-specific behaviours and should avoid interacting with discord (say, to detect if a message was sent; see issue [#2](https://github.com/UQComputingSociety/uqcsbot-discord/issues/2#issuecomment-1498967689)).
 
 To run all tests:
-```
+
+```bash
 poetry run pytest
 ```
+
 To run a particular test, say `test_whatweekisit.py`, run:
-```
+
+```bash
 poetry run pytest tests\test_whatweekisit.py
 ```
 
@@ -94,9 +73,9 @@ poetry run pyright uqcsbot/file.py
 
 ## Development Resources
 
-If this is your first time working on an open source project, we're here to walk you through every step of the way.
+If this is your first time working on an open source project, we're here to walk you through every step of the way. The [How To Contribute Code page](https://github.com/UQComputingSociety/uqcsbot-discord/wiki/How-To-Contribute-Code) should guide you through everything, from running the bot on your machine, to helping you use Git to contribute your changes.
 
-If you're completely new to Git, check out [Atlassian's Git Tutorial site](https://www.atlassian.com/git).
+Additionally, if you're completely new to Git, check out [Atlassian's Git Tutorial site](https://www.atlassian.com/git).
 
 If you're unsure what to work on, check out the [issues labelled good first issue](https://github.com/UQComputingSociety/uqcsbot-discord/labels/good%20first%20issue).
 
