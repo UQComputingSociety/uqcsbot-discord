@@ -1,0 +1,56 @@
+# Add your github username to become a codeowner.
+# This will automatically put you up for review if someone makes a PR editing
+# that file. This does not grant any special permisions, or let you control how
+# the file will be changed, but is instead a way to who contributors might
+# contact if they don't understand the workings of a file.
+
+# A file with no username is considered to have no owner.
+# Try to keep this in alphabetical order.
+/dev/cli.py @andrewj-brown
+/tests/test_haiku.py @49Indium
+/tests/test_whatweekisit.py @49Indium
+/tests/testfiles/test_whatweekisit.py @49Indium
+/uqcsbot/__init__.py
+/uqcsbot/__main__.py @49Indium
+/uqcsbot/advent.py @49Indium
+/uqcsbot/basic.py @andrewj-brown
+/uqcsbot/bot.py @andrewj-brown
+/uqcsbot/cat.py @shirei220
+/uqcsbot/cog.py @andrewj-brown
+/uqcsbot/course_ecp.py @ew-b
+/uqcsbot/cowsay.py
+/uqcsbot/dominos_coupons.py @49Indium
+/uqcsbot/error_handler.py @andrewj-brown
+/uqcsbot/events.py
+/uqcsbot/gaming.py @bradleysigma @andrewj-brown
+/uqcsbot/hackathon.py @49Indium
+/uqcsbot/haiku.py @49Indium
+/uqcsbot/holidays.py
+/uqcsbot/hoogle.py @shirei220
+/uqcsbot/intros.py
+/uqcsbot/jobs_bulletin.py @JamesDearlove
+/uqcsbot/latex.py @bradleysigma @49Indium
+/uqcsbot/manage_cogs.py @49Indium
+/uqcsbot/member_counter.py @49Indium
+/uqcsbot/minecraft.py @JamesDearlove
+/uqcsbot/models.py @andrewj-brown
+/uqcsbot/morse.py @jenseni-git
+/uqcsbot/past_exams.py @49Indium
+/uqcsbot/phonetics.py @TheOnlyMrCat
+/uqcsbot/remindme.py
+/uqcsbot/snailrace.py
+/uqcsbot/starboard.py @andrewj-brown
+/uqcsbot/static/geek_holidays.csv
+/uqcsbot/static/syllable_rules.yaml @49Indium
+/uqcsbot/text.py @TheOnlyMrCat @shirei220 @bradleysigma
+/uqcsbot/uptime.py
+/uqcsbot/utils/advent_utils.py @49Indium
+/uqcsbot/utils/err_log_utils.py @andrewj-brown
+/uqcsbot/utils/snailrace_utils.py
+/uqcsbot/utils/uq_course_utils.py @49Indium
+/uqcsbot/voteythumbs.py @49Indium
+/uqcsbot/whatsdue.py @49Indium
+/uqcsbot/whatweekisit.py @49Indium
+/uqcsbot/working_on.py @JamesDearlove
+/uqcsbot/xkcd.py
+/uqcsbot/yelling.py @bradleysigma @andrewj-brown
