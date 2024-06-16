@@ -46,11 +46,11 @@
 /uqcsbot/uptime.py
 /uqcsbot/utils/advent_utils.py @49Indium
 /uqcsbot/utils/err_log_utils.py @andrewj-brown
-/uqcsbot/utils/snailrace_utils.py @lcox74
+/uqcsbot/utils/snailrace_utils.py
 /uqcsbot/utils/uq_course_utils.py @49Indium
 /uqcsbot/voteythumbs.py @49Indium
 /uqcsbot/whatsdue.py @49Indium
 /uqcsbot/whatweekisit.py @49Indium
 /uqcsbot/working_on.py @JamesDearlove
-/uqcsbot/xkcd.py @lcox74
+/uqcsbot/xkcd.py
 /uqcsbot/yelling.py @bradleysigma @andrewj-brown
