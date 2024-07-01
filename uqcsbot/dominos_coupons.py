@@ -263,6 +263,17 @@ def _get_coupons_from_page(source: str) -> List[Coupon]:
             description: str = description_container.get_text(strip=True)
             code: str = code_container.get_text(strip=True)
 
+            if url == FRUGAL_FEEDS_DOMINOS_URL:
+                date_values: List[str] = expiry_date_str.split()
+                try:
+                    # Convert shortened month to numerical value
+                    month: int = datetime.strptime(date_values[1], "%b").month
+                    expiry_date_str = "{year}-{month}-{day}".format(
+                        year=int(date_values[2]), month=month, day=int(date_values[0])
+                    )
+                except (ValueError, IndexError):
+                    pass
+
             coupon = Coupon(code, expiry_date_str, description)
             coupons.append(coupon)
 
