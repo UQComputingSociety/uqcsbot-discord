@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Literal
 import logging
 import requests
 from requests.exceptions import RequestException
@@ -14,6 +14,7 @@ from uqcsbot.bot import UQCSBot
 from uqcsbot.yelling import yelling_exemptor
 
 MAX_COUPONS = 10  # Prevents abuse
+NUMBER_WEBSITES = 2
 COUPONESE_DOMINOS_URL = "https://www.couponese.com/store/dominos.com.au/"
 FRUGAL_FEEDS_DOMINOS_URL = "https://www.frugalfeeds.com.au/dominos/"
 
@@ -47,11 +48,18 @@ class DominosCoupons(commands.Cog):
         number_of_coupons: int = 5,
         ignore_expiry: bool = True,
         keywords: str = "",
-        source: str = "",
+        source: Literal["both", "couponese", "frugalfeeds"] = "both",
     ):
         """
         Returns a list of dominos coupons
         """
+
+        website_urls: Dict[str, str] = {
+            "couponese": COUPONESE_DOMINOS_URL,
+            "frugalfeeds": FRUGAL_FEEDS_DOMINOS_URL,
+            "both": FRUGAL_FEEDS_DOMINOS_URL,
+        }
+
         if number_of_coupons < 1 or number_of_coupons > MAX_COUPONS:
             await interaction.response.send_message(
                 content=f"You can't have that many coupons. Try a number between 1 and {MAX_COUPONS}.",
@@ -59,7 +67,7 @@ class DominosCoupons(commands.Cog):
             )
             return
 
-        if source:
+        if source != "both":
             if source != "couponese" and source != "frugalfeeds":
                 await interaction.response.send_message(
                     content=f"That website isn't recognised. Try couponese or frugalfeeds.",
@@ -69,40 +77,68 @@ class DominosCoupons(commands.Cog):
 
         await interaction.response.defer(thinking=True)
 
-        try:
-            coupons = _get_coupons(
-                number_of_coupons, ignore_expiry, keywords.split(), source
-            )
-        except RequestException as error:
-            resp_content = (
-                error.response.content if error.response else "No response error given."
-            )
-            request_url = error.request.url if error.request else "Unknown site."
-            logging.warning(
-                f"Could not connect to dominos coupon site ({request_url}): {resp_content}"
-            )
-            await interaction.edit_original_response(
-                content=f"Sadly could not reach the coupon website (<{request_url}>)..."
-            )
-            return
-        except HTTPResponseException as error:
-            logging.warning(
-                f"Received a HTTP response code {error.http_code}. Error information: {error}"
-            )
-            await interaction.edit_original_response(
-                content=f"Could not find the coupons on the coupon website {error.url}..."
-            )
-            return
+        coupons: List[Coupon] = []
+        stored_url: str = " "
+
+        for tries in range(0, NUMBER_WEBSITES):
+            try:
+                coupons = _get_coupons(
+                    number_of_coupons, ignore_expiry, keywords.split(), source
+                )
+                break
+            except (RequestException, HTTPResponseException) as error:
+                if isinstance(error, RequestException):
+                    request_url: str = (
+                        error.request.url
+                        if error.request and error.request.url
+                        else "Unknown site."
+                    )
+                    resp_content = (
+                        error.response.content
+                        if error.response
+                        else "No response error given."
+                    )
+                    logging.warning(
+                        f"Could not connect to dominos coupon site ({request_url}): {resp_content}"
+                    )
+                    stored_url = request_url
+
+                if isinstance(error, HTTPResponseException):
+                    logging.warning(
+                        f"Received a HTTP response code {error.http_code}. Error information: {error}"
+                    )
+                    stored_url = error.url
+
+                if source != "both" and tries == 0:
+                    await interaction.edit_original_response(
+                        content=f"Looks like that website ({stored_url}) isn't working. Try changing the website through the `source` command."
+                    )
+                    return
+
+                elif source == "both" or tries > 0:
+                    if tries == 0:
+                        await interaction.edit_original_response(
+                            content=f"Looks like that website ({stored_url}) didn't work.. trying another."
+                        )
+                        if stored_url == COUPONESE_DOMINOS_URL:
+                            source = "frugalfeeds"
+                        elif stored_url == FRUGAL_FEEDS_DOMINOS_URL:
+                            source = "couponese"
+                    else:
+                        await interaction.edit_original_response(
+                            content=f"Unfortunately, it looks like both coupon websites are down right now."
+                        )
+                        return
 
         if not coupons:
             await interaction.edit_original_response(
-                content=f"Could not find any coupons matching the given arguments from the coupon website/s."
+                content=f"Could not find any coupons matching the given arguments from {source}."
             )
             return
 
         embed = discord.Embed(
             title="Domino's Coupons",
-            url=FRUGAL_FEEDS_DOMINOS_URL,
+            url=(website_urls.get(source)),
             description=f"Keywords: *{keywords}*" if keywords else None,
             timestamp=datetime.now(),
         )
@@ -146,7 +182,7 @@ def _get_coupons(
     Returns a list of n Coupons
     """
 
-    coupons = _get_coupons_from_page(source)
+    coupons: List[Coupon] = _get_coupons_from_page(source)
 
     if not ignore_expiry:
         coupons = [coupon for coupon in coupons if coupon.is_valid()]
@@ -158,14 +194,15 @@ def _get_coupons(
             if any(coupon.keyword_matches(keyword) for keyword in keywords)
         ]
 
-    if not source:
-        random.shuffle(coupons)
-        return coupons[:n]
+    random.shuffle(coupons)
 
     return coupons[:n]
 
 
 def _get_coupons_from_page(source: str) -> List[Coupon]:
+    """
+    Strips results from html page and returns a list of Coupon(s)
+    """
     urls: List[str] = []
     coupons: List[Coupon] = []
 
@@ -225,17 +262,6 @@ def _get_coupons_from_page(source: str) -> List[Coupon]:
             expiry_date_str: str = expiry_date_container.get_text(strip=True)
             description: str = description_container.get_text(strip=True)
             code: str = code_container.get_text(strip=True)
-
-            if url == FRUGAL_FEEDS_DOMINOS_URL:
-                date_values: List[str] = expiry_date_str.split()
-                try:
-                    # Convert shortened month to numerical value
-                    month: int = datetime.strptime(date_values[1], "%b").month
-                except (ValueError, IndexError):
-                    continue
-                expiry_date_str = "{year}-{month}-{day}".format(
-                    year=int(date_values[2]), month=month, day=int(date_values[0])
-                )
 
             coupon = Coupon(code, expiry_date_str, description)
             coupons.append(coupon)
