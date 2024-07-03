@@ -54,12 +54,6 @@ class DominosCoupons(commands.Cog):
         Returns a list of dominos coupons
         """
 
-        website_urls: Dict[str, str] = {
-            "couponese": COUPONESE_DOMINOS_URL,
-            "frugalfeeds": FRUGAL_FEEDS_DOMINOS_URL,
-            "both": FRUGAL_FEEDS_DOMINOS_URL,
-        }
-
         if number_of_coupons < 1 or number_of_coupons > MAX_COUPONS:
             await interaction.response.send_message(
                 content=f"You can't have that many coupons. Try a number between 1 and {MAX_COUPONS}.",
@@ -131,15 +125,28 @@ class DominosCoupons(commands.Cog):
                         return
 
         if not coupons:
-            await interaction.edit_original_response(
-                content=f"Could not find any coupons matching the given arguments from {source}."
-            )
+            if source == "both":
+                content_str = "Could not find any coupons matching the given arguments from both websites."
+            else:
+                content_str = f"Could not find any coupons matching the given arguments from {source}. You can try changing the website through the `source` command."
+            await interaction.edit_original_response(content=content_str)
             return
+
+        if source == "both":
+            description_string = f"Sourced from [FrugalFeeds]({COUPONESE_DOMINOS_URL}) and [Couponese]({FRUGAL_FEEDS_DOMINOS_URL})"
+        elif source == "couponese":
+            description_string = f"Sourced from [Couponese]({COUPONESE_DOMINOS_URL})"
+        else:
+            description_string = (
+                f"Sourced from [FrugalFeeds]({FRUGAL_FEEDS_DOMINOS_URL})"
+            )
+
+        if keywords:
+            description_string += f"\nKeywords: *{keywords}*"
 
         embed = discord.Embed(
             title="Domino's Coupons",
-            url=(website_urls.get(source)),
-            description=f"Keywords: *{keywords}*" if keywords else None,
+            description=description_string,
             timestamp=datetime.now(),
         )
         for coupon in coupons:
@@ -262,6 +269,12 @@ def _get_coupons_from_page(source: str) -> List[Coupon]:
             expiry_date_str: str = expiry_date_container.get_text(strip=True)
             description: str = description_container.get_text(strip=True)
             code: str = code_container.get_text(strip=True)
+
+            temp_code: str = code.replace(",", "")
+            if not temp_code.isdigit():
+                continue
+
+            code = code.replace(",", " ")
 
             if url == FRUGAL_FEEDS_DOMINOS_URL:
                 date_values: List[str] = expiry_date_str.split()
