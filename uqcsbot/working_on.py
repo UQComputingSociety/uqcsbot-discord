@@ -1,5 +1,6 @@
 import logging
 from random import choice
+from apscheduler.triggers.cron import CronTrigger
 
 import discord
 from discord.ext import commands
@@ -13,7 +14,7 @@ class WorkingOn(commands.Cog):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
         self.bot.schedule_task(
-            self.workingon, trigger="cron", hour=17, timezone="Australia/Brisbane"
+            self.workingon, trigger=CronTrigger(hour=17, timezone=bot.BOT_TIMEZONE)
         )
 
     async def workingon(self):

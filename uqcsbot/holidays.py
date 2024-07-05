@@ -1,3 +1,4 @@
+from apscheduler.triggers.cron import CronTrigger
 from bs4 import BeautifulSoup
 import csv
 from datetime import datetime
@@ -114,10 +115,10 @@ class Holidays(commands.Cog):
         self.bot = bot
         self.bot.schedule_task(
             self.holiday,
-            trigger="cron",
-            hour=9,
-            minute=0,
-            timezone="Australia/Brisbane",
+            trigger=CronTrigger(
+                hour=9,
+                timezone=bot.BOT_TIMEZONE,
+            ),
         )
 
     async def holiday(self):

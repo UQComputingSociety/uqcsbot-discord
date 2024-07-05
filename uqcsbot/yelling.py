@@ -10,6 +10,7 @@ from uqcsbot.models import YellingBans
 
 from datetime import timedelta
 from functools import wraps
+from apscheduler.triggers.cron import CronTrigger
 
 
 def yelling_exemptor(input_args: List[str] = ["text"]) -> Callable[..., Any]:
@@ -64,7 +65,7 @@ class Yelling(commands.Cog):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
         self.bot.schedule_task(
-            self.clear_bans, trigger="cron", hour=17, timezone="Australia/Brisbane"
+            self.clear_bans, trigger=CronTrigger(hour=17, timezone=bot.BOT_TIMEZONE)
         )
 
     @commands.Cog.listener()

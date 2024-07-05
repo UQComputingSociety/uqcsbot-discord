@@ -2,6 +2,7 @@ import logging
 from calendar import day_abbr, month_abbr, month_name
 from datetime import date, datetime, timedelta
 from typing import List, Optional, Tuple, Dict
+from apscheduler.triggers.cron import CronTrigger
 
 import discord
 from discord import app_commands
@@ -195,10 +196,11 @@ class Events(commands.Cog):
         self.bot = bot
         self.bot.schedule_task(
             self.scheduled_message,
-            trigger="cron",
-            hour=9,
-            day_of_week="mon",
-            timezone="Australia/Brisbane",
+            trigger=CronTrigger(
+                hour=9,
+                day_of_week="mon",
+                timezone="Australia/Brisbane",
+            ),
         )
 
     async def scheduled_message(self):
