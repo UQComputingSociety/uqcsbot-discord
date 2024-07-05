@@ -18,6 +18,18 @@ NUMBER_WEBSITES = 2
 COUPONESE_DOMINOS_URL = "https://www.couponese.com/store/dominos.com.au/"
 FRUGAL_FEEDS_DOMINOS_URL = "https://www.frugalfeeds.com.au/dominos/"
 
+SITE_URLS: Dict[str, str] = {
+    "couponese": COUPONESE_DOMINOS_URL,
+    "frugalfeeds": FRUGAL_FEEDS_DOMINOS_URL,
+}
+
+CouponSource = Literal["frugalfeeds", "couponese", "both"]
+
+SingleSource = Literal[
+    "frugalfeeds",
+    "couponese",
+]
+
 
 class HTTPResponseException(Exception):
     """
@@ -48,13 +60,13 @@ class DominosCoupons(commands.Cog):
         number_of_coupons: int = 5,
         ignore_expiry: bool = False,
         keywords: str = "",
-        source: Literal["both", "couponese", "frugalfeeds"] = "both",
+        source: CouponSource = "both",
     ):
         """
         Returns a list of dominos coupons
         """
 
-        switch_source: Dict[str, Literal["frugalfeeds", "couponese", "both"]] = {
+        switch_source: Dict[str, SingleSource] = {
             COUPONESE_DOMINOS_URL: "frugalfeeds",
             FRUGAL_FEEDS_DOMINOS_URL: "couponese",
         }
@@ -85,10 +97,8 @@ class DominosCoupons(commands.Cog):
                 await interaction.edit_original_response(
                     content=f"Unfortunately, it looks like one website is down right now ({failed_urls[0]}). Trying another!"
                 )
-                # Switch source so user doesn't get mislead in embed description or when coupon search turns up empty
-                new_source: Optional[
-                    Literal["frugalfeeds", "couponese", "both"]
-                ] = switch_source.get(failed_urls[0])
+                # Switch source so user doesn't get misled in embed description or when coupon search turns up empty
+                new_source: Optional[SingleSource] = switch_source.get(failed_urls[0])
                 if new_source:
                     source = new_source
             else:
@@ -161,7 +171,7 @@ def _get_coupons(
     n: int,
     ignore_expiry: bool,
     keywords: List[str],
-    source: Literal["couponese", "frugalfeeds", "both"],
+    source: CouponSource,
 ) -> Tuple[List[Coupon], List[str]]:
     """
     Returns a list of n Coupons
@@ -169,7 +179,7 @@ def _get_coupons(
 
     failed_urls: List[str] = []
     coupons: List[Coupon] = []
-    sources: List[Literal["couponese", "frugalfeeds"]]
+    sources: List[SingleSource]
 
     if source == "both":
         sources = ["couponese", "frugalfeeds"]
@@ -226,15 +236,10 @@ def _get_coupons(
     return coupons[:n], failed_urls
 
 
-def _get_coupons_from_page(source: Literal["couponese", "frugalfeeds"]) -> List[Coupon]:
+def _get_coupons_from_page(source: SingleSource) -> List[Coupon]:
     """
     Strips results from html page and returns a list of Coupon(s)
     """
-
-    urls: Dict[str, str] = {
-        "couponese": COUPONESE_DOMINOS_URL,
-        "frugalfeeds": FRUGAL_FEEDS_DOMINOS_URL,
-    }
 
     website_coupon_classes: Dict[str, Dict[str, str]] = {
         COUPONESE_DOMINOS_URL: {
@@ -250,7 +255,7 @@ def _get_coupons_from_page(source: Literal["couponese", "frugalfeeds"]) -> List[
     }
 
     coupons: List[Coupon] = []
-    url = urls[source]
+    url = SITE_URLS[source]
 
     http_response: requests.Response = requests.get(url)
     if http_response.status_code != requests.codes.ok:
@@ -282,8 +287,9 @@ def _get_coupons_from_page(source: Literal["couponese", "frugalfeeds"]) -> List[
         description: str = description_container.get_text(strip=True)
         code: str = code_container.get_text(strip=True)
 
-        # Check if code is a digit - take seperators out so we can check
-        # this properly
+        # Take separators out and check if we're getting a valid
+        # code - intended to filter out unrelated
+        # advertisements posted on FrugalFeeds coupons page
         temp_code: str = code.replace(",", "").replace(" ", "")
         if not temp_code.isdigit():
             continue
@@ -291,7 +297,7 @@ def _get_coupons_from_page(source: Literal["couponese", "frugalfeeds"]) -> List[
         # Keep formatting same for coupons with multiple codes
         if source == "frugalfeeds":
             code = code.replace(",", ", ")
-        else:
+        if source == "couponese":
             code = code.replace(" ", ", ")
 
         if url == FRUGAL_FEEDS_DOMINOS_URL:
