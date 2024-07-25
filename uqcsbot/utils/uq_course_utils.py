@@ -68,20 +68,20 @@ class Offering:
 
     def get_semester_code(self) -> int:
         """
-        Returns the code used interally within UQ for the semester of the offering.
+        Returns the code used internally within UQ for the semester of the offering.
         """
         return self.semester_codes[self.semester]
 
     def get_campus_code(self) -> str:
         """
-        Returns the code used interally within UQ for the campus of the offering.
+        Returns the code used internally within UQ for the campus of the offering.
         """
         self.campus
         return self.campus_codes[self.campus]
 
     def get_mode_code(self) -> str:
         """
-        Returns the code used interally within UQ for the mode of the offering.
+        Returns the code used internally within UQ for the mode of the offering.
         """
         return self.mode_codes[self.mode]
 
@@ -119,8 +119,7 @@ class AssessmentItem:
 
     def get_parsed_due_date(self) -> Optional[tuple[datetime, datetime]]:
         """
-        Returns the parsed due date for the given assessment item as a datetime
-        object. If the date cannot be parsed, a DateSyntaxException is raised.
+        Returns the minimum and maximum date for a particular assessment item, or None if no dates can be parsed. These will be the same if only a single date can be parsed, or will be the earliest and latest dates if multiple dates can be parsed (e.g. assignment series, or when blocks of dates are scheduled as the due dates for talks).
         """
         if self.due_date.startswith("End of Semester Exam Period"):
             return get_current_exam_period()
@@ -142,9 +141,9 @@ class AssessmentItem:
             return min(dates), max(dates)
         return None
 
-    def is_after(self, cutoff: datetime):
+    def is_after(self, cutoff: datetime) -> bool:
         """
-        Returns whether the assessment occurs after the given cutoff.
+        Returns whether the assessment ends after the given cutoff.
         """
         date_range = self.get_parsed_due_date()
         if date_range is None:
@@ -154,9 +153,9 @@ class AssessmentItem:
         _, end_datetime = date_range
         return end_datetime >= cutoff
 
-    def is_before(self, cutoff: datetime):
+    def is_before(self, cutoff: datetime) -> bool:
         """
-        Returns whether the assessment occurs before the given cutoff.
+        Returns whether the assessment starts before the given cutoff.
         """
         date_range = self.get_parsed_due_date()
         if date_range is None:
@@ -247,7 +246,7 @@ def get_uq_request(
     url: str, params: Optional[dict[str, str]] = None
 ) -> requests.Response:
     """
-    Handles specific error handelling and header provision for requests.get to
+    Handles specific error handeling and header provision for requests.get to
     uq course urls
     """
     headers = {"User-Agent": "UQCS"}
@@ -301,7 +300,7 @@ def get_course_profile_url(
     return url
 
 
-def get_current_exam_period():
+def get_current_exam_period() -> tuple[datetime, datetime]:
     """
     Returns the start and end datetimes for the current semester's exam period.
 
@@ -327,13 +326,12 @@ def get_current_exam_period():
     return start_datetime, end_datetime
 
 
-def get_course_assessment(
+def get_course_assessment_items(
     course_name: str,
     offering: Offering,
 ) -> list[AssessmentItem]:
     """
-    Returns all the assessment for the given
-    course that occur after the given cutoff.
+    Returns all the assessment for the given course.
     """
     course_profile_url = get_course_profile_url(course_name, offering=offering)
     course_assessment_url = course_profile_url + "#assessment"

@@ -15,7 +15,7 @@ from uqcsbot.utils.uq_course_utils import (
     HttpException,
     ProfileNotFoundException,
     AssessmentItem,
-    get_course_assessment,
+    get_course_assessment_items,
     get_course_profile_url,
 )
 
@@ -26,7 +26,7 @@ ECP_ASSESSMENT_URL = (
 
 
 def sort_by_date(item: AssessmentItem):
-    """Provides a key to sort assessment dates by. If the date cannot be parsed, will put it with items occuring during exam block."""
+    """Provides a key to sort assessment dates by. If the date cannot be parsed, will put it with items occurring during exam block."""
     due_date = item.get_parsed_due_date()
     if due_date:
         return due_date[0]
@@ -54,8 +54,8 @@ class WhatsDue(commands.Cog):
         semester="The semester to get assessment for. Defaults to what UQCSbot believes is the current semester.",
         campus="The campus the course is held at. Defaults to St Lucia. Note that many external courses are 'hosted' at St Lucia.",
         mode="The mode of the course. Defaults to Internal.",
-        courses="Course codes seperated by spaces",
-        sort_order="The order to sort courses by. Defualts to Date.",
+        courses="Course codes separated by spaces",
+        sort_order="The order to sort courses by. Defaults to Date.",
         reverse_sort="Whether to reverse the sort order. Defaults to false.",
         show_ecp_links="Show the first ECP link for each course page. Defaults to false.",
     )
@@ -95,7 +95,7 @@ class WhatsDue(commands.Cog):
 
         try:
             assessment = [
-                get_course_assessment(course_name, offering)
+                get_course_assessment_items(course_name, offering)
                 for course_name in course_names
             ]
             assessment = [
