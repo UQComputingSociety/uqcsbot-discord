@@ -61,7 +61,7 @@ SNAILRACE_TIE_MESSAGES = [
 ]
 SNAILRACE_NO_CONTEST_MESSAGES = [
     "But it was against themselves, that was a little sad.",
-    "Suspicious there was no other snails though.",
+    "Suspicious there were no other snails though.",
     "But wait, it was a false start.",
     "At losing!",
     "And also lost!",
