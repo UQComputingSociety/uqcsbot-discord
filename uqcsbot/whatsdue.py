@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import logging
-from typing import Optional, Callable, Literal, Dict
+from typing import Optional, Callable, Literal
 
 import discord
 from discord import app_commands
@@ -9,15 +9,14 @@ from discord.ext import commands
 from uqcsbot.yelling import yelling_exemptor
 
 from uqcsbot.utils.uq_course_utils import (
-    DateSyntaxException,
+    AssessmentNotFoundException,
     Offering,
     CourseNotFoundException,
     HttpException,
     ProfileNotFoundException,
     AssessmentItem,
-    get_course_assessment,
-    get_course_assessment_page,
-    get_course_profile_id,
+    get_course_assessment_items,
+    get_course_profile_url,
 )
 
 AssessmentSortType = Literal["Date", "Course Name", "Weight"]
@@ -27,14 +26,14 @@ ECP_ASSESSMENT_URL = (
 
 
 def sort_by_date(item: AssessmentItem):
-    """Provides a key to sort assessment dates by. If the date cannot be parsed, will put it with items occuring during exam block."""
-    try:
-        return item.get_parsed_due_date()[0]
-    except DateSyntaxException:
-        return datetime.max
+    """Provides a key to sort assessment dates by. If the date cannot be parsed, will put it with items occurring during exam block."""
+    due_date = item.get_parsed_due_date()
+    if due_date:
+        return due_date[0]
+    return datetime.max
 
 
-SORT_METHODS: Dict[
+SORT_METHODS: dict[
     AssessmentSortType, Callable[[AssessmentItem], int | str | datetime]
 ] = {
     "Date": sort_by_date,
@@ -55,8 +54,8 @@ class WhatsDue(commands.Cog):
         semester="The semester to get assessment for. Defaults to what UQCSbot believes is the current semester.",
         campus="The campus the course is held at. Defaults to St Lucia. Note that many external courses are 'hosted' at St Lucia.",
         mode="The mode of the course. Defaults to Internal.",
-        courses="Course codes seperated by spaces",
-        sort_order="The order to sort courses by. Defualts to Date.",
+        courses="Course codes separated by spaces",
+        sort_order="The order to sort courses by. Defaults to Date.",
         reverse_sort="Whether to reverse the sort order. Defaults to false.",
         show_ecp_links="Show the first ECP link for each course page. Defaults to false.",
     )
@@ -88,27 +87,39 @@ class WhatsDue(commands.Cog):
 
         # If full output is not specified, set the cutoff to today's date.
         cutoff = (
-            None if fulloutput else datetime.today(),
+            datetime.min if fulloutput else datetime.today(),
             datetime.today() + timedelta(weeks=weeks_to_show)
             if weeks_to_show > 0
-            else None,
+            else datetime.max,
         )
+
         try:
-            assessment_page = get_course_assessment_page(course_names, offering)
-            assessment = get_course_assessment(course_names, cutoff, assessment_page)
+            assessment = [
+                get_course_assessment_items(course_name, offering)
+                for course_name in course_names
+            ]
+            assessment = [
+                item
+                for course in assessment
+                for item in course
+                if item.is_after(cutoff[0]) and item.is_before(cutoff[1])
+            ]
         except HttpException as e:
             logging.error(e.message)
             await interaction.edit_original_response(
                 content=f"An error occurred, please try again."
             )
             return
-        except (CourseNotFoundException, ProfileNotFoundException) as e:
+        except (
+            CourseNotFoundException,
+            ProfileNotFoundException,
+            AssessmentNotFoundException,
+        ) as e:
             await interaction.edit_original_response(content=e.message)
             return
 
         embed = discord.Embed(
             title=f"What's Due: {', '.join(course_names)}",
-            url=assessment_page,
             description="*WARNING: Assessment information may vary/change/be entirely different! Use at your own discretion. Check your ECP for a true list of assessment.*",
         )
         if assessment:
@@ -116,7 +127,7 @@ class WhatsDue(commands.Cog):
             for assessment_item in assessment:
                 embed.add_field(
                     name=assessment_item.course_name,
-                    value=f"`{assessment_item.weight}` {assessment_item.task} **({assessment_item.due_date})**",
+                    value=f"`{assessment_item.weight}` [{assessment_item.task}]({assessment_item.task_details_url}) ({assessment_item.category})\n{assessment_item.due_date}",
                     inline=False,
                 )
         elif fulloutput:
@@ -132,7 +143,7 @@ class WhatsDue(commands.Cog):
 
         if show_ecp_links:
             ecp_links = [
-                f"[{course_name}]({ECP_ASSESSMENT_URL + str(get_course_profile_id(course_name))})"
+                f"[{course_name}]({get_course_profile_url(course_name) + '#assessment'})"
                 for course_name in course_names
             ]
             embed.add_field(
