@@ -1,4 +1,7 @@
-import discord, random, datetime, asyncio
+import discord
+import random
+import datetime
+import asyncio
 
 # Racer Icon
 SNAILRACE_SNAIL_EMOJI = "🐌"
@@ -34,6 +37,45 @@ SNAILRACE_BOARD = "And they're off...\n```\n%s\n```"
 SNAILRACE_NO_START = "Sorry, but there aren't enough racers to start the race!"
 SNAILRACE_WINNER = "The race has finished! %s has won!"
 SNAILRACE_WINNER_TIE = "The race has finished! It's a tie between %s!"
+
+SNAILRACE_WIN_MESSAGES = [
+    "🎉🎉",
+    "🎉🎉🎉",
+    "🍾🥂",
+    "🥳🥳",
+    "🥳🥳🥳",
+    "🥳🎉",
+    "🥳🎉🎉",
+    "Congrats! 🥳",
+    "Congratulations!",
+    "ggs!",
+    "For every winner, there is a loser.",
+]
+SNAILRACE_TIE_MESSAGES = [
+    "MILLION TO ONE!",
+    "Everyone's a winner!",
+    "Nobody wins!",
+    "Friendship wins!",
+    "Time for a rematch?",
+    "That was just a warm-up!",
+]
+SNAILRACE_NO_CONTEST_MESSAGES = [
+    "But it was against themselves, that was a little sad.",
+    "Suspicious there were no other snails though.",
+    "But wait, it was a false start.",
+    "At losing!",
+    "And also lost!",
+    "Wait was that it?",
+    "But wait, they used illegal snail doping.",
+    "But wait, the ref says they're disqualified.",
+    "You call that a race?",
+    "I think we could all see that happening.",
+    "Who could've guessed.",
+    "Uhh congrats?",
+    "Well done, I guess...",
+    "Wait no they didn't.",
+    "But wait, that was just a warm-up.",
+]
 
 SnailRaceJoinType = 0 | 1 | 2
 SnailRaceJoinAdded = 0
@@ -162,9 +204,23 @@ class SnailRaceState:
         )
 
         # Conclude the race and send the winner
-        if len(winners) == 1:
-            await interaction.channel.send(SNAILRACE_WINNER % winners[0])
+        if len(self.racers) == 1:
+            await interaction.channel.send(
+                SNAILRACE_WINNER % winners[0]
+                + " "
+                + random.choice(SNAILRACE_NO_CONTEST_MESSAGES)
+            )
+        elif len(winners) == 1:
+            await interaction.channel.send(
+                SNAILRACE_WINNER % winners[0]
+                + " "
+                + random.choice(SNAILRACE_WIN_MESSAGES)
+            )
         else:
-            await interaction.channel.send(SNAILRACE_WINNER_TIE % ", ".join(winners))
+            await interaction.channel.send(
+                SNAILRACE_WINNER_TIE % ", ".join(winners)
+                + " "
+                + random.choice(SNAILRACE_TIE_MESSAGES)
+            )
 
         self.close_race()
