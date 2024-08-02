@@ -6,6 +6,7 @@ from typing import Callable, Dict, Iterable, List, Optional, Literal
 import requests
 from requests.exceptions import RequestException
 from sqlalchemy.sql.expression import and_
+from apscheduler.triggers.cron import CronTrigger
 
 import discord
 from discord import app_commands
@@ -69,7 +70,7 @@ sorting_functions_for_day: Dict[
         member.times[day].get(2, MAXIMUM_TIME_FOR_STAR),
         member.times[day].get(1, MAXIMUM_TIME_FOR_STAR),
     ),
-    "Total Time": lambda member, dat: (
+    "Total Time": lambda member, day: (
         member.get_total_time(default=MAXIMUM_TIME_FOR_STAR),
         -member.star_total,
     ),
@@ -171,20 +172,22 @@ class Advent(commands.Cog):
         self.bot = bot
         self.bot.schedule_task(
             self.reminder_released,
-            trigger="cron",
-            timezone="Australia/Brisbane",
-            hour=15,
-            day="1-25",
-            month=12,
+            trigger=CronTrigger(
+                timezone=bot.BOT_TIMEZONE,
+                hour=15,
+                day="1-25",
+                month=12,
+            ),
         )
         self.bot.schedule_task(
             self.reminder_fifteen_minutes,
-            trigger="cron",
-            timezone="Australia/Brisbane",
-            hour=14,
-            minute=45,
-            day="1-25",
-            month=12,
+            trigger=CronTrigger(
+                timezone=bot.BOT_TIMEZONE,
+                hour=14,
+                minute=45,
+                day="1-25",
+                month=12,
+            ),
         )
 
         # A dictionary from a year to the list of members

@@ -1,4 +1,5 @@
 import datetime as dt
+from apscheduler.triggers.cron import CronTrigger
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -6,6 +7,7 @@ from functools import partial
 import logging
 from typing import List, NamedTuple, Optional, Union
 from zoneinfo import ZoneInfo
+from asyncio import run
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import Reminders
@@ -257,24 +259,23 @@ class RemindMe(commands.Cog):
             and end_datetime != None
             and end_datetime < dt.datetime.now()
         ):
-            self.bot.schedule_task(
-                partial(self._process_reminder, reminder), misfire_grace_time=None
-            )
+            run(self._process_reminder(reminder))
 
         # otherwise, reminder datetime is in the future so we can schedule it
         if reminder.week_frequency == None or start_datetime > dt.datetime.now():
             # one-time reminder OR first occurrence of recurring reminder, so schedule for start_date
             return self.bot.schedule_task(
                 partial(self._process_reminder, reminder),
-                trigger="cron",
-                timezone="Australia/Brisbane",
+                trigger=CronTrigger(
+                    timezone=self.bot.BOT_TIMEZONE,
+                    year=start_date.year,
+                    month=start_date.month,
+                    day=start_date.day,
+                    hour=time.hour,
+                    minute=time.minute,
+                    second=time.second,
+                ),
                 misfire_grace_time=None,
-                year=start_date.year,
-                month=start_date.month,
-                day=start_date.day,
-                hour=time.hour,
-                minute=time.minute,
-                second=time.second,
             )
 
         # non-first occurrence of recurring reminder, schedule next occurrence based on week_frequency
@@ -305,15 +306,16 @@ class RemindMe(commands.Cog):
 
         self.bot.schedule_task(
             partial(self._process_reminder, reminder),
-            trigger="cron",
-            timezone="Australia/Brisbane",
+            trigger=CronTrigger(
+                timezone=self.bot.BOT_TIMEZONE,
+                year=year,
+                month=month,
+                day=day,
+                hour=time.hour,
+                minute=time.minute,
+                second=time.second,
+            ),
             misfire_grace_time=None,
-            year=year,
-            month=month,
-            day=day,
-            hour=time.hour,
-            minute=time.minute,
-            second=time.second,
         )
 
     async def _process_reminder(self, reminder: Reminder):

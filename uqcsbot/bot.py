@@ -1,10 +1,12 @@
 import logging
 import os
-from typing import List, Optional, Tuple, Any, Callable, Coroutine
+from typing import List, Optional, Tuple, Any, Callable
 
 import discord
 from discord.ext import commands
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler import AsyncScheduler
+from apscheduler.abc import Trigger
+from asyncio import run
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -23,7 +25,7 @@ class UQCSBot(commands.Bot):
 
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self._scheduler = AsyncIOScheduler()
+        self._scheduler = AsyncScheduler()
         self.start_time = datetime.now()
 
         # Important channel names & constants go here
@@ -36,10 +38,13 @@ class UQCSBot(commands.Bot):
         self.uqcs_server: discord.Guild
 
     def schedule_task(
-        self, func: Callable[..., Coroutine[Any, Any, None]], *args: Any, **kwargs: Any
+        self, func: Callable[..., Any], trigger: Trigger, *args: Any, **kwargs: Any
     ):
-        """Schedule a function to be run at a later time. A wrapper for apscheduler add_job."""
-        self._scheduler.add_job(func, *args, **kwargs)
+        """Schedule a function to be run at a later time. A wrapper for apscheduler add_schedule."""
+        # The apschedule library has an `Unknown` type within their definition of the type of `add_schedule`
+        run(
+            self._scheduler.add_schedule(func, trigger, *args, **kwargs)
+        )  # pyright: ignore[reportUnknownMemberType]
 
     def set_db_engine(self, db_engine: Engine):
         """Creates a sessionmaker from the provided database engine which can be called from commands."""
@@ -81,7 +86,7 @@ class UQCSBot(commands.Bot):
     # Web server binds to port 8080. This is a basic template to ensure
     # that Azure has something for a health check.
     async def web_server(self):
-        def handle(request):
+        async def handle(_: web.Request):
             return web.Response(text="UQCSbot is running")
 
         app = web.Application()
@@ -93,7 +98,7 @@ class UQCSBot(commands.Bot):
 
     async def on_ready(self):
         """Once the bot is loaded and has connected, run these commands first."""
-        self._scheduler.start()
+        await self._scheduler.start_in_background()
 
         if (user := self.user) is None:
             raise RuntimeError("Ready... but not logged in!")
