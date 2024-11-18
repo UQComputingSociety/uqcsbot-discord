@@ -59,9 +59,7 @@ class WhatsDue(commands.Cog):
         reverse_sort="Whether to reverse the sort order. Defaults to false.",
         show_ecp_links="Show the first ECP link for each course page. Defaults to false.",
     )
-    @yelling_exemptor(
-        input_args=["course1", "course2", "course3", "course4", "course5", "course6"]
-    )
+    @yelling_exemptor(input_args=["courses"])
     async def whatsdue(
         self,
         interaction: discord.Interaction,

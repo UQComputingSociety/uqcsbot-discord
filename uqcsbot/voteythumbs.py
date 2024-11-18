@@ -93,6 +93,7 @@ class VoteyThumbs(commands.Cog):
 
     @app_commands.command(name="voteyrachels")
     @app_commands.describe(question="The question that shall be voted upon")
+    @yelling_exemptor(input_args=["question"])
     async def voteyrachels_command(
         self, interaction: discord.Interaction, question: str
     ):
@@ -117,6 +118,7 @@ class VoteyThumbs(commands.Cog):
 
     @app_commands.command(name="voteytoms")
     @app_commands.describe(question="The question that shall be voted upon")
+    @yelling_exemptor(input_args=["question"])
     async def voteytoms_command(self, interaction: discord.Interaction, question: str):
         """Starts a vote with Tom faces."""
         await interaction.response.defer()
@@ -139,6 +141,7 @@ class VoteyThumbs(commands.Cog):
 
     @app_commands.command(name="voteyjimmys")
     @app_commands.describe(question="The question that shall be voted upon")
+    @yelling_exemptor(input_args=["question"])
     async def voteyjimmys_command(
         self, interaction: discord.Interaction, question: str
     ):
