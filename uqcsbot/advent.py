@@ -229,6 +229,7 @@ class Advent(commands.Cog):
             response = requests.get(
                 LEADERBOARD_URL.format(year=year, code=code),
                 cookies={"session": self.session_id},
+                allow_redirects=False, # Will redirct to home page if session token is out of date
             )
         except RequestException as exception:
             raise FatalErrorWithLog(
@@ -495,7 +496,7 @@ The arguments for the command have a bit of nuance. They are as follow:
             members = self._get_members(year, code)
         except InvalidHTTPSCode:
             await interaction.edit_original_response(
-                content="Error fetching leaderboard data. Check the leaderboard code and year."
+                content="Error fetching leaderboard data. Check the leaderboard code and year. If this keeps occurring, reach out to committee, as this may be due to an invalid session token."
             )
             return
         except AssertionError:
