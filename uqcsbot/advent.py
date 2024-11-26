@@ -575,9 +575,7 @@ The arguments for the command have a bit of nuance. They are as follow:
 
         query = (
             db_session.query(AOCRegistrations)
-            .filter(
-                AOCRegistrations.aoc_userid == AOC_id
-            )
+            .filter(AOCRegistrations.aoc_userid == AOC_id)
             .one_or_none()
         )
         if query is not None:
@@ -595,7 +593,7 @@ The arguments for the command have a bit of nuance. They are as follow:
         query = (
             db_session.query(AOCRegistrations)
             .filter(
-                    AOCRegistrations.discord_userid == discord_id,
+                AOCRegistrations.discord_userid == discord_id,
             )
             .one_or_none()
         )
@@ -605,9 +603,7 @@ The arguments for the command have a bit of nuance. They are as follow:
             )
             return
 
-        db_session.add(
-            AOCRegistrations(aoc_userid=AOC_id, discord_userid=discord_id)
-        )
+        db_session.add(AOCRegistrations(aoc_userid=AOC_id, discord_userid=discord_id))
         db_session.commit()
         db_session.close()
 
@@ -664,9 +660,7 @@ The arguments for the command have a bit of nuance. They are as follow:
 
         query = (
             db_session.query(AOCRegistrations)
-            .filter(
-                 AOCRegistrations.aoc_userid == aoc_id
-            )
+            .filter(AOCRegistrations.aoc_userid == aoc_id)
             .one_or_none()
         )
         if query is not None:
@@ -680,9 +674,7 @@ The arguments for the command have a bit of nuance. They are as follow:
             )
             return
 
-        db_session.add(
-            AOCRegistrations(aoc_userid=aoc_id, discord_userid=discord_id)
-        )
+        db_session.add(AOCRegistrations(aoc_userid=aoc_id, discord_userid=discord_id))
         db_session.commit()
         db_session.close()
 
