@@ -34,7 +34,6 @@ class AOCRegistrations(Base):
         "discord_userid", BigInteger, primary_key=True, nullable=False
     )
     aoc_userid: Mapped[int] = mapped_column("aoc_userid", Integer, nullable=False)
-    year: Mapped[int] = mapped_column("year", Integer, nullable=False)
 
 
 class MCWhitelist(Base):
