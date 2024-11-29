@@ -5,7 +5,6 @@ from random import choices
 from typing import Callable, Dict, Iterable, List, Optional, Literal
 import requests
 from requests.exceptions import RequestException
-from sqlalchemy.sql.expression import and_
 
 import discord
 from discord import app_commands
@@ -69,7 +68,7 @@ sorting_functions_for_day: Dict[
         member.times[day].get(2, MAXIMUM_TIME_FOR_STAR),
         member.times[day].get(1, MAXIMUM_TIME_FOR_STAR),
     ),
-    "Total Time": lambda member, dat: (
+    "Total Time": lambda member, day: (
         member.get_total_time(default=MAXIMUM_TIME_FOR_STAR),
         -member.star_total,
     ),
@@ -229,6 +228,7 @@ class Advent(commands.Cog):
             response = requests.get(
                 LEADERBOARD_URL.format(year=year, code=code),
                 cookies={"session": self.session_id},
+                allow_redirects=False,  # Will redirct to home page if session token is out of date
             )
         except RequestException as exception:
             raise FatalErrorWithLog(
@@ -267,14 +267,12 @@ class Advent(commands.Cog):
             ]
         return self.members_cache[year]
 
-    def _get_registrations(self, year: int) -> Iterable[AOCRegistrations]:
+    def _get_registrations(self) -> Iterable[AOCRegistrations]:
         """
         Get all registrations linking an AOC id to a discord account.
         """
         db_session = self.bot.create_db_session()
-        registrations = db_session.query(AOCRegistrations).filter(
-            AOCRegistrations.year == year
-        )
+        registrations = db_session.query(AOCRegistrations)
         db_session.commit()
         db_session.close()
         return registrations
@@ -495,7 +493,7 @@ The arguments for the command have a bit of nuance. They are as follow:
             members = self._get_members(year, code)
         except InvalidHTTPSCode:
             await interaction.edit_original_response(
-                content="Error fetching leaderboard data. Check the leaderboard code and year."
+                content="Error fetching leaderboard data. Check the leaderboard code and year. If this keeps occurring, reach out to committee, as this may be due to an invalid session token."
             )
             return
         except AssertionError:
@@ -577,11 +575,7 @@ The arguments for the command have a bit of nuance. They are as follow:
 
         query = (
             db_session.query(AOCRegistrations)
-            .filter(
-                and_(
-                    AOCRegistrations.year == year, AOCRegistrations.aoc_userid == AOC_id
-                )
-            )
+            .filter(AOCRegistrations.aoc_userid == AOC_id)
             .one_or_none()
         )
         if query is not None:
@@ -599,10 +593,7 @@ The arguments for the command have a bit of nuance. They are as follow:
         query = (
             db_session.query(AOCRegistrations)
             .filter(
-                and_(
-                    AOCRegistrations.year == year,
-                    AOCRegistrations.discord_userid == discord_id,
-                )
+                AOCRegistrations.discord_userid == discord_id,
             )
             .one_or_none()
         )
@@ -613,8 +604,8 @@ The arguments for the command have a bit of nuance. They are as follow:
             return
 
         db_session.add(
-            AOCRegistrations(aoc_userid=AOC_id, year=year, discord_userid=discord_id)
-        )
+            AOCRegistrations(aoc_userid=AOC_id, discord_userid=discord_id, year=2024)
+        )  # this is a quick fix unitl we drop the column in the database
         db_session.commit()
         db_session.close()
 
@@ -671,11 +662,7 @@ The arguments for the command have a bit of nuance. They are as follow:
 
         query = (
             db_session.query(AOCRegistrations)
-            .filter(
-                and_(
-                    AOCRegistrations.year == year, AOCRegistrations.aoc_userid == aoc_id
-                )
-            )
+            .filter(AOCRegistrations.aoc_userid == aoc_id)
             .one_or_none()
         )
         if query is not None:
@@ -690,8 +677,8 @@ The arguments for the command have a bit of nuance. They are as follow:
             return
 
         db_session.add(
-            AOCRegistrations(aoc_userid=aoc_id, year=year, discord_userid=discord_id)
-        )
+            AOCRegistrations(aoc_userid=aoc_id, discord_userid=discord_id, year=2024)
+        )  # this is a quick fix unitl we drop the column in the database
         db_session.commit()
         db_session.close()
 
@@ -701,7 +688,7 @@ The arguments for the command have a bit of nuance. They are as follow:
         else:
             discord_ping = f"someone who doesn't seem to be in the server (discord id = {discord_id})"
         await interaction.edit_original_response(
-            content=f"Advent of Code name `{aoc_name}` is now registered to {discord_ping} (for {year})."
+            content=f"Advent of Code name `{aoc_name}` is now registered to {discord_ping}."
         )
 
     @advent_command_group.command(name="unregister")
@@ -712,14 +699,10 @@ The arguments for the command have a bit of nuance. They are as follow:
         await interaction.response.defer(thinking=True)
 
         db_session = self.bot.create_db_session()
-        year = datetime.now().year
 
         discord_id = interaction.user.id
         query = db_session.query(AOCRegistrations).filter(
-            and_(
-                AOCRegistrations.year == year,
-                AOCRegistrations.discord_userid == discord_id,
-            )
+            AOCRegistrations.discord_userid == discord_id,
         )
         if (query.one_or_none()) is None:
             await interaction.edit_original_response(
@@ -754,10 +737,7 @@ The arguments for the command have a bit of nuance. They are as follow:
 
         db_session = self.bot.create_db_session()
         query = db_session.query(AOCRegistrations).filter(
-            and_(
-                AOCRegistrations.year == year,
-                AOCRegistrations.discord_userid == discord_id,
-            )
+            AOCRegistrations.discord_userid == discord_id,
         )
         if (query.one_or_none()) is None:
             if discord_user:
@@ -814,7 +794,7 @@ The arguments for the command have a bit of nuance. They are as follow:
             )
             return
 
-        registrations = self._get_registrations(year)
+        registrations = self._get_registrations()
         registered_AOC_ids = [member.aoc_userid for member in registrations]
 
         # TODO would an embed be appropriate?
@@ -893,7 +873,7 @@ The arguments for the command have a bit of nuance. They are as follow:
             )
             return
 
-        registrations = self._get_registrations(year)
+        registrations = self._get_registrations()
         registered_AOC_ids = [member.aoc_userid for member in registrations]
 
         potential_winners = [
