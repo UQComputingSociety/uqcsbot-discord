@@ -603,7 +603,7 @@ The arguments for the command have a bit of nuance. They are as follow:
             )
             return
 
-        db_session.add(AOCRegistrations(aoc_userid=AOC_id, discord_userid=discord_id))
+        db_session.add(AOCRegistrations(aoc_userid=AOC_id, discord_userid=discord_id, year=2024)) # this is a quick fix unitl we drop the column in the database
         db_session.commit()
         db_session.close()
 
@@ -674,7 +674,7 @@ The arguments for the command have a bit of nuance. They are as follow:
             )
             return
 
-        db_session.add(AOCRegistrations(aoc_userid=aoc_id, discord_userid=discord_id))
+        db_session.add(AOCRegistrations(aoc_userid=aoc_id, discord_userid=discord_id, year=2024)) # this is a quick fix unitl we drop the column in the database
         db_session.commit()
         db_session.close()
 
