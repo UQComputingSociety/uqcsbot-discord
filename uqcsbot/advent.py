@@ -193,7 +193,7 @@ class LeaderboardView(discord.ui.View):
             notes.append(f"sorted by {self.sortby}")
         if self.is_truncated:
             notes.append(f"top {len(self.visible_members)} shown")
-        body = f"({", ".join(notes)})" if notes else ""
+        body = f"({', '.join(notes)})" if notes else ""
 
         basename = f"advent_{self.code}_{self.year}_{self.day}"
 
