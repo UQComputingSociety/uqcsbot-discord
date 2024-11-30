@@ -545,13 +545,13 @@ The arguments for the command have a bit of nuance. They are as follow:
             content=message,
             attachments=[
                 discord.File(
-                    io.BytesIO(scoreboard_text.encode('utf-8')),
+                    io.BytesIO(scoreboard_text.encode("utf-8")),
                     filename=f"{basename}.txt",
                 ),
                 discord.File(
                     io.BytesIO(scoreboard_image),
                     filename=f"{basename}.png",
-                )
+                ),
             ],
         )
 
