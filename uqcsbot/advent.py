@@ -22,10 +22,13 @@ from uqcsbot.utils.advent_utils import (
     CACHE_TIME,
     parse_leaderboard_column_string,
     print_leaderboard,
+    render_leaderboard_to_image,
+    render_leaderboard_to_text,
 )
 
 # Leaderboard API URL with placeholders for year and code.
-LEADERBOARD_URL = "https://adventofcode.com/{year}/leaderboard/private/view/{code}.json"
+LEADERBOARD_VIEW_URL = "https://adventofcode.com/{year}/leaderboard/private/view/{code}"
+LEADERBOARD_URL = LEADERBOARD_VIEW_URL + ".json"
 
 # UQCS leaderboard ID.
 UQCS_LEADERBOARD = 989288
@@ -519,28 +522,35 @@ The arguments for the command have a bit of nuance. They are as follow:
             ]
             members.sort(key=sorting_functions_for_month[sortby])
 
+        view_url = LEADERBOARD_VIEW_URL.format(year=year, code=code)
+        message += f"\n{view_url}"
+
         if not members:
             await interaction.edit_original_response(
                 content="This leaderboard contains no people."
             )
             return
 
-        scoreboard_file = io.BytesIO(
-            bytes(
-                print_leaderboard(
-                    parse_leaderboard_column_string(leaderboard_style, self.bot),
-                    members,
-                    day,
-                ),
-                "utf-8",
-            )
+        leaderboard = print_leaderboard(
+            parse_leaderboard_column_string(leaderboard_style, self.bot),
+            members,
+            day,
         )
+
+        scoreboard_text = render_leaderboard_to_text(leaderboard)
+        scoreboard_image = render_leaderboard_to_image(leaderboard)
+        basename = f"advent_{code}_{year}_{day}"
+
         await interaction.edit_original_response(
             content=message,
             attachments=[
                 discord.File(
-                    scoreboard_file,
-                    filename=f"advent_{code}_{year}_{day}.txt",
+                    io.BytesIO(scoreboard_text.encode('utf-8')),
+                    filename=f"{basename}.txt",
+                ),
+                discord.File(
+                    io.BytesIO(scoreboard_image),
+                    filename=f"{basename}.png",
                 )
             ],
         )
