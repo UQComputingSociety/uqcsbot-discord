@@ -445,7 +445,7 @@ def render_leaderboard_to_image(leaderboard: Leaderboard) -> bytes:
     # first, try to draw text to obtain required bounding box size
     _, _, right, bottom = draw.textbbox((PAD, PAD), spaces, font=font)  # type: ignore
 
-    img = PIL.Image.new("RGB", (right + PAD, bottom + PAD), BG_COLOUR)
+    img = PIL.Image.new("RGB", (int(right) + PAD, int(bottom) + PAD), BG_COLOUR)
     draw = PIL.ImageDraw.Draw(img)
 
     # draw each layer. layers should be disjoint
