@@ -669,7 +669,10 @@ The arguments for the command have a bit of nuance. They are as follow:
         members = self._get_members(year)
         if aoc_name not in [member.name for member in members]:
             await interaction.edit_original_response(
-                content=f"Could not find the Advent of Code name `{aoc_name}` within the UQCS leaderboard."
+                content=(
+                    f"Could not find the Advent of Code name `{aoc_name}` within the UQCS leaderboard. Make sure your name appears at: "
+                    + LEADERBOARD_VIEW_URL.format(code=UQCS_LEADERBOARD, year=year)
+                )
             )
             return
         member = [member for member in members if member.name == aoc_name]
@@ -687,13 +690,17 @@ The arguments for the command have a bit of nuance. They are as follow:
         )
         if query is not None:
             discord_user = self.bot.uqcs_server.get_member(query.discord_userid)
+            is_self = False
             if discord_user:
                 discord_ping = discord_user.mention
+                is_self = discord_user.id == interaction.user.id
             else:
                 discord_ping = f"someone who doesn't seem to be in the server (discord id = {query.discord_userid})"
-            await interaction.edit_original_response(
-                content=f"Advent of Code name `{aoc_name}` is already registered to {discord_ping}. Please contact committee if this is your Advent of Code name."
-            )
+            if not is_self:
+                message = f"Advent of Code name `{aoc_name}` is already registered to {discord_ping}. Please contact committee if this is your Advent of Code name."
+            else:
+                message = f"Advent of Code name `{aoc_name}` is already registered to you ({discord_ping})! Please contact committee if this is incorrect."
+            await interaction.edit_original_response(content=message)
             return
 
         discord_id = interaction.user.id
