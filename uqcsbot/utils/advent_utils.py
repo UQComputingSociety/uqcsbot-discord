@@ -94,14 +94,17 @@ class Member:
             day = int(d)
             times = member.times[day]
 
-            # timestamp of puzzle unlock, rounded to whole seconds
-            DAY_START = int(datetime(year, 12, day, tzinfo=EST_TIMEZONE).timestamp())
+            # timestamp of puzzle unlock (12AM EST)
+            DAY_START = EST_TIMEZONE.localize(datetime(year, 12, day))
 
             for s, star_data in day_data.items():
                 star = int(s)
                 # assert is for type checking
                 assert star == 1 or star == 2
-                times[star] = int(star_data["get_star_ts"]) - DAY_START
+                ts = datetime.fromtimestamp(
+                    float(star_data["get_star_ts"]), tz=EST_TIMEZONE
+                )
+                times[star] = int((ts - DAY_START).total_seconds())
                 assert times[star] >= 0
 
         return member
@@ -133,7 +136,7 @@ class Member:
         Returns the total time working on just star 2 for all challenges in a year.
         The argument default determines the returned value if the total is 0.
         """
-        total = sum(self.times[day].get(2, 0) for day in ADVENT_DAYS)
+        total = sum(self.get_time_delta(day) or 0 for day in ADVENT_DAYS)
         return total if total != 0 else default
 
     def get_total_time(self, default: int = 0) -> int:
