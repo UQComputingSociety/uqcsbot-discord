@@ -12,8 +12,8 @@ from typing import (
 )
 from collections import defaultdict
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from io import BytesIO
-from pytz import timezone
 
 import PIL.Image
 import PIL.ImageDraw
@@ -38,7 +38,7 @@ ColourFragment = NamedTuple("ColourFragment", [("text", str), ("colour", Colour)
 Leaderboard = list[str | ColourFragment]
 
 # Puzzles are unlocked at midnight EST.
-EST_TIMEZONE = timezone("US/Eastern")
+EST_TIMEZONE = ZoneInfo("America/New_York")
 
 # The time to cache results to limit requests to adventofcode.com. Note that 15 minutes is the recomended minimum time.
 CACHE_TIME = timedelta(minutes=15)
@@ -95,7 +95,7 @@ class Member:
             times = member.times[day]
 
             # timestamp of puzzle unlock (12AM EST)
-            DAY_START = EST_TIMEZONE.localize(datetime(year, 12, day))
+            DAY_START = datetime(year, 12, day, tzinfo=EST_TIMEZONE)
 
             for s, star_data in day_data.items():
                 star = int(s)
