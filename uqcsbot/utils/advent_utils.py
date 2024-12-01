@@ -8,6 +8,7 @@ from typing import (
     Callable,
     NamedTuple,
     Tuple,
+    cast,
 )
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -43,6 +44,7 @@ EST_TIMEZONE = timezone("US/Eastern")
 CACHE_TIME = timedelta(minutes=15)
 
 # Colours borrowed from adventofcode.com website
+# https://adventofcode.com/static/style.css
 BG_COLOUR = "#0f0f23"
 FG_COLOUR = "#cccccc"
 HL_COLOUR = "#009900"
@@ -428,14 +430,17 @@ def _isolate_leaderboard_layers(
                 continue
             layers[k] += "".join(c if c.isspace() else " " for c in text)
 
-    spaces = layers[None]
-    del layers[None]
-    return spaces, layers  # type: ignore
+    spaces_str = layers.pop(None)
+    return spaces_str, cast(Dict[str, Any], layers)
 
 
 def render_leaderboard_to_image(leaderboard: Leaderboard) -> bytes:
     spaces, layers = _isolate_leaderboard_layers(leaderboard)
 
+    # NOTE: font choice should support as wide a range of glyphs as possible,
+    # since discord display names are arbitrary and pillow does not support
+    # fallback fonts.
+    # font must also be monospace, in order for the colour layers to be aligned.
     font = PIL.ImageFont.truetype("./uqcsbot/static/NotoSansMono-Regular.ttf", 20)
 
     img = PIL.Image.new("RGB", (1, 1))
@@ -457,11 +462,12 @@ def render_leaderboard_to_image(leaderboard: Leaderboard) -> bytes:
     return buf.getvalue()  # XXX: why do we need to getvalue()?
 
 
-def print_leaderboard(
+def build_leaderboard(
     columns: List[LeaderboardColumn], members: List[Member], day: Optional[Day]
 ):
     """
-    Returns a string of the leaderboard of the given format.
+    Returns a leaderboard made up of fragments, with the given column configuration
+    and member rows.
     """
     header = "".join(column.title[0] for column in columns)
     header += "\n"

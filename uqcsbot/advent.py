@@ -14,6 +14,7 @@ from uqcsbot.bot import UQCSBot
 from uqcsbot.models import AOCRegistrations, AOCWinners
 from uqcsbot.utils.err_log_utils import FatalErrorWithLog
 from uqcsbot.utils.advent_utils import (
+    Leaderboard,
     Member,
     Day,
     Json,
@@ -22,7 +23,7 @@ from uqcsbot.utils.advent_utils import (
     CACHE_TIME,
     HL_COLOUR,
     parse_leaderboard_column_string,
-    print_leaderboard,
+    build_leaderboard,
     render_leaderboard_to_image,
     render_leaderboard_to_text,
 )
@@ -139,11 +140,13 @@ leaderboards_for_month: Dict[SortingMethod, str] = {
 
 
 class LeaderboardView(discord.ui.View):
-    INITIAL_VISIBLE_ROWS = 20
+    TRUNCATED_COUNT = 20
+    TIMEOUT = 180  # seconds
 
     def __init__(
         self,
         bot: UQCSBot,
+        inter: discord.Interaction,
         code: int,
         year: int,
         day: Optional[Day],
@@ -151,9 +154,11 @@ class LeaderboardView(discord.ui.View):
         leaderboard_style: str,
         sortby: Optional[SortingMethod],
     ):
-        super().__init__(timeout=300)
+        super().__init__(timeout=self.TIMEOUT)
+
         # constant within one embed
         self.bot = bot
+        self.inter = inter
         self.code = code
         self.year = year
         self.day = day
@@ -161,23 +166,24 @@ class LeaderboardView(discord.ui.View):
         self.leaderboard_style = leaderboard_style
         self.sortby = sortby
         self.timestamp = datetime.now()
+        self.basename = f"advent_{self.code}_{self.year}_{self.day}"
 
         # can be changed by interaction
-        self.visible_members = members[: self.INITIAL_VISIBLE_ROWS]
-        self.show_text = False
+        self._visible_members = members[: self.TRUNCATED_COUNT]
 
     @property
     def is_truncated(self):
-        return len(self.visible_members) < len(self.all_members)
+        return len(self._visible_members) < len(self.all_members)
+
+    def _build_leaderboard(self, members: List[Member]) -> Leaderboard:
+        return build_leaderboard(
+            parse_leaderboard_column_string(self.leaderboard_style, self.bot),
+            members,
+            self.day,
+        )
 
     def make_message_arguments(self) -> Dict[str, Any]:
         view_url = LEADERBOARD_VIEW_URL.format(year=self.year, code=self.code)
-
-        leaderboard = print_leaderboard(
-            parse_leaderboard_column_string(self.leaderboard_style, self.bot),
-            self.visible_members,
-            self.day,
-        )
 
         title = (
             "Advent of Code UQCS Leaderboard"
@@ -193,11 +199,9 @@ class LeaderboardView(discord.ui.View):
             notes.append(f"sorted by {self.sortby}")
         if self.is_truncated:
             notes.append(
-                f"top {len(self.visible_members)} shown out of {len(self.all_members)}"
+                f"top {len(self._visible_members)} shown out of {len(self.all_members)}"
             )
         body = f"({', '.join(notes)})" if notes else ""
-
-        basename = f"advent_{self.code}_{self.year}_{self.day}"
 
         embed = discord.Embed(
             title=title,
@@ -207,19 +211,16 @@ class LeaderboardView(discord.ui.View):
             timestamp=self.timestamp,
         )
 
-        if not self.show_text:
-            scoreboard_image = render_leaderboard_to_image(leaderboard)
-            file = discord.File(io.BytesIO(scoreboard_image), basename + ".png")
-            embed.set_image(url=f"attachment://{file.filename}")
-        else:
-            scoreboard_text = render_leaderboard_to_text(leaderboard)
-            file = discord.File(
-                io.BytesIO(scoreboard_text.encode("utf-8")), basename + ".txt"
-            )
+        leaderboard = self._build_leaderboard(self._visible_members)
+        scoreboard_image = render_leaderboard_to_image(leaderboard)
+        file = discord.File(io.BytesIO(scoreboard_image), self.basename + ".png")
+        embed.set_image(url=f"attachment://{file.filename}")
 
-        self.show_all_interaction.disabled = not self.is_truncated
-        self.get_text_interaction.label = (
-            "Show as image" if self.show_text else "Show as text"
+        self.show_all_interaction.disabled = (
+            len(self.all_members) <= self.TRUNCATED_COUNT
+        )
+        self.show_all_interaction.label = (
+            "Show all" if self.is_truncated else "Show less"
         )
 
         return {
@@ -232,15 +233,33 @@ class LeaderboardView(discord.ui.View):
     async def show_all_interaction(
         self, inter: discord.Interaction, btn: discord.ui.Button["LeaderboardView"]
     ):
-        self.visible_members = self.all_members
+        self._visible_members = (
+            self.all_members
+            if self.is_truncated
+            else self.all_members[: self.TRUNCATED_COUNT]
+        )
         await inter.response.edit_message(**self.make_message_arguments())
 
-    @discord.ui.button(label="Show text", style=discord.ButtonStyle.gray)
+    @discord.ui.button(label="Export as text", style=discord.ButtonStyle.gray)
     async def get_text_interaction(
         self, inter: discord.Interaction, btn: discord.ui.Button["LeaderboardView"]
     ):
-        self.show_text = not self.show_text
-        await inter.response.edit_message(**self.make_message_arguments())
+        """
+        Sends the text leaderboard as a file attachment within a new reply.
+        """
+        leaderboard = self._build_leaderboard(self.all_members)
+        text = render_leaderboard_to_text(leaderboard)
+        file = discord.File(io.BytesIO(text.encode("utf-8")), self.basename + ".txt")
+        await inter.response.send_message(file=file)
+
+        btn.disabled = True
+        await self.inter.edit_original_response(view=self)
+
+    async def on_timeout(self) -> None:
+        """
+        Detach interactable view on timeout.
+        """
+        await self.inter.edit_original_response(view=None)
 
 
 class Advent(commands.Cog):
@@ -629,7 +648,7 @@ The arguments for the command have a bit of nuance. They are as follow:
             return
 
         view = LeaderboardView(
-            self.bot, code, year, day, members, leaderboard_style, sortby
+            self.bot, interaction, code, year, day, members, leaderboard_style, sortby
         )
         await interaction.edit_original_response(**view.make_message_arguments())
 
