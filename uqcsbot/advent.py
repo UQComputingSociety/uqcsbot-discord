@@ -531,7 +531,7 @@ All other characters will be ignored.
             case "register":
                 await interaction.response.send_message(
                     """
-`/advent register` links an Advent of Code account and a discord user so that you are eligble for prizes. Each Advent of Code account and discord account can only be linked to one other account each year. Note that registrations last for only the current year. If you are having any issues with this, message committee to help.
+`/advent register` links an Advent of Code account and a discord user so that you are eligble for prizes. Each Advent of Code account and discord account can only be linked to one other account. Registrations persist across years. If you are having any issues with this, message committee to help.
                     """
                 )
             case "register-force":
