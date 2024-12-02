@@ -2,7 +2,7 @@ import io
 import os
 from datetime import datetime
 from random import choices
-from typing import Callable, Dict, Iterable, List, Optional, Literal
+from typing import Any, Callable, Dict, Iterable, List, Optional, Literal
 import requests
 from requests.exceptions import RequestException
 
@@ -14,18 +14,23 @@ from uqcsbot.bot import UQCSBot
 from uqcsbot.models import AOCRegistrations, AOCWinners
 from uqcsbot.utils.err_log_utils import FatalErrorWithLog
 from uqcsbot.utils.advent_utils import (
+    Leaderboard,
     Member,
     Day,
     Json,
     InvalidHTTPSCode,
     ADVENT_DAYS,
     CACHE_TIME,
+    HL_COLOUR,
     parse_leaderboard_column_string,
-    print_leaderboard,
+    build_leaderboard,
+    render_leaderboard_to_image,
+    render_leaderboard_to_text,
 )
 
 # Leaderboard API URL with placeholders for year and code.
-LEADERBOARD_URL = "https://adventofcode.com/{year}/leaderboard/private/view/{code}.json"
+LEADERBOARD_VIEW_URL = "https://adventofcode.com/{year}/leaderboard/private/view/{code}"
+LEADERBOARD_URL = LEADERBOARD_VIEW_URL + ".json"
 
 # UQCS leaderboard ID.
 UQCS_LEADERBOARD = 989288
@@ -132,6 +137,129 @@ leaderboards_for_month: Dict[SortingMethod, str] = {
     "Total Stars": "# L T B",
     "Global Rank": "# G L * T",
 }
+
+
+class LeaderboardView(discord.ui.View):
+    TRUNCATED_COUNT = 20
+    TIMEOUT = 180  # seconds
+
+    def __init__(
+        self,
+        bot: UQCSBot,
+        inter: discord.Interaction,
+        code: int,
+        year: int,
+        day: Optional[Day],
+        members: list[Member],
+        leaderboard_style: str,
+        sortby: Optional[SortingMethod],
+    ):
+        super().__init__(timeout=self.TIMEOUT)
+
+        # constant within one embed
+        self.bot = bot
+        self.inter = inter
+        self.code = code
+        self.year = year
+        self.day = day
+        self.all_members = members
+        self.leaderboard_style = leaderboard_style
+        self.sortby = sortby
+        self.timestamp = datetime.now()
+        self.basename = f"advent_{self.code}_{self.year}_{self.day}"
+
+        # can be changed by interaction
+        self._visible_members = members[: self.TRUNCATED_COUNT]
+
+    @property
+    def is_truncated(self):
+        return len(self._visible_members) < len(self.all_members)
+
+    def _build_leaderboard(self, members: List[Member]) -> Leaderboard:
+        return build_leaderboard(
+            parse_leaderboard_column_string(self.leaderboard_style, self.bot),
+            members,
+            self.day,
+        )
+
+    def make_message_arguments(self) -> Dict[str, Any]:
+        view_url = LEADERBOARD_VIEW_URL.format(year=self.year, code=self.code)
+
+        title = (
+            "Advent of Code UQCS Leaderboard"
+            if self.code == UQCS_LEADERBOARD
+            else f"Advent of Code Leaderboard `{self.code}`"
+        )
+        title = f":star: {title} :trophy:"
+        if self.day:
+            title += f" \u2014 Day {self.day}"
+
+        notes: List[str] = []
+        if self.day:
+            notes.append(f"sorted by {self.sortby}")
+        if self.is_truncated:
+            notes.append(
+                f"top {len(self._visible_members)} shown out of {len(self.all_members)}"
+            )
+        body = f"({', '.join(notes)})" if notes else ""
+
+        embed = discord.Embed(
+            title=title,
+            url=view_url,
+            description=body,
+            colour=discord.Colour.from_str(HL_COLOUR),
+            timestamp=self.timestamp,
+        )
+
+        leaderboard = self._build_leaderboard(self._visible_members)
+        scoreboard_image = render_leaderboard_to_image(leaderboard)
+        file = discord.File(io.BytesIO(scoreboard_image), self.basename + ".png")
+        embed.set_image(url=f"attachment://{file.filename}")
+
+        self.show_all_interaction.disabled = (
+            len(self.all_members) <= self.TRUNCATED_COUNT
+        )
+        self.show_all_interaction.label = (
+            "Show all" if self.is_truncated else "Show less"
+        )
+
+        return {
+            "attachments": [file],
+            "embed": embed,
+            "view": self,
+        }
+
+    @discord.ui.button(label="Show all", style=discord.ButtonStyle.gray)
+    async def show_all_interaction(
+        self, inter: discord.Interaction, btn: discord.ui.Button["LeaderboardView"]
+    ):
+        self._visible_members = (
+            self.all_members
+            if self.is_truncated
+            else self.all_members[: self.TRUNCATED_COUNT]
+        )
+        await inter.response.edit_message(**self.make_message_arguments())
+
+    @discord.ui.button(label="Export as text", style=discord.ButtonStyle.gray)
+    async def get_text_interaction(
+        self, inter: discord.Interaction, btn: discord.ui.Button["LeaderboardView"]
+    ):
+        """
+        Sends the text leaderboard as a file attachment within a new reply.
+        """
+        leaderboard = self._build_leaderboard(self.all_members)
+        text = render_leaderboard_to_text(leaderboard)
+        file = discord.File(io.BytesIO(text.encode("utf-8")), self.basename + ".txt")
+        await inter.response.send_message(file=file)
+
+        btn.disabled = True
+        await self.inter.edit_original_response(view=self)
+
+    async def on_timeout(self) -> None:
+        """
+        Detach interactable view on timeout.
+        """
+        await self.inter.edit_original_response(view=None)
 
 
 class Advent(commands.Cog):
@@ -403,7 +531,7 @@ All other characters will be ignored.
             case "register":
                 await interaction.response.send_message(
                     """
-`/advent register` links an Advent of Code account and a discord user so that you are eligble for prizes. Each Advent of Code account and discord account can only be linked to one other account each year. Note that registrations last for only the current year. If you are having any issues with this, message committee to help.
+`/advent register` links an Advent of Code account and a discord user so that you are eligble for prizes. Each Advent of Code account and discord account can only be linked to one other account. Registrations persist across years. If you are having any issues with this, message committee to help.
                     """
                 )
             case "register-force":
@@ -502,13 +630,7 @@ The arguments for the command have a bit of nuance. They are as follow:
             )
             return
 
-        if code == UQCS_LEADERBOARD:
-            message = ":star: *Advent of Code UQCS Leaderboard* :trophy:"
-        else:
-            message = f":star: *Advent of Code Leaderboard {code}* :trophy:"
-
         if day:
-            message += f"\n:calendar: *Day {day}* (Sorted By {sortby})"
             members = [member for member in members if member.attempted_day(day)]
             members.sort(key=lambda m: sorting_functions_for_day[sortby](m, day))
         else:
@@ -525,25 +647,10 @@ The arguments for the command have a bit of nuance. They are as follow:
             )
             return
 
-        scoreboard_file = io.BytesIO(
-            bytes(
-                print_leaderboard(
-                    parse_leaderboard_column_string(leaderboard_style, self.bot),
-                    members,
-                    day,
-                ),
-                "utf-8",
-            )
+        view = LeaderboardView(
+            self.bot, interaction, code, year, day, members, leaderboard_style, sortby
         )
-        await interaction.edit_original_response(
-            content=message,
-            attachments=[
-                discord.File(
-                    scoreboard_file,
-                    filename=f"advent_{code}_{year}_{day}.txt",
-                )
-            ],
-        )
+        await interaction.edit_original_response(**view.make_message_arguments())
 
     @advent_command_group.command(name="register")
     @app_commands.describe(
@@ -562,7 +669,10 @@ The arguments for the command have a bit of nuance. They are as follow:
         members = self._get_members(year)
         if aoc_name not in [member.name for member in members]:
             await interaction.edit_original_response(
-                content=f"Could not find the Advent of Code name `{aoc_name}` within the UQCS leaderboard."
+                content=(
+                    f"Could not find the Advent of Code name `{aoc_name}` within the UQCS leaderboard. Make sure your name appears at: "
+                    + LEADERBOARD_VIEW_URL.format(code=UQCS_LEADERBOARD, year=year)
+                )
             )
             return
         member = [member for member in members if member.name == aoc_name]
@@ -580,13 +690,17 @@ The arguments for the command have a bit of nuance. They are as follow:
         )
         if query is not None:
             discord_user = self.bot.uqcs_server.get_member(query.discord_userid)
+            is_self = False
             if discord_user:
                 discord_ping = discord_user.mention
+                is_self = discord_user.id == interaction.user.id
             else:
                 discord_ping = f"someone who doesn't seem to be in the server (discord id = {query.discord_userid})"
-            await interaction.edit_original_response(
-                content=f"Advent of Code name `{aoc_name}` is already registered to {discord_ping}. Please contact committee if this is your Advent of Code name."
-            )
+            if not is_self:
+                message = f"Advent of Code name `{aoc_name}` is already registered to {discord_ping}. Please contact committee if this is your Advent of Code name."
+            else:
+                message = f"Advent of Code name `{aoc_name}` is already registered to you ({discord_ping})! Please contact committee if this is incorrect."
+            await interaction.edit_original_response(content=message)
             return
 
         discord_id = interaction.user.id

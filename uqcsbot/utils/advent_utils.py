@@ -1,6 +1,24 @@
-from typing import Any, List, Literal, Dict, Optional, Callable
+from typing import (
+    Any,
+    DefaultDict,
+    List,
+    Literal,
+    Dict,
+    Optional,
+    Callable,
+    NamedTuple,
+    Tuple,
+    cast,
+)
+from collections import defaultdict
 from datetime import datetime, timedelta
-from pytz import timezone
+from zoneinfo import ZoneInfo
+from io import BytesIO
+
+import PIL.Image
+import PIL.ImageDraw
+import PIL.ImageFont
+import PIL.features
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import AOCRegistrations
@@ -15,12 +33,23 @@ Seconds = int
 Times = Dict[Star, Seconds]
 Delta = Optional[Seconds]
 Json = Dict[str, Any]
+Colour = str
+ColourFragment = NamedTuple("ColourFragment", [("text", str), ("colour", Colour)])
+Leaderboard = list[str | ColourFragment]
 
 # Puzzles are unlocked at midnight EST.
-EST_TIMEZONE = timezone("US/Eastern")
+EST_TIMEZONE = ZoneInfo("America/New_York")
 
 # The time to cache results to limit requests to adventofcode.com. Note that 15 minutes is the recomended minimum time.
 CACHE_TIME = timedelta(minutes=15)
+
+# Colours borrowed from adventofcode.com website
+# https://adventofcode.com/static/style.css
+BG_COLOUR = "#0f0f23"
+FG_COLOUR = "#cccccc"
+HL_COLOUR = "#009900"
+GOLD_COLOUR = "#ffff66"
+SILVER_COLOUR = "#9999cc"
 
 
 class InvalidHTTPSCode(Exception):
@@ -65,14 +94,17 @@ class Member:
             day = int(d)
             times = member.times[day]
 
-            # timestamp of puzzle unlock, rounded to whole seconds
-            DAY_START = int(datetime(year, 12, day, tzinfo=EST_TIMEZONE).timestamp())
+            # timestamp of puzzle unlock (12AM EST)
+            DAY_START = datetime(year, 12, day, tzinfo=EST_TIMEZONE)
 
             for s, star_data in day_data.items():
                 star = int(s)
                 # assert is for type checking
                 assert star == 1 or star == 2
-                times[star] = int(star_data["get_star_ts"]) - DAY_START
+                ts = datetime.fromtimestamp(
+                    float(star_data["get_star_ts"]), tz=EST_TIMEZONE
+                )
+                times[star] = int((ts - DAY_START).total_seconds())
                 assert times[star] >= 0
 
         return member
@@ -104,7 +136,7 @@ class Member:
         Returns the total time working on just star 2 for all challenges in a year.
         The argument default determines the returned value if the total is 0.
         """
-        total = sum(self.times[day].get(2, 0) for day in ADVENT_DAYS)
+        total = sum(self.get_time_delta(day) or 0 for day in ADVENT_DAYS)
         return total if total != 0 else default
 
     def get_total_time(self, default: int = 0) -> int:
@@ -136,7 +168,9 @@ def _star_char(num_stars: int):
     Given a number of stars (0, 1, or 2), returns its leaderboard
     representation.
     """
-    return " .*"[num_stars]
+    return ColourFragment(
+        " .*"[num_stars], [FG_COLOUR, SILVER_COLOUR, GOLD_COLOUR][num_stars]
+    )
 
 
 def _format_seconds(seconds: Optional[int]):
@@ -164,8 +198,8 @@ def _format_seconds_long(seconds: Optional[int]):
     return f"{hours}:{minutes:02}:{seconds:02}"
 
 
-def _get_member_star_progress_bar(member: Member):
-    return "".join(_star_char(len(member.times[day])) for day in ADVENT_DAYS)
+def _get_member_star_progress_bar(member: Member) -> Leaderboard:
+    return [_star_char(len(member.times[day])) for day in ADVENT_DAYS]
 
 
 class LeaderboardColumn:
@@ -176,7 +210,7 @@ class LeaderboardColumn:
     def __init__(
         self,
         title: tuple[str, str],
-        calculation: Callable[[Member, int, Optional[Day]], str],
+        calculation: Callable[[Member, int, Optional[Day]], str | Leaderboard],
     ):
         self.title = title
         self.calculation = calculation
@@ -297,13 +331,16 @@ class LeaderboardColumn:
         A column listing each name.
         """
 
-        def format_name(member: Member, _: int, __: Optional[int]) -> str:
+        def format_name(member: Member, _: int, __: Optional[int]) -> Leaderboard:
             if not (discord_userid := member.get_discord_userid(bot)):
-                return member.name
+                return [member.name]
             if not (discord_user := bot.uqcs_server.get_member(discord_userid)):
-                return member.name
+                return [member.name]
             # Don't actually ping as leaderboard is called many times
-            return f"{member.name} (@{discord_user.display_name})"
+            return [
+                ColourFragment(member.name, HL_COLOUR),
+                f" (@{discord_user.display_name})",
+            ]
 
         return LeaderboardColumn(title=("", ""), calculation=format_name)
 
@@ -366,21 +403,85 @@ def parse_leaderboard_column_string(s: str, bot: UQCSBot) -> List[LeaderboardCol
     return columns
 
 
-def print_leaderboard(
+def render_leaderboard_to_text(leaderboard: Leaderboard) -> str:
+    return "".join(x if isinstance(x, str) else x.text for x in leaderboard)
+
+
+def _isolate_leaderboard_layers(
+    leaderboard: Leaderboard,
+) -> Tuple[str, Dict[Colour, str]]:
+    """
+    Given a leaderboard made up of coloured fragments, split the
+    text into a number of layers. Each layer contains all the text
+    which is coloured by one particular colour.
+
+    Returns:
+    - a string of the leaderboard, but with whitespace in the place of every character,
+      for calculating bounding box size.
+    - a dictionary mapping colours to the layer of that colour.
+    """
+    layers: DefaultDict[str | None, str] = defaultdict(lambda: layers[None])
+    layers[None] = ""
+
+    for frag in leaderboard:
+        colour, text = (
+            (FG_COLOUR, frag) if isinstance(frag, str) else (frag.colour, frag.text)
+        )
+        layers[colour] += text
+        for k in layers:
+            if k == colour:
+                continue
+            layers[k] += "".join(c if c.isspace() else " " for c in text)
+
+    spaces_str = layers.pop(None)
+    return spaces_str, cast(Dict[str, Any], layers)
+
+
+def render_leaderboard_to_image(leaderboard: Leaderboard) -> bytes:
+    spaces, layers = _isolate_leaderboard_layers(leaderboard)
+
+    # NOTE: font choice should support as wide a range of glyphs as possible,
+    # since discord display names are arbitrary and pillow does not support
+    # fallback fonts.
+    # font must also be monospace, in order for the colour layers to be aligned.
+    font = PIL.ImageFont.truetype("./uqcsbot/static/NotoSansMono-Regular.ttf", 20)
+
+    img = PIL.Image.new("RGB", (1, 1))
+    draw = PIL.ImageDraw.Draw(img)
+
+    PAD = 20
+    # first, try to draw text to obtain required bounding box size
+    _, _, right, bottom = draw.textbbox((PAD, PAD), spaces, font=font)  # type: ignore
+
+    img = PIL.Image.new("RGB", (int(right) + PAD, int(bottom) + PAD), BG_COLOUR)
+    draw = PIL.ImageDraw.Draw(img)
+
+    # draw each layer. layers should be disjoint
+    for colour, text in layers.items():
+        draw.text((PAD, PAD), text, font=font, fill=colour)  # type: ignore
+
+    buf = BytesIO()
+    img.save(buf, format="PNG", optimize=True)
+    return buf.getvalue()  # XXX: why do we need to getvalue()?
+
+
+def build_leaderboard(
     columns: List[LeaderboardColumn], members: List[Member], day: Optional[Day]
 ):
     """
-    Returns a string of the leaderboard of the given format.
+    Returns a leaderboard made up of fragments, with the given column configuration
+    and member rows.
     """
-    leaderboard = "".join(column.title[0] for column in columns)
-    leaderboard += "\n"
-    leaderboard += "".join(column.title[1] for column in columns)
+    header = "".join(column.title[0] for column in columns)
+    header += "\n"
+    header += "".join(column.title[1] for column in columns)
+
+    leaderboard: Leaderboard = [ColourFragment(header, HL_COLOUR)]
 
     # Note that leaderboards start at 1, not 0
     for id, member in enumerate(members, start=1):
-        leaderboard += "\n"
-        leaderboard += "".join(
-            column.calculation(member, id, day) for column in columns
-        )
+        leaderboard.append("\n")
+        for column in columns:
+            leaderboard.extend(column.calculation(member, id, day))
 
     return leaderboard
