@@ -1,6 +1,7 @@
 from typing import (
     Any,
     DefaultDict,
+    Iterable,
     List,
     Literal,
     Dict,
@@ -418,7 +419,7 @@ def render_leaderboard_to_text(leaderboard: Leaderboard) -> str:
 
 
 def _isolate_leaderboard_layers(
-    leaderboard: Leaderboard,
+    leaderboard: Iterable[str | ColourFragment],
 ) -> Tuple[str, Dict[Colour, str]]:
     """
     Given a leaderboard made up of coloured fragments, split the
@@ -448,7 +449,7 @@ def _isolate_leaderboard_layers(
 
 
 @lru_cache(maxsize=16)
-def render_leaderboard_to_image(leaderboard: Leaderboard) -> bytes:
+def render_leaderboard_to_image(leaderboard: Tuple[str | ColourFragment, ...]) -> bytes:
     spaces, layers = _isolate_leaderboard_layers(leaderboard)
 
     # NOTE: font choice should support as wide a range of glyphs as possible,
@@ -477,7 +478,7 @@ def render_leaderboard_to_image(leaderboard: Leaderboard) -> bytes:
 
 
 def build_leaderboard(
-    columns: List[LeaderboardColumn], members: List[Member], day: Optional[Day]
+    columns: List[LeaderboardColumn], members: Iterable[Member], day: Optional[Day]
 ):
     """
     Returns a leaderboard made up of fragments, with the given column configuration

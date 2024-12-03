@@ -212,7 +212,7 @@ class LeaderboardView(discord.ui.View):
         )
 
         leaderboard = self._build_leaderboard(self._visible_members)
-        scoreboard_image = render_leaderboard_to_image(leaderboard)
+        scoreboard_image = render_leaderboard_to_image(tuple(leaderboard))
         file = discord.File(io.BytesIO(scoreboard_image), self.basename + ".png")
         embed.set_image(url=f"attachment://{file.filename}")
 
