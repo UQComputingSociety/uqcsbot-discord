@@ -478,7 +478,7 @@ def render_leaderboard_to_image(leaderboard: Tuple[str | ColourFragment, ...]) -
 
 
 def build_leaderboard(
-    columns: List[LeaderboardColumn], members: Iterable[Member], day: Optional[Day]
+    columns: List[LeaderboardColumn], members: List[Member], day: Optional[Day]
 ):
     """
     Returns a leaderboard made up of fragments, with the given column configuration
