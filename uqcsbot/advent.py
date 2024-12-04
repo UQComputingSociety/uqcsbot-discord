@@ -1,6 +1,6 @@
 import io
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from random import choices
 from typing import Any, Callable, Dict, Iterable, List, Optional, Literal
 import requests
@@ -141,7 +141,7 @@ leaderboards_for_month: Dict[SortingMethod, str] = {
 
 class LeaderboardView(discord.ui.View):
     TRUNCATED_COUNT = 20
-    TIMEOUT = 180  # seconds
+    TIMEOUT = timedelta(hours=24).total_seconds()
 
     def __init__(
         self,
@@ -212,7 +212,7 @@ class LeaderboardView(discord.ui.View):
         )
 
         leaderboard = self._build_leaderboard(self._visible_members)
-        scoreboard_image = render_leaderboard_to_image(leaderboard)
+        scoreboard_image = render_leaderboard_to_image(tuple(leaderboard))
         file = discord.File(io.BytesIO(scoreboard_image), self.basename + ".png")
         embed.set_image(url=f"attachment://{file.filename}")
 

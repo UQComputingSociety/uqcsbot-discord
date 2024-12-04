@@ -1,18 +1,21 @@
 from typing import (
     Any,
     DefaultDict,
+    Iterable,
     List,
     Literal,
     Dict,
     Optional,
     Callable,
-    NamedTuple,
     Tuple,
     cast,
 )
+from dataclasses import dataclass
 from collections import defaultdict
+from collections.abc import Hashable
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+from functools import lru_cache
 from io import BytesIO
 
 import PIL.Image
@@ -33,8 +36,16 @@ Seconds = int
 Times = Dict[Star, Seconds]
 Delta = Optional[Seconds]
 Json = Dict[str, Any]
+
 Colour = str
-ColourFragment = NamedTuple("ColourFragment", [("text", str), ("colour", Colour)])
+
+
+@dataclass(frozen=True)
+class ColourFragment(Hashable):
+    text: str
+    colour: Colour
+
+
 Leaderboard = list[str | ColourFragment]
 
 # Puzzles are unlocked at midnight EST.
@@ -408,7 +419,7 @@ def render_leaderboard_to_text(leaderboard: Leaderboard) -> str:
 
 
 def _isolate_leaderboard_layers(
-    leaderboard: Leaderboard,
+    leaderboard: Iterable[str | ColourFragment],
 ) -> Tuple[str, Dict[Colour, str]]:
     """
     Given a leaderboard made up of coloured fragments, split the
@@ -437,7 +448,8 @@ def _isolate_leaderboard_layers(
     return spaces_str, cast(Dict[str, Any], layers)
 
 
-def render_leaderboard_to_image(leaderboard: Leaderboard) -> bytes:
+@lru_cache(maxsize=16)
+def render_leaderboard_to_image(leaderboard: Tuple[str | ColourFragment, ...]) -> bytes:
     spaces, layers = _isolate_leaderboard_layers(leaderboard)
 
     # NOTE: font choice should support as wide a range of glyphs as possible,
@@ -462,7 +474,7 @@ def render_leaderboard_to_image(leaderboard: Leaderboard) -> bytes:
 
     buf = BytesIO()
     img.save(buf, format="PNG", optimize=True)
-    return buf.getvalue()  # XXX: why do we need to getvalue()?
+    return buf.getvalue()
 
 
 def build_leaderboard(
