@@ -356,6 +356,7 @@ class Advent(commands.Cog):
             response = requests.get(
                 LEADERBOARD_URL.format(year=year, code=code),
                 cookies={"session": self.session_id},
+                headers={"user-agent": "github.com/UQComputingSociety/uqcsbot-discord"},
                 allow_redirects=False,  # Will redirct to home page if session token is out of date
             )
         except RequestException as exception:
