@@ -32,6 +32,8 @@ class Alfred(commands.Cog):
             + "<https://disasterhub.sunshinecoast.qld.gov.au/>\n"
             + "\n"
             + "Please stay safe. And remember, if it's flooded, forget it.\n"
+            + "\n"
+            + "This information is not official UQCS advice, but simply a list of useful links for students to stay updated."
         )
 
         await interaction.response.send_message(response)
