@@ -15,22 +15,24 @@ class Alfred(commands.Cog):
         Returns info about Cyclone Alfred and UQ recommendations.
         """
 
-        response = f"""
-        To track Cyclone Alfred, see the official Bureau of Meteorology webpage:
-        <http://www.bom.gov.au/cyclone/index.shtml>
-
-        For current informatino about UQ's response, see:
-        <https://about.uq.edu.au/incident-response>
-
-        To more information as to Brisbane City Council's flood zones, see:
-        <https://fam.brisbane.qld.gov.au/>
-        Moreton Bay Regional Council:
-        <https://www.moretonbay.qld.gov.au/Services/Property-Ownership/Flooding>
-        Logan City Council:
-        <https://www.logan.qld.gov.au/floodimpacts>
-
-        Please stay safe. And remember, if it's flooded, forget it.
-        """
+        response = (
+            "To track Cyclone Alfred, see the official Bureau of Meteorology webpage:\n"
+            + "<http://www.bom.gov.au/cyclone/index.shtml>\n"
+            + ""
+            + "For current information about UQ's response, see:\n"
+            + "<https://about.uq.edu.au/incident-response>\n"
+            + ""
+            + "To more information as to Brisbane City Council's flood zones, see:\n"
+            + "<https://fam.brisbane.qld.gov.au/>\n"
+            + "Moreton Bay Regional Council:\n"
+            + "<https://www.moretonbay.qld.gov.au/Services/Property-Ownership/Flooding>\n"
+            + "Logan City Council:\n"
+            + "<https://www.logan.qld.gov.au/floodimpacts>\n"
+            + "Sunshine Coast Council:\n"
+            + "<https://disasterhub.sunshinecoast.qld.gov.au/>\n"
+            + "\n"
+            + "Please stay safe. And remember, if it's flooded, forget it.\n"
+        )
 
         await interaction.response.send_message(response)
 
