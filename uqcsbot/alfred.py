@@ -22,7 +22,7 @@ class Alfred(commands.Cog):
             + "For current information about UQ's response, see:\n"
             + "<https://about.uq.edu.au/incident-response>\n"
             + ""
-            + "To more information as to Brisbane City Council's flood zones, see:\n"
+            + "For more information as to Brisbane City Council's flood zones, see:\n"
             + "<https://fam.brisbane.qld.gov.au/>\n"
             + "Moreton Bay Regional Council:\n"
             + "<https://www.moretonbay.qld.gov.au/Services/Property-Ownership/Flooding>\n"
