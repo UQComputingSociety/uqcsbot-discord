@@ -1,17 +1,16 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
+
 
 class Alfred(commands.Cog):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
 
     @app_commands.command(name="alfred")
-    async def alfred_command(
-        self,
-        interaction, discord.Interaction
-    ) -> None:
+    async def alfred_command(self, interaction: discord.Interaction) -> None:
         """
         Returns info about Cyclone Alfred and UQ recommendations.
         """
