@@ -10,7 +10,7 @@ class Alfred(commands.Cog):
     @app_commands.command(name="alfred")
     async def alfred_command(
         self,
-        interaction, discord.Interaction
+        interaction: discord.Interaction
     ) -> None:
         """
         Returns info about Cyclone Alfred and UQ recommendations.
