@@ -11,6 +11,7 @@ from discord.ext import commands
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import MCWhitelist
 from uqcsbot.utils.err_log_utils import FatalErrorWithLog
+from uqcsbot.yelling import yelling_exemptor
 
 RCON_ADDRESS = os.environ.get("MC_RCON_ADDRESS")
 RCON_PORT = os.environ.get("MC_RCON_PORT")
@@ -74,6 +75,7 @@ class Minecraft(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(username="Minecraft username to whitelist.")
+    @yelling_exemptor(input_args=["username"])
     async def mcwhitelist(self, interaction: discord.Interaction, username: str):
         """Adds a username to the whitelist for the UQCS server."""
         db_session = self.bot.create_db_session()
@@ -118,6 +120,7 @@ class Minecraft(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(username="Minecraft username to unwhitelist.")
+    @yelling_exemptor(input_args=["username"])
     async def mcunwhitelist(self, interaction: discord.Interaction, username: str):
         """Removes a username from the whitelist for the UQCS server."""
         db_session = self.bot.create_db_session()
