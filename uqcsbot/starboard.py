@@ -4,7 +4,7 @@ from typing import Tuple, List
 from zoneinfo import ZoneInfo
 
 import discord
-from discord import app_commands
+from discord import MessageType, app_commands
 from discord.ext import commands
 from sqlalchemy.sql.expression import and_
 
@@ -234,6 +234,7 @@ class Starboard(commands.Cog):
     def _starboard_db_add(self, recv: int, recv_location: int, sent: int) -> None:
         """Creates a starboard DB entry. Only called from _process_updates when the messages are not None, so doesn't
         need to handle any None-checks - we can just pass ints straight in."""
+        print(recv, sent)
         db_session = self.bot.create_db_session()
         db_session.add(
             models.Starboard(recv=recv, recv_location=recv_location, sent=sent)
@@ -258,7 +259,7 @@ class Starboard(commands.Cog):
             .one_or_none()
         )
         if entry is not None:
-            entry.delete(synchronize_session=False)
+            db_session.delete(entry)
         db_session.commit()
         db_session.close()
 
@@ -270,7 +271,26 @@ class Starboard(commands.Cog):
             return None
         else:
             try:
-                return await channel.fetch_message(id)
+                msg = await channel.fetch_message(id)
+                ref = msg.reference
+                if ref and not ref.resolved and ref.message_id:
+                    try:
+                        # if the referenced message has not yet been resolved,
+                        # try our best to find it.
+                        guild = (
+                            self.bot.get_guild(ref.guild_id)
+                            if ref.guild_id
+                            else self.bot.uqcs_server
+                        )
+                        chan = guild.get_channel_or_thread(ref.channel_id)
+                        msg.reference.resolved = await chan.fetch_message(
+                            ref.message_id
+                        )
+                    except discord.NotFound:
+                        pass
+                if ref and not msg.reference.resolved:
+                    msg.reference = None
+                return msg
             except discord.NotFound:
                 return None
 
@@ -284,78 +304,76 @@ class Starboard(commands.Cog):
         db_session = self.bot.create_db_session()
 
         entry = None
-        if self.starboard_channel.id == channel_id:
-            # we're primarily looking up a recieved message and a location.
-            # first, get the entry, then the location, then _fetch_message_or_none the remaining IDs.
-            entry = (
-                db_session.query(models.Starboard)
-                .filter(models.Starboard.sent == message_id)
-                .one_or_none()
-            )
+        # attempt to look up a recieved message and a location for messages
+        # that are sent by the bot.
+        # first, get the entry, then the location, then _fetch_message_or_none the remaining IDs.
+        entry = (
+            db_session.query(models.Starboard)
+            .filter(models.Starboard.sent == message_id)
+            .one_or_none()
+        )
 
-            if entry is not None:
-                if entry.recv_location is not None:
-                    channel = self.bot.get_channel(entry.recv_location)
-
-                    return (
-                        await self._fetch_message_or_none(channel, entry.recv),
-                        await self._fetch_message_or_none(
-                            self.starboard_channel, entry.sent
-                        ),
-                    )
-                else:
-                    # if the recieved location is None, then the message won't exist either.
-                    # The only thing we can possibly return is a starboard message.
-                    return (
-                        None,
-                        await self._fetch_message_or_none(
-                            self.starboard_channel, entry.sent
-                        ),
-                    )
-            else:
-                if message_id == 1076779482637144105:
-                    # This is Isaac's initial-starboard message. I know, IDs are bad. BUT
-                    # consider that this doesn't cause any of the usual ID-related issues
-                    # like breaking lookups in other servers.
-                    return
-
-                raise FatalErrorWithLog(
-                    client=self.bot,
-                    message=f"Starboard state error: Couldn't find an DB entry for this starboard message ({message_id})!",
-                )
-
-        else:
-            # we're primarily looking up a starboard message.
-            entry = (
-                db_session.query(models.Starboard)
-                .filter(models.Starboard.recv == message_id)
-                .one_or_none()
-            )
-
-            if entry is not None:
-                if entry.recv_location != channel_id:
-                    raise FatalErrorWithLog(
-                        client=self.bot,
-                        message=f"Starboard state error: Recieved message ({message_id}) from different channel ({channel_id}) to what the DB expects ({entry.recv_location})!",
-                    )
-                elif entry.sent is None:
-                    raise BlacklistedMessageError()
-
-                channel = self.bot.get_channel(channel_id)
+        if entry is not None:
+            if entry.recv_location is not None:
+                channel = self.bot.get_channel(entry.recv_location)
 
                 return (
-                    await self._fetch_message_or_none(channel, message_id),
+                    await self._fetch_message_or_none(channel, entry.recv),
                     await self._fetch_message_or_none(
                         self.starboard_channel, entry.sent
                     ),
                 )
             else:
-                channel = self.bot.get_channel(channel_id)
-
+                # if the recieved location is None, then the message won't exist either.
+                # The only thing we can possibly return is a starboard message.
                 return (
-                    await self._fetch_message_or_none(channel, message_id),
                     None,
+                    await self._fetch_message_or_none(
+                        self.starboard_channel, entry.sent
+                    ),
                 )
+        else:
+            if message_id == 1076779482637144105:
+                # This is Isaac's initial-starboard message. I know, IDs are bad. BUT
+                # consider that this doesn't cause any of the usual ID-related issues
+                # like breaking lookups in other servers.
+                return
+
+            # channel = self.bot.get_channel(channel_id)
+            # raise FatalErrorWithLog(
+            #     client=self.bot,
+            #     message=f"Starboard state error: Couldn't find an DB entry for this starboard message ({message_id})!",
+            # )
+
+        # we're primarily looking up a starboard message.
+        entry = (
+            db_session.query(models.Starboard)
+            .filter(models.Starboard.recv == message_id)
+            .one_or_none()
+        )
+
+        if entry is not None:
+            if entry.recv_location != channel_id:
+                raise FatalErrorWithLog(
+                    client=self.bot,
+                    message=f"Starboard state error: Recieved message ({message_id}) from different channel ({channel_id}) to what the DB expects ({entry.recv_location})!",
+                )
+            elif entry.sent is None:
+                raise BlacklistedMessageError()
+
+            channel = self.bot.get_channel(channel_id)
+
+            return (
+                await self._fetch_message_or_none(channel, message_id),
+                await self._fetch_message_or_none(self.starboard_channel, entry.sent),
+            )
+        else:
+            channel = self.bot.get_channel(channel_id)
+
+            return (
+                await self._fetch_message_or_none(channel, message_id),
+                None,
+            )
 
     async def _count_num_reacts(
         self, data: Tuple[discord.Message | None, discord.Message | None]
@@ -380,7 +398,7 @@ class Starboard(commands.Cog):
                 # eliminate duplicates (only count one reaction per person)
                 users += [user.id async for user in reaction.users()]
 
-        return len(set([user for user in users if user not in authors]))
+        return len(set([user for user in users]))
 
     def _generate_message_text(
         self, reaction_count: int, recieved_msg: (discord.Message | None)
@@ -394,13 +412,22 @@ class Starboard(commands.Cog):
         self, recieved_msg: discord.Message
     ) -> List[discord.Embed]:
         """Creates the starboard embed for a message, including author, colours, replies, etc."""
+        author = recieved_msg.author.display_name
+        content = recieved_msg.content
+
+        if recieved_msg.type == MessageType.pins_add:
+            content = f"**{author}** pinned a message to this channel. See all pinned messages."
+
         embed = discord.Embed(
-            color=recieved_msg.author.top_role.color, description=recieved_msg.content
+            color=recieved_msg.author.top_role.color, description=content
         )
-        embed.set_author(
-            name=recieved_msg.author.display_name,
-            icon_url=recieved_msg.author.display_avatar.url,
-        )
+
+        if recieved_msg.type != MessageType.pins_add:
+            embed.set_author(
+                name=author,
+                icon_url=recieved_msg.author.display_avatar.url,
+            )
+
         embed.set_footer(
             text=recieved_msg.created_at.astimezone(tz=self.BRISBANE_TZ).strftime(
                 "%b %d, %H:%M:%S"
@@ -421,8 +448,16 @@ class Starboard(commands.Cog):
                 description=recieved_msg.reference.resolved.content,
             )
 
+            if recieved_msg.type == MessageType.pins_add:
+                reply_prefix = ""
+            elif recieved_msg.type == MessageType.reply:
+                reply_prefix = "Replying to "
+            else:
+                # eventually, we will want to handle more cases. e.g., forwarded.
+                reply_prefix = ""
+
             replied.set_author(
-                name=f"Replying to {recieved_msg.reference.resolved.author.display_name}",
+                name=f"{reply_prefix}{recieved_msg.reference.resolved.author.display_name}",
                 icon_url=recieved_msg.reference.resolved.author.display_avatar.url,
             )
 
@@ -441,6 +476,19 @@ class Starboard(commands.Cog):
         recieved_msg: (discord.Message | None),
         starboard_msg: (discord.Message | None),
     ) -> None:
+        print("process updates", recieved_msg is None, starboard_msg is None)
+        print(recieved_msg and recieved_msg.reference)
+
+        print(reaction_count >= self.base_threshold)
+        print(recieved_msg is not None)
+        print(recieved_msg.id not in self.base_blocked_messages)
+        print(starboard_msg is None)
+        print(
+            recieved_msg.reference is None
+            or not isinstance(
+                recieved_msg.reference.resolved, discord.DeletedReferencedMessage
+            )
+        )
         if (
             reaction_count >= self.base_threshold
             and recieved_msg is not None
@@ -453,6 +501,7 @@ class Starboard(commands.Cog):
                 )
             )
         ):
+            print("i wanna post ", recieved_msg)
             # Above threshold, not blocked, not replying to deleted msg, no current starboard message? post it.
             new_sb_message = await self.starboard_channel.send(
                 content=self._generate_message_text(reaction_count, recieved_msg),
@@ -478,6 +527,7 @@ class Starboard(commands.Cog):
             self.base_blocked_messages += [recieved_msg.id]
             Timer(self.ratelimit, self._rm_base_ratelimit, [recieved_msg.id]).start()
         elif reaction_count >= self.base_threshold and starboard_msg is not None:
+            print("above threshold and existing")
             # Above threshold, existing message? update it.
             if (
                 reaction_count >= self.big_threshold
@@ -504,6 +554,8 @@ class Starboard(commands.Cog):
                 content=self._generate_message_text(reaction_count, recieved_msg)
             )
         else:
+            print("below threshold or other problem")
+            print(starboard_msg)
             # Below threshold, or blocked from sending. Might need to delete.
             if starboard_msg is not None:
                 self._starboard_db_remove(recieved_msg, starboard_msg)
@@ -512,7 +564,7 @@ class Starboard(commands.Cog):
     """
     The four handlers below here are more or less identical.
     The differences are just that `add` deletes :starhaj:'s that come from the author of the message,
-    and `clear` doesn't need to check that the payload references :starhaj:.    
+    and `clear` doesn't need to check that the payload references :starhaj:.
     """
 
     @commands.Cog.listener()
@@ -529,12 +581,13 @@ class Starboard(commands.Cog):
             recieved_msg, starboard_msg = await self._lookup_from_id(
                 payload.channel_id, payload.message_id
             )
+            print(recieved_msg, starboard_msg)
         except BlacklistedMessageError:
             return
 
-        if recieved_msg is not None and recieved_msg.author.id == payload.user_id:
-            # payload.member is guaranteed to be available because we're adding and we're in a server
-            return await recieved_msg.remove_reaction(payload.emoji, payload.member)
+        # if recieved_msg is not None and recieved_msg.author.id == payload.user_id:
+        #     # payload.member is guaranteed to be available because we're adding and we're in a server
+        #     return await recieved_msg.remove_reaction(payload.emoji, payload.member)
 
         new_reaction_count = await self._count_num_reacts((recieved_msg, starboard_msg))
         await self._process_sb_updates(new_reaction_count, recieved_msg, starboard_msg)
