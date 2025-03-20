@@ -40,7 +40,6 @@ async def main():
 
     cogs = [
         "advent",
-        "alfred",
         "basic",
         "cat",
         "cowsay",
