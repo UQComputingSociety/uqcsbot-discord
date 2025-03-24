@@ -1,9 +1,7 @@
 from datetime import datetime
-from typing import List, Dict, Literal, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Literal
 import logging
-import requests
 from requests.exceptions import RequestException
-from bs4 import BeautifulSoup
 import random
 
 import discord
@@ -12,309 +10,259 @@ from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.yelling import yelling_exemptor
+from uqcsbot.utils.dominos_utils import Coupon, Store, get_filtered_stores
 
 MAX_COUPONS = 10  # Prevents abuse
-NUMBER_WEBSITES = 2
-COUPONESE_DOMINOS_URL = "https://www.couponese.com/store/dominos.com.au/"
-FRUGAL_FEEDS_DOMINOS_URL = "https://www.frugalfeeds.com.au/dominos/"
-
-SITE_URLS: Dict[str, str] = {
-    "couponese": COUPONESE_DOMINOS_URL,
-    "frugalfeeds": FRUGAL_FEEDS_DOMINOS_URL,
-}
-
-CouponSource = Literal["frugalfeeds", "couponese", "both"]
-
-SingleSource = Literal[
-    "frugalfeeds",
-    "couponese",
-]
+MAX_STORES = 5
 
 
-class HTTPResponseException(Exception):
-    """
-    An exception for when a HTTP response is not requests.codes.ok
-    """
+class StoreSelect(discord.ui.Select):
+    def __init__(self, stores: List[Store]):
+        # self.view = view
+        options=[discord.SelectOption(label=store.name,description=store.address)for store in stores]
+        super().__init__(placeholder="Select a store...", options=options)
 
-    def __init__(self, http_code: int, url: str, *args: object) -> None:
-        super().__init__(*args)
-        self.http_code = http_code
-        self.url = url
+    async def callback(self, interaction: discord.Interaction):
+        # await interaction.response.send_message(content=f"Selected {self.values[0]}")
+        self.view.selected_store = self.values[0]
+        self.view.stop()
 
+class StoreSelectView(discord.ui.View):
+    def __init__(self, stores: List[Store], *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.selected_store = None
+        self.add_item(StoreSelect(stores))
 
-class DominosCoupons(commands.Cog):
+class StoreDetailsView(discord.ui.View):
+    def __init__(self, store: Store, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.store = store
+        self.state = None
+
+    @discord.ui.button(label="Get Coupons", style=discord.ButtonStyle.primary)
+    async def get_coupons(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.state = True
+        self.stop()
+
+order_method = Literal["Any", "Delivery", "Pickup", "Dine In"]
+
+class DominosCoupons(commands.GroupCog, group_name='dominos'):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
 
     @app_commands.command()
     @app_commands.describe(
-        number_of_coupons="The number of coupons to return. Defaults to 5 with max 10.",
+        search_term="The name of the store to search for.",
+        open_at="The time to check if the store is open. Defaults to now. Format: YYYY-MM-DD HH:MM:SS",
+        service_method="Filter by supported service type. Defaults to any."
+    )
+    @yelling_exemptor(input_args=["search_term"])
+    async def stores(
+            self,
+            interaction: discord.Interaction,
+            search_term: str,
+            open_at: str = None,
+            service_method: Literal[order_method] = "Any",
+    ):
+        """
+        Returns a list of dominos stores
+        """
+        await interaction.response.defer(thinking=True)
+
+        if open_at:
+            try:
+                checking_time = datetime.strptime(open_at, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                await interaction.edit_original_response(
+                    content="Invalid date format. Use YYYY-MM-DD HH:MM:SS."
+                )
+                return
+        else:
+            checking_time = datetime.now()
+
+        stores: List[Store] = get_filtered_stores(search_term, service_method, checking_time, MAX_STORES)
+
+        if stores is None:
+            await interaction.edit_original_response(
+                content=f"Something went wrong."
+            )
+            return
+        if len(stores) == 0:
+            response_text = f"Could not find any stores matching `{search_term}`"
+            if service_method != "Any":
+                response_text += f" with service method `{service_method}`"
+            await interaction.edit_original_response(content=f"{response_text}.")
+            return
+
+        if stores[0].matches(search_term):
+            # If exact match, proceed straight to the store details
+            store_str = stores[0].name
+        else:
+            # Display a list of stores to choose from
+            description_string = f"Searching for stores matching `{search_term}`"
+            view = StoreSelectView(stores)
+            await interaction.edit_original_response(content=description_string, view=view)
+            await view.wait()
+
+            store_str = view.selected_store
+
+            if store_str is None:
+                await interaction.edit_original_response(content="No store selected.")
+                return
+
+        store = next((store for store in stores if store.name == store_str), None)
+        if store is None:
+            await interaction.edit_original_response(content="Something went wrong.")
+            return
+
+        embed = discord.Embed(
+            title=store.name,
+            timestamp=checking_time,
+        )
+        embed.add_field(name="Address", value=store.address, inline=False)
+        embed.add_field(name="Phone", value=store.phone_no, inline=False)
+        try:
+            store_open = store.is_open(checking_time)
+            next_open_time = store.next_opening_time(checking_time)
+            next_closed_time = store.next_closing_time(checking_time)
+        except ValueError:
+            pass
+        else:
+            if store_open is None:
+                pass
+            elif store_open and next_open_time:
+                embed.add_field(name="Open", value=f"Until {next_closed_time}", inline=False)
+            elif not store_open and next_closed_time:
+                embed.add_field(name="Closed", value=f"Until {next_open_time}", inline=False)
+            else:
+                embed.add_field(name="Currently", value='Open' if store_open else "Closed", inline=False)
+
+        view = StoreDetailsView(store) if store.has_coupons() else None
+        await interaction.edit_original_response(content=None, embed=embed, view=view)
+        if not view:
+            return
+
+        await view.wait()
+        if not view.state:
+            return
+
+        embed = discord.Embed(
+            title="Domino's Coupons",
+            description=f"For {store.name} ({store.address})",
+            timestamp=checking_time,
+        )
+        coupons = store.get_filtered_coupons(service_method=service_method,
+                                             checking_time=checking_time,
+                                             count=MAX_COUPONS)
+        for coupon in coupons:
+            embed.add_field(
+                name=coupon.code,
+                value=f"{coupon.description}\n*[Expires {coupon.expiry_date}, {coupon.method}]*",
+                inline=False,
+            )
+
+        await interaction.edit_original_response(embed=embed, view=None)
+
+
+    @app_commands.command()
+    @app_commands.describe(
+        store_search="Store to get coupons for. Defaults to St Lucia.",
+        number_of_coupons=f"The number of coupons to return. Defaults to {MAX_COUPONS}.",
+        service_method="Filter by supported service type. Defaults to any.",
         ignore_expiry="Indicates to include coupons that have expired. Defaults to False.",
-        keywords="Words to search for within the coupon. All coupons descriptions will mention at least one keyword.",
-        source="Website to source coupons from (couponese or frugalfeeds). Defaults to both.",
+        keywords="Words to search for within the coupon. All coupons descriptions will mention at least one keyword."
     )
     @yelling_exemptor(input_args=["keywords"])
-    async def dominoscoupons(
+    async def coupons(
         self,
         interaction: discord.Interaction,
-        number_of_coupons: int = 5,
+        store_search: str = "St Lucia",
+        number_of_coupons: app_commands.Range[int, 1, MAX_COUPONS] = MAX_COUPONS,
+        service_method: order_method = "Any",
         ignore_expiry: bool = False,
         keywords: str = "",
-        source: CouponSource = "both",
     ):
         """
         Returns a list of dominos coupons
         """
-
-        switch_source: Dict[str, SingleSource] = {
-            COUPONESE_DOMINOS_URL: "frugalfeeds",
-            FRUGAL_FEEDS_DOMINOS_URL: "couponese",
-        }
-
-        coupons: List[Coupon] = []
-        failed_urls: List[str] = []
-
-        if number_of_coupons < 1 or number_of_coupons > MAX_COUPONS:
-            await interaction.response.send_message(
-                content=f"You can't have that many coupons. Try a number between 1 and {MAX_COUPONS}.",
-                ephemeral=True,
-            )
-            return
-
         await interaction.response.defer(thinking=True)
 
-        coupons, failed_urls = _get_coupons(
-            number_of_coupons, ignore_expiry, keywords.split(), source
-        )
+        expiry_time = datetime.now() if not ignore_expiry else None
 
-        if len(failed_urls) == NUMBER_WEBSITES:
+        # Get stores
+        # Limit to 3 stores, hopefully including the one the user wants
+        stores: List[Store] = get_filtered_stores(store_search,
+                                                  service_method=service_method,
+                                                  open_at_time=expiry_time,
+                                                  count=3)
+        if stores is None:
+            await interaction.edit_original_response(content=f"Something went wrong.")
+            return
+        if len(stores) == 0:
+            response_text = f"Could not find any stores matching `{store_search}`"
+            if service_method != "Any":
+                response_text += f" with service method `{service_method}`"
             await interaction.edit_original_response(
-                content=f"Unfortunately, it looks like both coupon websites are down right now."
+                content=f"{response_text}."
             )
             return
-        elif len(failed_urls) == 1:
-            if source == "both":
-                await interaction.edit_original_response(
-                    content=f"Unfortunately, it looks like one website is down right now ({failed_urls[0]}). Trying another!"
-                )
-                # Switch source so user doesn't get misled in embed description or when coupon search turns up empty
-                new_source: Optional[SingleSource] = switch_source.get(failed_urls[0])
-                if new_source:
-                    source = new_source
-            else:
-                await interaction.edit_original_response(
-                    content=f"It looks like that website is down right now. Try changing site with the `source` command. ({failed_urls[0]})"
-                )
-                return
+
+        # If exact match select just that store
+        # Otherwise, choose the first three.
+        if stores[0].matches(store_search):
+            # If exact match, proceed straight to the store details
+            stores = stores[:1]
+        else:
+            stores = stores[:3]
+        print(stores)
+
+        # Get coupons for each store
+        coupons: List[Coupon] = []
+        for store in stores:
+            try:
+                coupons.extend(store.get_filtered_coupons(service_method=service_method,
+                                                          checking_time=expiry_time,
+                                                          keywords=keywords))
+            except RequestException:
+                print("Error getting coupons for store:", store.name)
+                continue
+
 
         if not coupons:
-            if source == "both":
-                content_str = "Could not find any coupons matching the given arguments from both websites."
-            elif len(failed_urls) == 1:
-                content_str = f"Searched {source} as the other website is down ({failed_urls[0]}) and could not find any coupons matching the given arguments."
-            else:
-                content_str = f"Could not find any coupons matching the given arguments from {source}. You can try changing the website through the `source` command."
-            await interaction.edit_original_response(content=content_str)
+            await interaction.edit_original_response(content="No coupons found.")
             return
 
-        if source == "both":
-            description_string = f"Sourced from [FrugalFeeds]({FRUGAL_FEEDS_DOMINOS_URL}) and [Couponese]({COUPONESE_DOMINOS_URL})"
-        elif source == "couponese":
-            description_string = f"Sourced from [Couponese]({COUPONESE_DOMINOS_URL})"
-        else:
-            description_string = (
-                f"Sourced from [FrugalFeeds]({FRUGAL_FEEDS_DOMINOS_URL})"
-            )
-
+        description_string = ""
+        if len(stores) == 1:
+            description_string += f"For {stores[0].name} ({stores[0].address})"
         if keywords:
             description_string += f"\nKeywords: *{keywords}*"
 
+        # Remove duplicates
+        unique_coupons: List[Coupon] = []
+        unique_codes: List[str] = []
+        for coupon in coupons:
+            if coupon.code not in unique_codes:
+                unique_codes.append(coupon.code)
+                unique_coupons.append(coupon)
+        coupons = unique_coupons
+
+        random.shuffle(coupons)
+        coupons = coupons[:number_of_coupons]
+
         embed = discord.Embed(
             title="Domino's Coupons",
-            description=description_string,
+            description=description_string.strip(),
             timestamp=datetime.now(),
         )
         for coupon in coupons:
             embed.add_field(
                 name=coupon.code,
-                value=f"{coupon.description} *[Expires: {coupon.expiry_date}]*",
+                value=f"{coupon.description}\n*[Expires {coupon.expiry_date}, {coupon.method}]*",
                 inline=False,
             )
-        await interaction.edit_original_response(embed=embed)
 
-
-class Coupon:
-    def __init__(self, code: str, expiry_date: str, description: str) -> None:
-        self.code = code
-        self.expiry_date = expiry_date
-        self.description = description
-
-    def is_valid(self) -> bool:
-        try:
-            expiry_date = datetime.strptime(self.expiry_date, "%Y-%m-%d")
-            now = datetime.now()
-            return all(
-                [
-                    expiry_date.year >= now.year,
-                    expiry_date.month >= now.month,
-                    expiry_date.day >= now.day,
-                ]
-            )
-        except ValueError:
-            return True
-
-    def keyword_matches(self, keyword: str) -> bool:
-        return keyword.lower() in self.description.lower()
-
-
-def _get_coupons(
-    n: int,
-    ignore_expiry: bool,
-    keywords: List[str],
-    source: CouponSource,
-) -> Tuple[List[Coupon], List[str]]:
-    """
-    Returns a list of n Coupons
-    """
-
-    failed_urls: List[str] = []
-    coupons: List[Coupon] = []
-    sources: List[SingleSource]
-
-    if source == "both":
-        sources = ["couponese", "frugalfeeds"]
-    else:
-        sources = [source]
-
-    for source in sources:
-        try:
-            coupons.extend(_get_coupons_from_page(source))
-        except (RequestException, HTTPResponseException) as error:
-            if isinstance(error, RequestException):
-                request_url: str = (
-                    error.request.url
-                    if error.request and error.request.url
-                    else "Unknown site."
-                )
-                resp_content = (
-                    error.response.content
-                    if error.response
-                    else "No response error given."
-                )
-                logging.warning(
-                    f"Could not connect to dominos coupon site ({request_url}): {resp_content}"
-                )
-                failed_urls.append(request_url)
-
-            if isinstance(error, HTTPResponseException):
-                logging.warning(
-                    f"Received a HTTP response code {error.http_code}. Error information: {error}"
-                )
-                failed_urls.append(error.url)
-
-    if not ignore_expiry:
-        coupons = [coupon for coupon in coupons if coupon.is_valid()]
-
-    # Remove duplicates
-    unique_coupons: List[Coupon] = []
-    unique_codes: List[str] = []
-    for coupon in coupons:
-        if coupon.code not in unique_codes:
-            unique_codes.append(coupon.code)
-            unique_coupons.append(coupon)
-    coupons = unique_coupons
-
-    if keywords:
-        coupons = [
-            coupon
-            for coupon in coupons
-            if any(coupon.keyword_matches(keyword) for keyword in keywords)
-        ]
-
-    random.shuffle(coupons)
-
-    return coupons[:n], failed_urls
-
-
-def _get_coupons_from_page(source: SingleSource) -> List[Coupon]:
-    """
-    Strips results from html page and returns a list of Coupon(s)
-    """
-
-    website_coupon_classes: Dict[str, Dict[str, str]] = {
-        COUPONESE_DOMINOS_URL: {
-            "expiry": "ov-expiry",
-            "description": "ov-desc",
-            "code": "ov-code",
-        },
-        FRUGAL_FEEDS_DOMINOS_URL: {
-            "expiry": "column-3",
-            "description": "column-2",
-            "code": "column-1",
-        },
-    }
-
-    coupons: List[Coupon] = []
-    url = SITE_URLS[source]
-
-    http_response: requests.Response = requests.get(url)
-    if http_response.status_code != requests.codes.ok:
-        raise HTTPResponseException(http_response.status_code, url)
-
-    soup = BeautifulSoup(http_response.content, "html.parser")
-    soup_coupons: List[BeautifulSoup] = []
-
-    if url == COUPONESE_DOMINOS_URL:
-        soup_coupons = soup.find_all(class_="ov-coupon")
-    elif url == FRUGAL_FEEDS_DOMINOS_URL:
-        tables = soup.select('[class^="tablepress"]')
-        for table in tables:
-            # Headers have stuff we don't want
-            rows = table.find_all("tr")[1:]
-            soup_coupons.extend(rows)
-
-    siteclass: Dict[str, str] = website_coupon_classes.get(url, {})
-
-    for soup_coupon in soup_coupons:
-        expiry_date_container = soup_coupon.find(class_=siteclass.get("expiry"))
-        description_container = soup_coupon.find(class_=siteclass.get("description"))
-        code_container = soup_coupon.find(class_=siteclass.get("code"))
-
-        if not expiry_date_container or not description_container or not code_container:
-            continue
-
-        expiry_date_str: str = expiry_date_container.get_text(strip=True)
-        description: str = description_container.get_text(strip=True)
-        code: str = code_container.get_text(strip=True)
-
-        # Take separators out and check if we're getting a valid
-        # code - intended to filter out unrelated
-        # advertisements posted on FrugalFeeds coupons page
-        temp_code: str = code.replace(",", "").replace(" ", "")
-        if not temp_code.isdigit():
-            continue
-
-        # Keep formatting same for coupons with multiple codes
-        if source == "frugalfeeds":
-            code = code.replace(",", ", ")
-        if source == "couponese":
-            code = code.replace(" ", ", ")
-
-        if url == FRUGAL_FEEDS_DOMINOS_URL:
-            date_values: List[str] = expiry_date_str.split()
-            try:
-                # Convert shortened month to numerical value
-                month: int = datetime.strptime(date_values[1], "%b").month
-                expiry_date_str = "{year}-{month}-{day}".format(
-                    year=int(date_values[2]), month=month, day=int(date_values[0])
-                )
-            except (ValueError, IndexError):
-                pass
-
-        coupon = Coupon(code, expiry_date_str, description)
-        coupons.append(coupon)
-
-    return coupons
+        await interaction.edit_original_response(embed=embed, view=None)
 
 
 async def setup(bot: UQCSBot):
