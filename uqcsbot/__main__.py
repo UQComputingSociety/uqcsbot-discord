@@ -57,7 +57,7 @@ async def main():
         "latex",
         "manage_cogs",
         "member_counter",
-        "minecraft",
+        # "minecraft",
         "morse",
         "past_exams",
         "phonetics",
