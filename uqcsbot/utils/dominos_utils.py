@@ -5,22 +5,11 @@ import time
 from datetime import datetime
 from typing import List, Dict, Optional
 import logging
-# TODO: Logging
 import requests
 from requests.exceptions import RequestException
 from bs4 import BeautifulSoup
 
 MAX_RETRIES = 5
-
-
-class HTTPResponseException(Exception):
-    """
-    """
-
-    def __init__(self, http_code: int, url: str, *args: object) -> None:
-        super().__init__(*args)
-        self.http_code = http_code
-        self.url = url
 
 
 def retry_request(request_func, url: str, key: str = None, max_retries: int = MAX_RETRIES,
@@ -47,11 +36,12 @@ def retry_request(request_func, url: str, key: str = None, max_retries: int = MA
     for count in range(max_retries):
         try:
             response = request_func(url, headers=headers, **kwargs)
-            response.raise_for_status()
             return response
         except requests.exceptions.RequestException as e:
-            print(f"Attempt {count + 1} failed: {str(e)}")
+            # Exponential backoff
+            logging.warning(f"Attempt {count + 1} failed: {str(e)}")
             time.sleep(1 << count)
+    logging.warning(f"Could not connect to dominos coupon site ({url})")
     return None
 
 
@@ -63,6 +53,7 @@ class Coupon:
     """
     A class representing a Domino's coupon.
     """
+
     def __init__(self, code: str, expiry_date: str, description: str, method: str = None) -> None:
         self.code = code
         self.expiry_date = expiry_date
@@ -95,7 +86,7 @@ class Coupon:
         Returns:
             bool: True if the keyword is in the description, False otherwise.
         """
-        return keyword.lower() in self.description.lower()
+        return keyword.lower() in self.description.lower().replace(' ', '')
 
     def method_matches(self, method: str) -> bool:
         """
@@ -116,12 +107,13 @@ class Store:
     """
     A class representing a Domino's store.
     """
+
     def __init__(self, store: Dict[str, str]) -> None:
         # I just threw anything useful looking in here
         self.name: str = store.get("Name")
         self.phone_no: str = store.get("PhoneNo")
         self.address: str = (store.get("Address", {}).get("FullAddress")
-                        .replace("\r", "").replace("\n", ", ").replace(", , ", ", "))
+                             .replace("\r", "").replace("\n", ", ").replace(", , ", ", "))
         self.service_methods: dict[str, bool] = store.get("ServiceMethods")
         self.ordering_methods: dict[str, bool] = store.get("OrderingMethods")
         self.coordinates: dict[str, float] = store.get("GeoCoordinates")
@@ -160,12 +152,8 @@ class Store:
         if not self.opening_hours:
             raise ValueError("No opening hours available")
         now = datetime.now()
-        if (checking_time - now).days > 7:
-            print("Checking time is more than 7 days in the future")
+        if (checking_time - now).days > 7 or (checking_time - now).days < 0:
             raise ValueError("Checking time is more than 7 days in the future")
-        return NotImplemented
-
-    def available_method(self, method: str) -> bool:
         for day in self.opening_hours:
             open_time = datetime.fromisoformat(day['Open']).replace(tzinfo=None)
             close_time = datetime.fromisoformat(day['Close']).replace(tzinfo=None)
@@ -184,8 +172,16 @@ class Store:
             datetime: The next opening time for the store.
         """
         if not self.opening_hours:
+            # No opening hours available
+            return None
         now = datetime.now()
         if (checking_time - now).days > 7 or (checking_time - now).days < 0:
+            # Checking time is more than 7 days in the future
+            return None
+        opening_times = [day['Open'] for day in self.opening_hours]
+        opening_times = [datetime.fromisoformat(open_time).replace(tzinfo=None) for open_time in
+                         opening_times]
+        return min([open_time for open_time in opening_times if open_time <= checking_time])
 
     def next_closing_time(self, checking_time: datetime) -> Optional[datetime]:
         """
@@ -204,8 +200,16 @@ class Store:
         if (checking_time - now).days > 7 or (checking_time - now).days < 0:
             # Checking time is more than 7 days in the future
             return None
+        closing_times = [day['Close'] for day in self.opening_hours]
+        closing_times = [datetime.fromisoformat(close_time).replace(tzinfo=None) for close_time in
                          closing_times]
         return min([close_time for close_time in closing_times if close_time >= checking_time])
+
+    def available_method(self, method: str) -> Optional[bool]:
+        """
+        Check if the store has the given service method available.
+        They are usually "Pickup", "Delivery" or "DineIn".
+
         Args:
             method: The service method to check.
 
@@ -246,8 +250,9 @@ class Store:
         if not url:
             return []
         http_response: requests.Response = retry_request(requests.get, url, timeout=10)
-        if http_response.status_code != requests.codes.ok:
-            raise HTTPResponseException(http_response.status_code, url)
+        if not http_response:
+            # Failed to get coupons
+            return []
 
         soup = BeautifulSoup(http_response.content, "html.parser")
         soup_coupons = soup.find_all(class_="special-offer-anz")
@@ -257,7 +262,7 @@ class Store:
             coupon_code = (coupon.find(class_="offer-code-anz").get_text(strip=True)
                            .replace('Offer Code:', '').strip())
             coupon_expiry = re.findall(r'\d{2}-\d{2}-\d{2,}',
-                           coupon.find(class_="offer-disclaimer-anz").get_text())[0]
+                                       coupon.find(class_="offer-disclaimer-anz").get_text())[0]
             coupon_description = coupon.find(class_="offer-title-anz").get_text(strip=True)
             coupon_method = coupon.find(class_="service-method-anz").get_text(strip=True)
             coupons.append(Coupon(coupon_code, coupon_expiry, coupon_description, coupon_method))
@@ -285,15 +290,21 @@ class Store:
         """
         coupons = self._get_coupons()
         if not coupons:
+            return coupons
+        if service_method != "Any":
             coupons = [coupon for coupon in coupons if coupon.method_matches(service_method)]
         if checking_time:
             coupons = [coupon for coupon in coupons if coupon.is_valid(checking_time)]
         if keywords:
+            matching_coupons = []
+            for coupon in coupons:
+                if any(coupon.keyword_matches(keyword) for keyword in keywords.split()):
+                    matching_coupons.append(coupon)
+            coupons = matching_coupons
         if count:
             random.shuffle(coupons)
             coupons = coupons[:count]
         return coupons
-
 
 
 def _get_stores(search_term) -> Optional[List[Store]]:
