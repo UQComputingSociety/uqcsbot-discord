@@ -1,7 +1,7 @@
 import logging
 import random
 from datetime import datetime
-from typing import List, Literal
+from typing import List, Literal, Optional, Any
 
 import discord
 from discord import app_commands
@@ -16,32 +16,41 @@ MAX_COUPONS = 10  # Prevents abuse
 MAX_STORES = 5
 
 
-class StoreSelect(discord.ui.Select):
-    def __init__(self, stores: List[Store]):
-        options = [discord.SelectOption(label=store.name, description=store.address)
-                   for store in stores]
-        super().__init__(placeholder="Select a store...", options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        self.view.selected_store = self.values[0]
-        self.view.stop()
-
-
 class StoreSelectView(discord.ui.View):
-    def __init__(self, stores: List[Store], *args, **kwargs):
+    def __init__(self, stores: List[Store], *args: list[Any], **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.selected_store = None
+        self.selected_store: Optional[str] = None
         self.add_item(StoreSelect(stores))
 
 
+class StoreSelect(discord.ui.Select[StoreSelectView]):
+    def __init__(self, stores: List[Store]):
+        options = [
+            discord.SelectOption(label=store.name, description=store.address)
+            for store in stores
+        ]
+        super().__init__(placeholder="Select a store...", options=options)
+        self.selected_store: Optional[str] = None
+
+    async def callback(self, interaction: discord.Interaction):
+        if not self.view:
+            return
+        self.view.selected_store = self.values[0]
+        await interaction.response.defer()  # Acknowledge the interaction
+        self.view.stop()
+
+
 class StoreDetailsView(discord.ui.View):
-    def __init__(self, store: Store, *args, **kwargs):
+    def __init__(self, store: Store, *args: list[Any], **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.store = store
-        self.state = None
+        self.store: Store = store
+        self.state: bool = False
 
     @discord.ui.button(label="Get Coupons", style=discord.ButtonStyle.primary)
-    async def get_coupons(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def get_coupons(self, *_):
+        """
+        Button to get coupons for the selected store. Sets the state to True then stops the view.
+        """
         self.state = True
         self.stop()
 
@@ -49,23 +58,23 @@ class StoreDetailsView(discord.ui.View):
 order_method = Literal["Any", "Delivery", "Pickup", "Dine In"]
 
 
-class DominosCoupons(commands.GroupCog, group_name='dominos'):
+class DominosCoupons(commands.GroupCog, group_name="dominos"):
     def __init__(self, bot: UQCSBot):
         self.bot = bot
 
     @app_commands.command()
     @app_commands.describe(
         search_term="The name of the store to search for.",
+        service_method="Filter by supported service type. Defaults to any.",
         open_at="The time to check if the store is open. Defaults to now. Format: YYYY-MM-DD HH:MM:SS",
-        service_method="Filter by supported service type. Defaults to any."
     )
     @yelling_exemptor(input_args=["search_term"])
     async def stores(
-            self,
-            interaction: discord.Interaction,
-            search_term: str,
-            open_at: str = None,
-            service_method: Literal[order_method] = "Any",
+        self,
+        interaction: discord.Interaction,
+        search_term: str,
+        service_method: Literal[order_method] = "Any",
+        open_at: Optional[str] = None,
     ):
         """
         Returns a list of dominos stores
@@ -83,14 +92,11 @@ class DominosCoupons(commands.GroupCog, group_name='dominos'):
         else:
             checking_time = datetime.now()
 
-        stores: List[Store] = get_filtered_stores(search_term, service_method, count=MAX_STORES)
+        stores: List[Store] = get_filtered_stores(
+            search_term, service_method, count=MAX_STORES
+        )
 
-        if stores is None:
-            await interaction.edit_original_response(
-                content=f"Something went wrong."
-            )
-            return
-        if len(stores) == 0:
+        if not stores:
             response_text = f"Could not find any stores matching `{search_term}`"
             if service_method != "Any":
                 response_text += f" with service method `{service_method}`"
@@ -103,11 +109,13 @@ class DominosCoupons(commands.GroupCog, group_name='dominos'):
         else:
             # Display a list of stores to choose from
             description_string = f"Searching for stores matching `{search_term}`"
-            view = StoreSelectView(stores)
-            await interaction.edit_original_response(content=description_string, view=view)
-            await view.wait()
+            store_select_view: StoreSelectView = StoreSelectView(stores)
+            await interaction.edit_original_response(
+                content=description_string, view=store_select_view
+            )
+            await store_select_view.wait()
 
-            store_str = view.selected_store
+            store_str: Optional[str] = store_select_view.selected_store
 
             if store_str is None:
                 await interaction.edit_original_response(content="No store selected.")
@@ -131,23 +139,34 @@ class DominosCoupons(commands.GroupCog, group_name='dominos'):
         except ValueError:
             pass
         else:
-            if store_open is None:
-                pass
-            elif store_open and next_open_time:
-                embed.add_field(name="Open", value=f"Until {next_closed_time}", inline=False)
+            if store_open and next_open_time:
+                embed.add_field(
+                    name="Open", value=f"Until {next_closed_time}", inline=False
+                )
             elif not store_open and next_closed_time:
-                embed.add_field(name="Closed", value=f"Until {next_open_time}", inline=False)
+                embed.add_field(
+                    name="Closed", value=f"Until {next_open_time}", inline=False
+                )
             else:
-                embed.add_field(name="Currently", value='Open' if store_open else "Closed",
-                                inline=False)
+                embed.add_field(
+                    name="Currently",
+                    value="Open" if store_open else "Closed",
+                    inline=False,
+                )
 
-        view = StoreDetailsView(store) if store.has_coupons() else None
-        await interaction.edit_original_response(content=None, embed=embed, view=view)
-        if not view:
+        if store.has_coupons():
+            store_details_view: StoreDetailsView = StoreDetailsView(store)
+            await interaction.edit_original_response(
+                content=None, embed=embed, view=store_details_view
+            )
+        else:
+            await interaction.edit_original_response(
+                content=None, embed=embed, view=None
+            )
             return
 
-        await view.wait()
-        if not view.state:
+        await store_details_view.wait()
+        if not store_details_view.state:
             return
 
         embed = discord.Embed(
@@ -155,9 +174,11 @@ class DominosCoupons(commands.GroupCog, group_name='dominos'):
             description=f"For {store.name} ({store.address})",
             timestamp=checking_time,
         )
-        coupons = store.get_filtered_coupons(service_method=service_method,
-                                             checking_time=checking_time,
-                                             count=MAX_COUPONS)
+        coupons = store.get_filtered_coupons(
+            service_method=service_method,
+            checking_time=checking_time,
+            count=MAX_COUPONS,
+        )
         for coupon in coupons:
             embed.add_field(
                 name=coupon.code,
@@ -173,17 +194,17 @@ class DominosCoupons(commands.GroupCog, group_name='dominos'):
         number_of_coupons=f"The number of coupons to return. Defaults to {MAX_COUPONS}.",
         service_method="Filter by supported service type. Defaults to any.",
         ignore_expiry="Indicates to include coupons that have expired. Defaults to False.",
-        keywords="Words to search for within the coupon. All coupons will mention at least one keyword."
+        keywords="Words to search for within the coupon. All coupons will mention at least one keyword.",
     )
     @yelling_exemptor(input_args=["keywords"])
     async def coupons(
-            self,
-            interaction: discord.Interaction,
-            store_search: str = "St Lucia",
-            number_of_coupons: app_commands.Range[int, 1, MAX_COUPONS] = MAX_COUPONS,
-            service_method: order_method = "Any",
-            ignore_expiry: bool = False,
-            keywords: str = "",
+        self,
+        interaction: discord.Interaction,
+        store_search: str = "St Lucia",
+        number_of_coupons: app_commands.Range[int, 1, MAX_COUPONS] = MAX_COUPONS,
+        service_method: order_method = "Any",
+        ignore_expiry: bool = False,
+        keywords: str = "",
     ):
         """
         Returns a list of dominos coupons
@@ -194,38 +215,37 @@ class DominosCoupons(commands.GroupCog, group_name='dominos'):
 
         # Get stores
         # Limit to 3 stores, hopefully including the one the user wants
-        stores: List[Store] = get_filtered_stores(store_search,
-                                                  service_method=service_method,
-                                                  open_at_time=expiry_time,
-                                                  has_coupons=True,
-                                                  count=3)
-        if stores is None:
-            await interaction.edit_original_response(content=f"Something went wrong.")
-            return
-        if len(stores) == 0:
+        stores: List[Store] = get_filtered_stores(
+            store_search,
+            service_method=service_method,
+            open_at_time=expiry_time,
+            has_coupons=True,
+            count=MAX_STORES,
+        )
+        if not stores:
             response_text = f"Could not find any stores matching `{store_search}`"
             if service_method != "Any":
                 response_text += f" with service method `{service_method}`"
-            await interaction.edit_original_response(
-                content=f"{response_text}."
-            )
+            if expiry_time:
+                response_text += f" open at `{expiry_time}`"
+            await interaction.edit_original_response(content=f"{response_text}.")
             return
 
         # If exact match select just that store
-        # Otherwise, choose the first five.
         if stores[0].matches(store_search):
-            # If exact match, proceed straight to the store details
             stores = stores[:1]
-        else:
-            stores = stores[:3]
 
         # Get coupons for each store
         coupons: List[Coupon] = []
         for store in stores:
             try:
-                coupons.extend(store.get_filtered_coupons(service_method=service_method,
-                                                          checking_time=expiry_time,
-                                                          keywords=keywords))
+                coupons.extend(
+                    store.get_filtered_coupons(
+                        service_method=service_method,
+                        checking_time=expiry_time,
+                        keywords=keywords,
+                    )
+                )
             except RequestException:
                 logging.warning(f"Error getting coupons for store: {store.name}")
                 continue
