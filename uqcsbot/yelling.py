@@ -12,6 +12,13 @@ from datetime import timedelta
 from functools import wraps
 
 
+"""
+This decorator that ensures that certain arguments of a command are checked if used in the #yelling channel.
+Provide it with the list of names of keyword arguments that the #yelling check should be applied to.
+Use after the decorator @app_commands.command().
+"""
+
+
 def yelling_exemptor(input_args: List[str] = ["text"]) -> Callable[..., Any]:
     def handler(func: Callable[..., Any]):
         @wraps(func)
