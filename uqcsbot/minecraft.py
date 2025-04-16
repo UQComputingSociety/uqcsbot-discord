@@ -4,16 +4,21 @@ from datetime import datetime
 
 import discord
 from aiomcrcon import Client, IncorrectPasswordError, RCONConnectionError  # type: ignore
+from mcstatus import JavaServer
 from discord import Member, app_commands, Colour
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import MCWhitelist
 from uqcsbot.utils.err_log_utils import FatalErrorWithLog
+from uqcsbot.yelling import yelling_exemptor
 
 RCON_ADDRESS = os.environ.get("MC_RCON_ADDRESS")
 RCON_PORT = os.environ.get("MC_RCON_PORT")
 RCON_PASSWORD = os.environ.get("MC_RCON_PASSWORD")
+
+MC_PUBLIC_IP = os.environ.get("MC_PUBLIC_IP")
+MC_PUBLIC_PORT = os.environ.get("MC_PUBLIC_PORT")
 
 
 class Minecraft(commands.Cog):
@@ -48,7 +53,29 @@ class Minecraft(commands.Cog):
         return response
 
     @app_commands.command()
+    async def mcplayers(self, interaction: discord.Interaction):
+        """Returns the number and list of people currently playing on the Minecraft server."""
+        server = JavaServer.lookup(
+            f"{MC_PUBLIC_IP}:{MC_PUBLIC_PORT}"
+        )  # Does this need to be hard coded?? Is RCON addr/IP the same?
+        status = server.status()  # type: ignore
+
+        # Check if there are players online
+        # Not none so pyright shuts up
+        if status.players.online > 0 and status.players.sample is not None:
+            # Extract player names
+            player_names = [player.name for player in status.players.sample]
+            # Format the list of players
+            players_list = "\n".join(player_names)
+            response_message = f"The server has {status.players.online} player(s) online:\n```\n{players_list}\n```"
+        else:
+            response_message = f"The server has {status.players.online} players online."
+
+        await interaction.response.send_message(response_message)
+
+    @app_commands.command()
     @app_commands.describe(username="Minecraft username to whitelist.")
+    @yelling_exemptor(input_args=["username"])
     async def mcwhitelist(self, interaction: discord.Interaction, username: str):
         """Adds a username to the whitelist for the UQCS server."""
         db_session = self.bot.create_db_session()
@@ -88,6 +115,52 @@ class Minecraft(commands.Cog):
                 )
 
             await interaction.response.send_message(response[0])
+
+        db_session.close()
+
+    @app_commands.command()
+    @app_commands.describe(username="Minecraft username to unwhitelist.")
+    @yelling_exemptor(input_args=["username"])
+    async def mcunwhitelist(self, interaction: discord.Interaction, username: str):
+        """Removes a username from the whitelist for the UQCS server."""
+        db_session = self.bot.create_db_session()
+        is_user_admin = (
+            isinstance(interaction.user, Member)
+            and interaction.user.guild_permissions.manage_guild
+        )
+
+        # If the user has already whitelisted someone, and they aren't an admin deny it.
+        if not is_user_admin:
+            await interaction.response.send_message(
+                "You've already whitelisted an account."
+            )
+        else:
+            # Send the RCON command to remove the user from the whitelist
+            response_remove = await self.send_rcon_command(
+                f"whitelist remove {username}"
+            )
+            logging.info(f"[MINECRAFT] whitelist remove {username}: {response_remove}")
+
+            # Send the RCON command to kick the player from the server
+            response_kick = await self.send_rcon_command(f"kick {username}")
+            logging.info(f"[MINECRAFT] kick {username}: {response_kick}")
+
+            # If the responses indicate successful removal, remove from the database item
+            if "Removed" in response_remove[0]:
+                db_session.query(MCWhitelist).filter(
+                    MCWhitelist.mc_username == username
+                ).delete()
+                db_session.commit()
+
+                await self.bot.admin_alert(
+                    title="Minecraft Server Unwhitelist",
+                    description=response_remove[0],
+                    footer=f"Action performed by {interaction.user}",
+                    colour=Colour.red(),
+                )
+
+            # Display the response to the user in Discord
+            await interaction.response.send_message(response_remove[0])
 
         db_session.close()
 

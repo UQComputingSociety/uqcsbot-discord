@@ -30,6 +30,8 @@ class UQCSBot(commands.Bot):
         self.ADMIN_ALERTS_CNAME = "admin-alerts"
         self.GENERAL_CNAME = "general"
         self.STARBOARD_CNAME = "starboard"
+        self.AOC_CNAME = "cpg"
+        self.AOC_ROLE = "cpg"
         self.BOT_TIMEZONE = timezone("Australia/Brisbane")
         self.STARBOARD_ENAME = "starhaj"
 

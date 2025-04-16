@@ -7,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
+from uqcsbot.yelling import yelling_exemptor
 
 # Max length of the message to be displayed per line in the bubble.
 CowsayWrapLength = 40
@@ -49,6 +50,7 @@ class Cowsay(commands.Cog):
         tongue="Whether the cow should show its tongue (optional, default to False)",
         tux="Display the Linux Tux instead of the cow. Tux doesn't show tongue. (optional, default to False)",
     )
+    @yelling_exemptor(input_args=["message"])
     async def cowsay_command(
         self,
         interaction: discord.Interaction,
@@ -91,6 +93,7 @@ class Cowsay(commands.Cog):
         tongue="Whether the cow should show its tongue (optional, default to False)",
         tux="Display the Linux Tux instead of the cow. Tux doesn't show tongue. (optional, default to False)",
     )
+    @yelling_exemptor(input_args=["message"])
     async def cowthink_command(
         self,
         interaction: discord.Interaction,

@@ -11,6 +11,7 @@ from discord.ext import commands
 from requests import get
 
 from uqcsbot.bot import UQCSBot
+from uqcsbot.yelling import yelling_exemptor
 
 
 class Gaming(commands.Cog):
@@ -217,6 +218,7 @@ class Gaming(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(board_game="Board game to search for")
+    @yelling_exemptor(input_args=["board_game"])
     async def bgg(self, interaction: discord.Interaction, board_game: str):
         """
         Gets the details of the provided board game from Board Game Geek
@@ -242,6 +244,7 @@ class Gaming(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(card="Card to search for")
+    @yelling_exemptor(input_args=["card"])
     async def scry(self, interaction: discord.Interaction, card: Optional[str]):
         """
         Returns the Magic: the Gathering card that matches (partially or

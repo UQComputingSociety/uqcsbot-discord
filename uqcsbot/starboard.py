@@ -104,7 +104,7 @@ class Starboard(commands.Cog):
             self.modlog = log
 
     @app_commands.command()
-    @app_commands.default_permissions(manage_guild=True)
+    @app_commands.checks.has_permissions(manage_guild=True)
     async def cleanup_starboard(self, interaction: discord.Interaction):
         """Cleans up the last 100 messages from the starboard.
         Removes any uqcsbot message that doesn't have a corresponding message id in the db, regardless of recv.
@@ -112,7 +112,6 @@ class Starboard(commands.Cog):
 
         manage_guild perms: for committee and infra use.
         """
-
         if interaction.channel == self.starboard_channel:
             # because if you do it from in the starboard, it deletes its own interaction response
             # and i cba making it not do that, so i'll just forbid doing it in starboard.
@@ -189,7 +188,7 @@ class Starboard(commands.Cog):
             )
         )
 
-    @app_commands.default_permissions(manage_messages=True)
+    @app_commands.checks.has_permissions(manage_messages=True)
     async def context_blacklist_sb_message(
         self, interaction: discord.Interaction, message: discord.Message
     ):
@@ -237,7 +236,7 @@ class Starboard(commands.Cog):
             f"Blacklisted message {message.id}.", ephemeral=True
         )
 
-    @app_commands.default_permissions(manage_messages=True)
+    @app_commands.checks.has_permissions(manage_messages=True)
     async def context_unblacklist_sb_message(
         self, interaction: discord.Interaction, message: discord.Message
     ):

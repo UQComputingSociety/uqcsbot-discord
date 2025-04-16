@@ -16,12 +16,27 @@ class Base(DeclarativeBase):
     pass
 
 
-class AOCWinner(Base):
-    __tablename__ = "aoc_winner"
+class AOCWinners(Base):
+    __tablename__ = "aoc_winners"
 
-    id: Mapped[int] = mapped_column("id", BigInteger, primary_key=True, nullable=False)
+    id: Mapped[int] = mapped_column(
+        "id", Integer, primary_key=True, nullable=False, autoincrement=True
+    )
     aoc_userid: Mapped[int] = mapped_column("aoc_userid", Integer, nullable=False)
     year: Mapped[int] = mapped_column("year", Integer, nullable=False)
+    prize: Mapped[str] = mapped_column("prize", String, nullable=True)
+
+
+class AOCRegistrations(Base):
+    __tablename__ = "aoc_registrations"
+
+    discord_userid: Mapped[int] = mapped_column(
+        "discord_userid", BigInteger, primary_key=True, nullable=False
+    )
+    aoc_userid: Mapped[int] = mapped_column("aoc_userid", Integer, nullable=False)
+    year: Mapped[int] = mapped_column(
+        "year", Integer, nullable=False
+    )  # Try to remove this column from the database at some point
 
 
 class MCWhitelist(Base):
@@ -69,3 +84,12 @@ class Starboard(Base):
     sent: Optional[Mapped[Optional[int]]] = mapped_column(
         "sent", BigInteger, primary_key=True, nullable=True, unique=True
     )
+
+
+class YellingBans(Base):
+    __tablename__ = "yellingbans"
+
+    user_id: Mapped[int] = mapped_column(
+        "user_id", BigInteger, primary_key=True, nullable=False
+    )
+    value: Mapped[int] = mapped_column("value", BigInteger, nullable=False)

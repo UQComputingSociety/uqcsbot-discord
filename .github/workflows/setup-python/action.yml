@@ -16,7 +16,7 @@ runs:
     # Get python
     # ------
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version }}
     
@@ -25,7 +25,7 @@ runs:
     # ------
     - name: Check for cached poetry binary
       id: cached-poetry-binary
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.local
         # poetry depends on OS, python version, and poetry version
@@ -50,7 +50,7 @@ runs:
     # ------
     - name: Check for cached dependencies
       id: cached-poetry-dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: '**/.venv'
         # poetry dependencies depend on OS, python version, poetry version, and repository lockfile

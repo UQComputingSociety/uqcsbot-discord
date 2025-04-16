@@ -7,27 +7,29 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-"discord.py" = "^2.2.3"
+"discord.py" = "^2.3.2"
 icalendar = "^5.0"
-"python-dateutil" = "^2.8"
-pytz = "^2023.3"
-requests = "^2.28"
+"python-dateutil" = "^2.9"
+requests = "^2.31"
 beautifulsoup4 = "^4.12"
 APScheduler = "^3.10"
-SQLAlchemy = {version = "^2.0.12", extras = ["postgresql_psycopg2binary"]}
-humanize = "^4.3"
-aiohttp = "^3.8"
+SQLAlchemy = {version = "^2.0.28", extras = ["postgresql_psycopg2binary"]}
+humanize = "^4.9"
+aiohttp = "^3.9"
 aio-mc-rcon = "^3.2.0"
 PyYAML = "^6.0"
+mcstatus = "^11.1.0"
+pillow = "^11.0.0"
+tzdata = "*"
 
 [tool.poetry.scripts]
 botdev = "dev.cli:main"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.3.1"
+pytest = "^7.4.4"
 pytest-datafiles = "^3.0.0"
 python-dotenv = "^1.0.0"
-black = "^23.3.0"
+black = "^23.12.0"
 pyright = "^1.1.316"
 types-requests = "^2.30.0.0"
 types-beautifulsoup4 = "^4.12.0.4"
@@ -41,16 +43,15 @@ build-backend = "poetry.core.masonry.api"
 [tool.pyright]
 strict = ["**"]
 exclude = [
-    "**/advent.py",
     "**/bot.py",
-    "**/error_handler.py",
     "**/events.py",
     "**/gaming.py",
-    "**/member_counter.py",
     "**/remindme.py",
     "**/snailrace.py",
+    "**/starboard.py",
     "**/uptime.py",
     "**/working_on.py",
     "**/utils/command_utils.py",
     "**/utils/snailrace_utils.py",
 ]
+

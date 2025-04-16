@@ -11,12 +11,21 @@ from typing import List
 from zoneinfo import ZoneInfo
 
 from uqcsbot.bot import UQCSBot
-from uqcsbot.utils.command_utils import HYPE_REACTS
 
 HOLIDAY_URL = "https://www.timeanddate.com/holidays/fun/"
 HOLIDAY_CSV_PATH = "uqcsbot/static/geek_holidays.csv"
 HOLIDAY_MESSAGE = "Today is {}!"
 GENERAL_CHANNEL = "general"
+HYPE_REACTS = [
+    "blahaj",
+    "blobhajHeart",
+    "realheart",
+    "blobhajInnocent",
+    "keen",
+    "bigsippin",
+    "pog_of_greed",
+    "blobhajHearts",
+]
 
 
 class Holiday:
@@ -94,7 +103,10 @@ def get_holiday_page() -> bytes | None:
         response = requests.get(HOLIDAY_URL)
         return response.content
     except RequestException as e:
-        logging.warning(e.response.content)
+        resp_content = e.response.content if e.response else "No response error given."
+        logging.warning(
+            f"(RequestException) Could not fetch {HOLIDAY_URL}: {resp_content}"
+        )
 
 
 class Holidays(commands.Cog):
@@ -113,8 +125,11 @@ class Holidays(commands.Cog):
         Posts a random celebratory day on #general from
         https://www.timeanddate.com/holidays/fun/
         """
+        logging.info("Running daily holiday task")
+
         holiday = get_holiday()
         if holiday is None:
+            logging.info("No holiday was found for today")
             return
 
         general_channel = discord.utils.get(

@@ -11,6 +11,7 @@ from uqcsbot.utils.uq_course_utils import (
     get_past_exams_page_url,
     HttpException,
 )
+from uqcsbot.yelling import yelling_exemptor
 
 SemesterType = Optional[Literal["Sem 1", "Sem 2", "Summer"]]
 
@@ -26,6 +27,7 @@ class PastExams(commands.Cog):
         semester="The semester to find exams for. Leave blank for all semesters.",
         random_exam="Whether to select a single random exam.",
     )
+    @yelling_exemptor(input_args=["course_code"])
     async def pastexams(
         self,
         interaction: discord.Interaction,

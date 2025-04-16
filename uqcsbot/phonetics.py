@@ -2,6 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from uqcsbot.yelling import yelling_exemptor
+
 # X-SAMPA is basically a giant lookup table of symbols. It is split up into tables of
 # length 4, 3, 2, and 1 for ease of decoding. This is not the most efficient way to
 # convert X-SAMPA to Unicode, but it is definitely the simplest + easiest to understand.
@@ -169,6 +171,7 @@ class Phonetics(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(input="X-SAMPA to convert")
+    @yelling_exemptor(input_args=["input"])
     async def xsampa(self, interaction: discord.Interaction, input: str):
         """
         Converts X-SAMPA to IPA

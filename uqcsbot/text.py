@@ -6,6 +6,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from uqcsbot.yelling import yelling_exemptor
+
 
 async def encoding_autocomplete(
     interaction: discord.Interaction, current: str
@@ -31,17 +33,30 @@ async def encoding_autocomplete(
 class Text(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.zalgo_menu = app_commands.ContextMenu(
-            name="Zalgo",
-            callback=self.zalgo_context,
-        )
-        self.bot.tree.add_command(self.zalgo_menu)
 
-        self.mock_menu = app_commands.ContextMenu(
-            name="Mock",
-            callback=self.mock_context,
+        ##        self.zalgo_menu = app_commands.ContextMenu(
+        ##            name="Zalgo",
+        ##            callback=self.zalgo_context,
+        ##        )
+        ##        self.bot.tree.add_command(self.zalgo_menu)
+        ##
+        ##        self.mock_menu = app_commands.ContextMenu(
+        ##            name="Mock",
+        ##            callback=self.mock_context,
+        ##        )
+        ##        self.bot.tree.add_command(self.mock_menu)
+        ##
+        ##        self.rot_13_menu = app_commands.ContextMenu(
+        ##            name="ROT13",
+        ##            callback=self.rot_13_context,
+        ##        )
+        ##        self.bot.tree.add_command(self.rot_13_menu)
+
+        self.rot_13_secret_menu = app_commands.ContextMenu(
+            name="ROT13 (Secret)",
+            callback=self.rot_13_secret_context,
         )
-        self.bot.tree.add_command(self.mock_menu)
+        self.bot.tree.add_command(self.rot_13_secret_menu)
 
         # casualty of the starboard's blacklist/whitelist commands, kept for posterity
         # self.scare_menu = app_commands.ContextMenu(
@@ -70,6 +85,7 @@ class Text(commands.Cog):
         message="Input string", encoding="Character encoding to use, defaults to UTF-8"
     )
     @app_commands.autocomplete(encoding=encoding_autocomplete)
+    @yelling_exemptor(input_args=["message"])
     async def binify(
         self,
         interaction: discord.Interaction,
@@ -112,6 +128,7 @@ class Text(commands.Cog):
     @app_commands.describe(
         message="Text to shift", distance="Distance to shift, defaults to 13"
     )
+    @yelling_exemptor(input_args=["message"])
     async def caesar(
         self,
         interaction: discord.Interaction,
@@ -140,6 +157,7 @@ class Text(commands.Cog):
         message="Input string", encoding="Character encoding to use, defaults to UTF-8"
     )
     @app_commands.autocomplete(encoding=encoding_autocomplete)
+    @yelling_exemptor(input_args=["message"])
     async def hexify(
         self,
         interaction: discord.Interaction,
@@ -213,6 +231,7 @@ class Text(commands.Cog):
 
     @app_commands.command(name="mock")
     @app_commands.describe(text="Text to mock")
+    @yelling_exemptor()
     async def mock_command(self, interaction: discord.Interaction, text: str):
         """mOckS ThE pRovIdEd teXT."""
 
@@ -231,6 +250,7 @@ class Text(commands.Cog):
 
     @app_commands.command(name="scare")
     @app_commands.describe(text='Text to "scare"')
+    @yelling_exemptor()
     async def scare_command(self, interaction: discord.Interaction, text: str):
         """
         "adds" "scary" "quotes" "around" "the" "provided" "text"
@@ -258,12 +278,51 @@ class Text(commands.Cog):
 
     @app_commands.command(name="zalgo")
     @app_commands.describe(text="Input text")
+    @yelling_exemptor()
     async def zalgo_command(self, interaction: discord.Interaction, text: str):
         """
         Ȃd͍̋͗̃d͒̈́s̒͢ ̅̂̚͏̞̩ͅZͩ̆a̦̐ͭ́l̠̫̈́̐g̡͗ͯo̝̱̽ ̮̰͊c̢̞ͬh̩ͤ̑a̡̫̟͐̽̌r̪̭͇̓a̘͕̣c͓̐́t̠̂̈̓e̳̣̣͂̉r͓͗s͉̞͝ t̙͓̊ͨoͭ ̋̽͊t̛̖̮̊͋hͤ̂͏̯̺͚e̷͖̩̙̿ ͇̩̕ğ̵̟̘̼i̢͙̜v̲ͫ͘e͐͐͆̕n͟ ̭͋͢ͅt͐͆̀e̝̱͑͛x̝̲t͇͕
         """
 
         await interaction.response.send_message(self.zalgo_common(text))
+
+    def rot_13_cipher(self, text: str) -> str:
+        result = ""
+        for c in text:
+            if "a" <= c <= "m" or "A" <= c <= "M":
+                result += chr(ord(c) + 13)
+            elif "n" <= c <= "z" or "N" <= c <= "Z":
+                result += chr(ord(c) - 13)
+            else:
+                result += c
+        return result
+
+    @app_commands.command(name="rot_13")
+    @app_commands.describe(text="Input text")
+    @yelling_exemptor()
+    async def rot_13_command(self, interaction: discord.Interaction, text: str):
+        """
+        Encodes the given text with the cunning ROT13 Cipher
+        """
+        await interaction.response.send_message(self.rot_13_cipher(text))
+
+    ##    async def rot_13_context(
+    ##        self, interaction: discord.Interaction, message: discord.Message
+    ##    ):
+    ##        """
+    ##        Encodes this message with the cunning ROT13 Cipher
+    ##        """
+    ##        await interaction.response.send_message(self.rot_13_cipher(message.content))
+
+    async def rot_13_secret_context(
+        self, interaction: discord.Interaction, message: discord.Message
+    ):
+        """
+        Encodes this message with the cunning ROT13 Cipher, and shows it secretly to the caller
+        """
+        await interaction.response.send_message(
+            self.rot_13_cipher(message.content), ephemeral=True
+        )
 
 
 async def setup(bot: commands.Bot):
