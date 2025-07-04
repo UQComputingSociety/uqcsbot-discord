@@ -97,7 +97,7 @@ class Yelling(commands.Cog):
                         "<@&813325414302875669>! "
                         + new.author.mention
                         + " IS ABUSING THEIR DISCORD PRIVILEGES! NAUGHTY "
-                        + msg.author.mention
+                        + new.author.mention
                         + "!"
                     )
 
