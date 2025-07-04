@@ -146,7 +146,9 @@ class Yelling(commands.Cog):
         db_session.close()
 
         try:
-            await author.timeout(timedelta(seconds=(15 * 2**value)), reason="#yelling")
+            await author.timeout(
+                timedelta(seconds=(15 * 2**value)), reason="#yelling"
+            )
         except discord.Forbidden:
             return False
         return True
@@ -168,7 +170,9 @@ class Yelling(commands.Cog):
         db_session.close()
 
         try:
-            await author.timeout(timedelta(seconds=(15 * 2**value)), reason="#yelling")
+            await author.timeout(
+                timedelta(seconds=(15 * 2**value)), reason="#yelling"
+            )
         except discord.Forbidden:
             return False
         return True
