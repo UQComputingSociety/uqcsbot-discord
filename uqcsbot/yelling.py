@@ -100,7 +100,7 @@ class Yelling(commands.Cog):
                         ping = role.mention
                     else:
                         ping = "<@&813325414302875669>"
-                    await msg.reply(
+                    await new.reply(
                         ping
                         + "! "
                         + new.author.mention
