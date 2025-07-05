@@ -93,8 +93,9 @@ class Yelling(commands.Cog):
             if isinstance(new.author, discord.Member):
                 banned = await self.handle_bans(new.author)
                 if not banned:
+                    role = discord.utils.get(self.bot.uqcs_server.roles, name="committee")
                     await new.reply(
-                        "<@&813325414302875669>! "
+                        role.mention + "! "
                         + new.author.mention
                         + " IS ABUSING THEIR DISCORD PRIVILEGES! NAUGHTY "
                         + new.author.mention
@@ -120,8 +121,9 @@ class Yelling(commands.Cog):
             if isinstance(msg.author, discord.Member):
                 banned = await self.handle_bans(msg.author)
                 if not banned:
+                    role = discord.utils.get(self.bot.uqcs_server.roles, name="committee")
                     await msg.reply(
-                        "<@&813325414302875669>! "
+                        role.mention + "! "
                         + msg.author.mention
                         + " IS ABUSING THEIR DISCORD PRIVILEGES! NAUGHTY "
                         + msg.author.mention
