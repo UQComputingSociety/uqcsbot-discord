@@ -96,8 +96,12 @@ class Yelling(commands.Cog):
                     role = discord.utils.get(
                         self.bot.uqcs_server.roles, name="committee"
                     )
-                    await new.reply(
-                        role.mention
+                    if isinstance(role, discord.Role):
+                        ping = role.mention
+                    else:
+                        ping = "<@&813325414302875669>"
+                    await msg.reply(
+                        ping
                         + "! "
                         + new.author.mention
                         + " IS ABUSING THEIR DISCORD PRIVILEGES! NAUGHTY "
@@ -127,8 +131,12 @@ class Yelling(commands.Cog):
                     role = discord.utils.get(
                         self.bot.uqcs_server.roles, name="committee"
                     )
+                    if isinstance(role, discord.Role):
+                        ping = role.mention
+                    else:
+                        ping = "<@&813325414302875669>"
                     await msg.reply(
-                        role.mention
+                        ping
                         + "! "
                         + msg.author.mention
                         + " IS ABUSING THEIR DISCORD PRIVILEGES! NAUGHTY "
