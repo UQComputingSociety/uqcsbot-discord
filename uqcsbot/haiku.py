@@ -261,7 +261,9 @@ def _number_of_syllables_in_word(word: str) -> int:
                 word.removesuffix(suffix).removesuffix(suffix + "s")
             )
             > 0
-            and not word.removesuffix(suffix).removesuffix(suffix + "s").endswith(("a", "e", "i", "o", "u"))
+            and not word.removesuffix(suffix)
+            .removesuffix(suffix + "s")
+            .endswith(("a", "e", "i", "o", "u"))
         ):
             word = word.removesuffix(suffix).removesuffix(suffix + "s")
             number_of_syllables += _number_of_vowel_groups(suffix)
