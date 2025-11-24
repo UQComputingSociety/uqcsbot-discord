@@ -92,14 +92,23 @@ class Member:
 
         Times and delta are calculated for the given year and day.
         """
-
-        member = cls(
-            data["id"],
-            data["name"],
-            data["local_score"],
-            data["stars"],
-            data["global_score"],
-        )
+        # Global leaderboard is removed after year 2025
+        if year < 2025:
+            member = cls(
+                data["id"],
+                data["name"],
+                data["local_score"],
+                data["stars"],
+                data["global_score"],
+            )
+        else:
+            member = cls(
+                data["id"],
+                data["name"],
+                data["local_score"],
+                data["stars"],
+                0
+            )
 
         for d, day_data in data["completion_day_level"].items():
             day = int(d)

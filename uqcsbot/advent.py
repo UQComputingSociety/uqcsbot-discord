@@ -480,7 +480,7 @@ class Advent(commands.Cog):
             case None:
                 await interaction.response.send_message(
                     """
-[Advent of Code](https://adventofcode.com/) is a yearly coding competition that occurs during the first 25 days of december. Coding puzzles are released at 3pm AEST each day, with two stars available for each puzzle. You can spend as long as you like on each puzzle, but UQCS also has a private leaderboard with prizes on offer.
+[Advent of Code](https://adventofcode.com/) is a yearly coding competition that occurs during the first 12 days (used to be 25 days before year 2025) of december. Coding puzzles are released at 3pm AEST each day, with two stars available for each puzzle. You can spend as long as you like on each puzzle, but UQCS also has a private leaderboard with prizes on offer.
 
 To join, go to <https://adventofcode.com/> and sign in. The UQCS private leaderboard join code is `989288-0ff5a98d`. To be eligible for prizes, you will also have to link your discord account. This can be done by using the `/advent register` command. Reach out to committee if you are having any issues.
 
@@ -504,7 +504,7 @@ There are 6 different sorting options, which do slightly different things depend
  `Star 1 & 2 Time` - For single-day leaderboards, this sorts by the shortest time to get both stars 1 and 2 for the given problem. For monthly leaderboards, this sorts by the shortest total time working on all the problems.
  `Total Time     ` - This sorts by the sortest total time working on all the problems. For monthly leaderboards, this is the same as `Star 1 & 2 Time`.
  `Total Stars    ` - This sorts by the largest number of total stars collected over the month.
- `Global         ` - This sorts by users global score. Note that this will only show users with global score.
+ `Global         ` - This sorts by users global score. Note that this will only show users with global score. Note that this only works for year before 2025, as Advent of code remvoed global leaderboard for years after and including 2025.
 
 You can also style the leaderboard (i.e. change the columns). The default style will change depending on whether the leaderboard is for a single-day or the entire month, and depending on the sorting method. Styles consist of a string, with each character representing a column. Use `/advent help leaderboard-style` to see the possoble characters.
                     """
@@ -512,7 +512,7 @@ You can also style the leaderboard (i.e. change the columns). The default style 
             case "leaderboard_style":
                 await interaction.response.send_message(
                     """
-Not a command, but an option given to the command `/advent leaderboard` controling the columns in the leaderboard. Each character in the given string represents a certain column. The possible characters are:
+Not a command, but an option given to the command `/advent leaderboard` controlling the columns in the leaderboard. Each character in the given string represents a certain column. The possible characters are:
 The characters in the string can be:
  `#    ` - Provides a column of the form "XXX)" telling the order for the given leaderboard
  `1    ` - The time for star 1 for the specific day (daily leaderboards only)
@@ -523,7 +523,7 @@ The characters in the string can be:
  `T    ` - The total time spent overall for the whole competition
  `*    ` - The total number of stars for the whole competition
  `L    ` - The local ranking someone has within the UQCS leaderboard
- `G    ` - The global score someone has
+ `G    ` - The global score someone has (before year 2025 only)
  `B    ` - A progress bar of the stars each person has
  `space` - A padding column of a single character
 All other characters will be ignored.
@@ -647,11 +647,15 @@ The arguments for the command have a bit of nuance. They are as follow:
                 content="This leaderboard contains no people."
             )
             return
-
-        view = LeaderboardView(
-            self.bot, interaction, code, year, day, members, leaderboard_style, sortby
-        )
-        await interaction.edit_original_response(**view.make_message_arguments())
+        if year >= 2025 and sortby == "Global Rank": # Global rank is disabled for year 2025 and onwards
+            await interaction.edit_original_response(
+                content="Global leaderboard is removed for year 2025 and onwards, try sorting with other order instead."
+            )
+        else:
+            view = LeaderboardView(
+                self.bot, interaction, code, year, day, members, leaderboard_style, sortby
+            )
+            await interaction.edit_original_response(**view.make_message_arguments())
 
     @advent_command_group.command(name="register")
     @app_commands.describe(
