@@ -103,11 +103,7 @@ class Member:
             )
         else:
             member = cls(
-                data["id"],
-                data["name"],
-                data["local_score"],
-                data["stars"],
-                0
+                data["id"], data["name"], data["local_score"], data["stars"], 0
             )
 
         for d, day_data in data["completion_day_level"].items():
