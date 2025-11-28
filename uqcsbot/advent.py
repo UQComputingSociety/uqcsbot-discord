@@ -647,17 +647,26 @@ The arguments for the command have a bit of nuance. They are as follow:
                 content="This leaderboard contains no people."
             )
             return
-        if year >= 2025 and sortby == "Global Rank": # Global rank is disabled for year 2025 and onwards
+        if (
+            year >= 2025 and sortby == "Global Rank"
+        ):  # Global rank is disabled for year 2025 and onwards
             await interaction.edit_original_response(
                 content="Global leaderboard is removed for year 2025 and onwards, sort with another order instead."
             )
-        elif year >= 2025 and 'G' in leaderboard_style:
+        elif year >= 2025 and "G" in leaderboard_style:
             await interaction.edit_original_response(
                 content="Cannot display global score as global leaderboard is removed of year 2025 and onwards. Please try again after removing the `G` option."
             )
         else:
             view = LeaderboardView(
-                self.bot, interaction, code, year, day, members, leaderboard_style, sortby
+                self.bot,
+                interaction,
+                code,
+                year,
+                day,
+                members,
+                leaderboard_style,
+                sortby,
             )
             await interaction.edit_original_response(**view.make_message_arguments())
 
