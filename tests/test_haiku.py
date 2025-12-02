@@ -310,6 +310,12 @@ def test_number_of_syllables_in_word():
         "yes": 1,
         "theorem": 2,
         "stadium": 3,
+        "appraise": 2,
+        "liaise": 2,
+        "praise": 1,
+        "raise": 1,
+        "raises": 2,
+        "praises": 2,
     }
     for word, expected_syllable_count in test_cases.items():
         assert _number_of_syllables_in_word(word) == expected_syllable_count
