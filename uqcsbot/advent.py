@@ -301,7 +301,7 @@ class Advent(commands.Cog):
             trigger="cron",
             timezone="Australia/Brisbane",
             hour=15,
-            day="1-25",
+            day="1-12",
             month=12,
         )
         self.bot.schedule_task(
@@ -310,7 +310,7 @@ class Advent(commands.Cog):
             timezone="Australia/Brisbane",
             hour=14,
             minute=45,
-            day="1-25",
+            day="1-12",
             month=12,
         )
 
