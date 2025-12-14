@@ -995,7 +995,7 @@ The arguments for the command have a bit of nuance. They are as follow:
         interaction: discord.Interaction,
         prize: str,
         start: int = 1,
-        end: int = 25,
+        end: int = 12,
         number_of_winners: int = 1,
         weights: Literal["Stars", "Equal"] = "Equal",
         allow_repeat_winners: bool = False,
@@ -1098,7 +1098,7 @@ The arguments for the command have a bit of nuance. They are as follow:
                 winners_message += " and "
 
         await interaction.edit_original_response(
-            content=f"The results are in! Out of {number_of_potential_winners} potential participants, {winners_message} have recieved a prize from participating in Advent of Code: {prize}",
+            content=f"The results are in! Out of {number_of_potential_winners} potential participants, {winners_message} have received a prize from participating in Advent of Code: {prize}",
             allowed_mentions=discord.AllowedMentions(
                 everyone=False, users=True, roles=False
             ),
