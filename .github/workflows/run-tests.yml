@@ -3,7 +3,7 @@ name: Static Code Tests
 on:
   push:
     branches: [ main ]
-  pull_request: []
+  pull_request:
 
 env: 
   PYTHON_VERSION: '3.10'
