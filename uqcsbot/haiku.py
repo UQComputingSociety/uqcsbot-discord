@@ -261,6 +261,9 @@ def _number_of_syllables_in_word(word: str) -> int:
                 word.removesuffix(suffix).removesuffix(suffix + "s")
             )
             > 0
+            and not word.removesuffix(suffix)
+            .removesuffix(suffix + "s")
+            .endswith(("a", "e", "i", "o", "u"))
         ):
             word = word.removesuffix(suffix).removesuffix(suffix + "s")
             number_of_syllables += _number_of_vowel_groups(suffix)
@@ -279,9 +282,9 @@ def _number_of_syllables_in_word(word: str) -> int:
 
     number_of_syllables += _number_of_vowel_groups(word)
 
-    # Before removing s, note that "s" adds a syllable to words ending in "ce", "ge", "se", "ches" or "shes" such as "sentences", "ages", "houses", "batches" and "hashes"
+    # Before removing s, note that "s" adds a syllable to words ending in "ce", "ge", "se", "ches", "shes" and "aises" such as "sentences", "ages", "houses", "batches", "hashes" and "raises"
     # Note that this does not include all words ending in "thes", as we have words like "breathes"
-    if word.endswith(("ces", "ges", "ses", "ches", "shes")):
+    if word.endswith(("ces", "ges", "ses", "ches", "shes", "aises")):
         number_of_syllables += 1
     word = word.removesuffix("s")
 
