@@ -49,6 +49,9 @@ exclude = [
     "**/remindme.py",
     "**/snailrace.py",
     "**/starboard.py",
+    "**/uptime.py",
+    "**/working_on.py",
+    "**/utils/command_utils.py",
     "**/utils/snailrace_utils.py",
 ]
 
