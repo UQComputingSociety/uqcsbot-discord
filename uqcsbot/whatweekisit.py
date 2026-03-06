@@ -1,28 +1,28 @@
 import discord
 from discord import app_commands
-import requests
-from typing import NamedTuple, List, Tuple, Optional
+from typing import List, Tuple, Optional
 from zoneinfo import ZoneInfo
-from datetime import datetime, timedelta
-from math import ceil
+from datetime import datetime
 from random import choice
+from dataclasses import dataclass
 
 from bs4 import BeautifulSoup
 from discord.ext import commands
 
 from uqcsbot.yelling import yelling_exemptor
 
+
 # Endpoint that contains a table of semester dates
-MARKUP_CALENDAR_URL: str = "https://systems-training.its.uq.edu.au/systems/student-systems/electronic-course-profile-system/design-or-edit-course-profile/academic-calendar-teaching-week"
+ACADEMIC_CALENDAR_FILE = "uqcsbot/static/academic_calendar.html"
 DATE_FORMAT = "%d/%m/%Y"
 
 
 # Semester information
-class Semester(NamedTuple):
+@dataclass
+class Semester:
     name: str
     start_date: datetime
     end_date: datetime
-    weeks: List[str]
 
 
 def date_to_string(date: datetime):
@@ -46,49 +46,53 @@ def string_to_date(date: str) -> datetime:
 
 
 def get_semester_times(markup: str) -> List[Semester]:
-    """
-    Parses the given HTML page to get a list of the names, dates & weeks of the semesters at UQ
-
-        Dev: this relies on the calendar page for UQ staying relative sane and static
-        Parameters:
-            markup: HTML page from UQ's website in plaintext
-        Returns:
-            A list of the information about semesters at UQ
-
-    """
-    soup = BeautifulSoup(markup, "html.parser")
     semesters: List[Semester] = []
 
-    for semester_title in soup.find_all("h2", "structured-page__step-title"):
-        table = semester_title.parent.find("table")
-        weeks = table.find("tbody").find_all("tr")
+    soup = BeautifulSoup(markup, "html.parser")
+    years = soup.find_all("h3")  # All years are within <h3> tags
 
-        # We assume the term starts on a Monday
-        sem_start = weeks[0].find_all("td")[0].text
-        start_date: datetime = string_to_date(sem_start)
+    for year in years:
+        for element in year.find_all_next():
+            if element.name == "h3":
+                break  # Stop when to next semester
 
-        # We'll filter out the empty cells at the end of the term, say in case it ends on a Tuesday
-        last_week_dates = [
-            cell for cell in weeks[-1].find_all("td") if len(cell.text.strip())
-        ]
-        end_date: datetime = string_to_date(last_week_dates[-1].text)
+            if element.name == "div" and element.get("class") == ["uq-accordion__item"]:
+                semester_name = element.find("h4").text  # Semesters are in <h4> tags
 
-        week_names = [week.text.strip() for week in table.find("tbody").find_all("th")]
-        # Invariant
-        assert len(week_names) == ceil(
-            (end_date - start_date + timedelta(days=1)).days / 7
-        )
+                if semester_name not in ("Semester 1", "Semester 2"):
+                    break  # For other semesters (e.g. summer semesters)
 
-        semesters.append(
-            Semester(semester_title.text, start_date, end_date, week_names)
-        )
+                semester_content = element.find("div", class_="uq-accordion__content")
+
+                start_date: datetime | None = None
+                end_date: datetime | None = None
+
+                for event in semester_content.find_all("li"):
+                    text = event.get_text()
+
+                    def get_date():
+                        date_str = text.split("–", 1)[0].replace("\xa0", " ").strip()
+                        dt = datetime.strptime(f"{date_str} {year.text}", "%d %b %Y")
+                        return dt.replace(tzinfo=ZoneInfo("Australia/Brisbane"))
+
+                    if "Classes start" in text:
+                        start_date = get_date()
+
+                    elif (
+                        f"{semester_name} classes end" in text
+                        or f"{semester_name} ends" in text
+                    ):
+                        end_date = get_date()
+
+                if start_date and end_date:
+                    semesters.append(Semester(semester_name, start_date, end_date))
 
     return semesters
 
 
 def get_semester_week(
     semesters: List[Semester], checked_date: datetime
-) -> Optional[Tuple[str, str, str]]:
+) -> Optional[Tuple[str, int, str]]:
     """
     Gets the name of the semester, week and weekday of the date that's to be checked
         Parameters:
@@ -103,16 +107,11 @@ def get_semester_week(
         if semester.start_date <= checked_date <= semester.end_date:
             # If it is, we figure out what week it is
             days_since_start = (checked_date - semester.start_date).days
-            week_index = days_since_start // 7
+            week_index = days_since_start // 7 + 1
 
             weekday = checked_date.strftime("%A")
-            week_name = semester.weeks[week_index]
-            if "week" not in week_name.lower():
-                # Accounts for & makes things like "Revision", "Exam", "Pause" a bit nicer
-                week_name = week_name + " Week"
             semester_name = semester.name
-            return semester_name, week_name, weekday
-
+            return semester_name, week_index, weekday
     return None
 
 
@@ -134,7 +133,8 @@ class WhatWeekIsIt(commands.Cog):
         await interaction.response.defer(thinking=True)
 
         if date == None:
-            check_date = datetime.now(tz=ZoneInfo("Australia/Brisbane"))
+            current_date = datetime.now(tz=ZoneInfo("Australia/Brisbane"))
+            check_date = current_date
         else:
             try:
                 check_date = string_to_date(date)
@@ -144,43 +144,46 @@ class WhatWeekIsIt(commands.Cog):
                 )
                 return
 
-        calendar_page = requests.get(MARKUP_CALENDAR_URL)
-        if calendar_page.status_code != requests.codes.ok:
-            await interaction.edit_original_response(
-                content="An error occurred, please try again."
-            )
+        with open(ACADEMIC_CALENDAR_FILE, "r", encoding="utf-8") as file:
+            calendar_page = file.read()
 
-        semesters = get_semester_times(calendar_page.text)
+        semesters = get_semester_times(calendar_page)
 
         semester_tuple = get_semester_week(semesters, check_date)
-        if not semester_tuple:
-            date = date_to_string(check_date)
-            message = f"University isn't in session on {date}, enjoy the break :)"
-        else:
-            semester_name, week_name, weekday = semester_tuple
 
-            if date != None:
-                message = f"The week of {date} is in:"
+        date = date_to_string(check_date)
+
+        if not semester_tuple:
+            years = BeautifulSoup(calendar_page, "html.parser").find_all("h3")
+            year_numbers = [int(year.get_text(strip=True)) for year in years]
+
+            if min(year_numbers) <= check_date.year <= max(year_numbers):
+                message = f"University isn't in session on {date}, enjoy the break :)"
             else:
-                message = choice(
-                    [
-                        "The week we're in is:",
-                        "The current week is:",
-                        "Currently, the week is:",
-                        "Hey, look at the time:",
-                        f"Can you believe that it's already {week_name}:",
-                        "Time flies when you're having fun:",
-                        "Maybe time's just a construct of human perception:",
-                        "Time waits for noone:",
-                        "This week is:",
-                        "It is currently:",
-                        "The week is",
-                        "The week we're currently in is:",
-                        f"Right now we are in:",
-                        "Good heavens, would you look at the time:",
-                        "What's the time, mister wolf? It's:",
-                    ]
-                )
+                message = f"Sorry, {date} is currently out of bounds."
+        else:
+            semester_name, week_index, weekday = semester_tuple
+            week_name = "Week " + str(week_index)
+            message = f"The week of {date} is in:\n> "
+            message += choice(
+                [
+                    "The week we're in is:",
+                    "The current week is:",
+                    "Currently, the week is:",
+                    "Hey, look at the time:",
+                    "Can you believe that it's already:",
+                    "Time flies when you're having fun:",
+                    "Maybe time's just a construct of human perception:",
+                    "Time waits for noone:",
+                    "This week is:",
+                    "It is currently:",
+                    "The week is",
+                    "The week we're currently in is:",
+                    "Right now we are in:",
+                    "Good heavens, would you look at the time:",
+                    "What's the time, mister wolf? It's:",
+                ]
+            )
 
             message += f"\n> {weekday}, {week_name} of {semester_name}"
 
