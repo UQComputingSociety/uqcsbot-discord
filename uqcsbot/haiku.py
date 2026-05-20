@@ -1,5 +1,5 @@
 import re
-from typing import Final, Dict, List, Tuple
+from typing import Final, Dict, List, Tuple, cast
 from yaml import load, Loader
 import random
 import logging
@@ -54,9 +54,9 @@ try:
         elif isinstance(rule_specification, dict):
             match rule_name:
                 case "exceptions":
-                    syllable_exceptions = rule_specification
+                    syllable_exceptions = cast(Dict[str, int], rule_specification)
                 case "accents":
-                    accent_replacements = rule_specification
+                    accent_replacements = cast(Dict[str, str], rule_specification)
                 case _:
                     # We will catch this on __init__ of the cog. We cannot deal with this error now via FatalErrorWithLog, as the bot may not have loaded enough
                     pass
