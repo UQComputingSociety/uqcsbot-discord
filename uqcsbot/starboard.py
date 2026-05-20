@@ -242,7 +242,7 @@ class Starboard(commands.Cog):
         db_session.close()
 
     def _starboard_db_remove(
-        self, recv: (discord.Message | None), sent: (discord.Message | None)
+        self, recv: discord.Message | None, sent: discord.Message | None
     ) -> None:
         """Removes a starboard DB entry. Only called from process_updates, but no caller guarantees about recv being
         None, so we take Messages and only get ids if they're not-None."""
@@ -263,8 +263,8 @@ class Starboard(commands.Cog):
         db_session.close()
 
     async def _fetch_message_or_none(
-        self, channel: (discord.TextChannel | None), id: (int | None)
-    ) -> (discord.Message | None):
+        self, channel: discord.TextChannel | None, id: int | None
+    ) -> discord.Message | None:
         """Translates a lot of None into much less None. Also translates NotFound exceptions."""
         if channel is None or id is None:
             return None
@@ -383,7 +383,7 @@ class Starboard(commands.Cog):
         return len(set([user for user in users if user not in authors]))
 
     def _generate_message_text(
-        self, reaction_count: int, recieved_msg: (discord.Message | None)
+        self, reaction_count: int, recieved_msg: discord.Message | None
     ) -> str:
         return (
             f"{str(self.starboard_emoji)} {reaction_count} | "
@@ -438,8 +438,8 @@ class Starboard(commands.Cog):
     async def _process_sb_updates(
         self,
         reaction_count: int,
-        recieved_msg: (discord.Message | None),
-        starboard_msg: (discord.Message | None),
+        recieved_msg: discord.Message | None,
+        starboard_msg: discord.Message | None,
     ) -> None:
         if (
             reaction_count >= self.base_threshold
