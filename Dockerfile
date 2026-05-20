@@ -1,17 +1,17 @@
-FROM python:3.10-slim as python-base
+FROM python:3.13-slim AS python-base
 
 # Environment variables that should exist in all images.
 ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_DEFAULT_TIMEOUT=100 \
     POETRY_NO_INTERACTION=1 \
-    POETRY_VERSION=1.7.1 \
+    POETRY_VERSION=2.4.1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
     POETRY_CACHE_DIR='/var/cache/pypoetry'
 
 
 # poetry-base stage installs Poetry and installs prod deps
-FROM python-base as poetry-base
+FROM python-base AS poetry-base
 
 WORKDIR /app
 RUN pip install "poetry==$POETRY_VERSION" && poetry --version
@@ -22,7 +22,7 @@ RUN poetry install --without=dev
 
 # dev stage continues off poetry-base to install dev deps
 # and have poetry available within the container.
-FROM poetry-base as dev
+FROM poetry-base AS dev
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
@@ -35,7 +35,7 @@ ENTRYPOINT ["python", "-m", "uqcsbot"]
 
 # prod stage creates the final image for production and excludes
 # poetry as it is unneeded on prod.
-FROM python-base as prod
+FROM python-base AS prod
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
