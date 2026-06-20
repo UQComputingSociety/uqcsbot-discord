@@ -64,9 +64,11 @@ sorting_functions_for_day: Dict[
         member.times[day].get(2, MAXIMUM_TIME_FOR_STAR),
     ),
     "Star 2 Time": lambda member, day: (
-        member.times[day][2] - member.times[day][1]
-        if 2 in member.times[day]
-        else MAXIMUM_TIME_FOR_STAR,
+        (
+            member.times[day][2] - member.times[day][1]
+            if 2 in member.times[day]
+            else MAXIMUM_TIME_FOR_STAR
+        ),
         member.times[day].get(1, MAXIMUM_TIME_FOR_STAR),
     ),
     "Star 1 & 2 Time": lambda member, day: (
@@ -478,24 +480,19 @@ class Advent(commands.Cog):
         """
         match command:
             case None:
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 [Advent of Code](https://adventofcode.com/) is a yearly coding competition that occurs during the first 12 days (used to be 25 days before year 2025) of december. Coding puzzles are released at 3pm AEST each day, with two stars available for each puzzle. You can spend as long as you like on each puzzle, but UQCS also has a private leaderboard with prizes on offer.
 
 To join, go to <https://adventofcode.com/> and sign in. The UQCS private leaderboard join code is `989288-0ff5a98d`. To be eligible for prizes, you will also have to link your discord account. This can be done by using the `/advent register` command. Reach out to committee if you are having any issues.
 
 For more help, you can use `/advent help <command name>` to get information about a specific command.
-                    """
-                )
+                    """)
             case "help":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent help` is a help menu for all the Advent of Code commands. If you use `/advent help <command name>` you can see details of a particular command. Not much else to say here, try another command.
-                    """
-                )
+                    """)
             case "leaderboard":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent leaderboard` displays a leaderboard for the Advent of Code challenges. There are two types of leaderboard: for a single day, and for the entire month. These are selected by either providing the `day` option or not. You can also display the leaderboard for a past year or another leaderboard (say another private leaderboard that you have).
 
 There are 6 different sorting options, which do slightly different things depending on whether the leaderboard is for a single day or an entire month. The default sorting method changes on which type of leaderboard you want.
@@ -507,11 +504,9 @@ There are 6 different sorting options, which do slightly different things depend
  `Global         ` - This sorts by users global score. Note that this will only show users with global score. Note that this only works for year before 2025, as Advent of code remvoed global leaderboard for years after and including 2025.
 
 You can also style the leaderboard (i.e. change the columns). The default style will change depending on whether the leaderboard is for a single-day or the entire month, and depending on the sorting method. Styles consist of a string, with each character representing a column. Use `/advent help leaderboard-style` to see the possoble characters.
-                    """
-                )
+                    """)
             case "leaderboard_style":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 Not a command, but an option given to the command `/advent leaderboard` controlling the columns in the leaderboard. Each character in the given string represents a certain column. The possible characters are:
 The characters in the string can be:
  `#    ` - Provides a column of the form "XXX)" telling the order for the given leaderboard
@@ -527,41 +522,29 @@ The characters in the string can be:
  `B    ` - A progress bar of the stars each person has
  `space` - A padding column of a single character
 All other characters will be ignored.
-                    """
-                )
+                    """)
             case "register":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent register` links an Advent of Code account and a discord user so that you are eligble for prizes. Each Advent of Code account and discord account can only be linked to one other account. Registrations persist across years. If you are having any issues with this, message committee to help.
-                    """
-                )
+                    """)
             case "register-force":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent register-force` is an admin-only command to force a registration (i.e. create a registration between any Advent of Code account and Discord user). This can be used for moderation, if someone is having difficulties registering or if you want to register someone for a previous year. This command can break things (such as creating duplicate registrations), so be careful. Exactly one of `aoc_name` or `aoc_id` should be given. Also note that you need to use the Discord ID, not the discord username. If you have developer options enables on your account, this can be found by right clicking on the user and selecting `Copy User ID`.
-                    """
-                )
+                    """)
             case "unregister":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent unregister` unlinks your discord account from the currently linked Advent of Code account. Message committee if you need any help.
-                    """
-                )
+                    """)
             case "unregister-force":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent unregister-force` is an admin-only command that removes a registration from the database. This can be used as a moderation tool, to remove someone who has registered to an Advent of Code account that isn't there. Note that you need to use the Discord ID, not the discord username. If you have developer options enables on your account, this can be found by right clicking on the user and selecting `Copy User ID`.
-                    """
-                )
+                    """)
             case "previous-winners":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent previous-winners` displays the previous winners for a particular year. Note that the records for year prior to 2022 may not be accurate, as the current system was not in use then.
-                    """
-                )
+                    """)
             case "new-winner":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent add-winner` is an admin-only command that allows you to either manually or randomly select winners. Participants will only be eligible to win if they have completed at least one star within the given times. For manual selection, provide an Advent of Code user ID (note that this is not the same as their Advent of Code name), otherwise a random winner will be drawn.
                     
 The arguments for the command have a bit of nuance. They are as follow:
@@ -572,14 +555,11 @@ The arguments for the command have a bit of nuance. They are as follow:
  `allow_repeat_winners    ` -  This allows participants to win multiple times from the same selection if `number_of_winners` is greater than 1. Note that regardless of this option, someone can win multiple times in a year, just not in a single selection.
  `allow_unregistered_users` - This allows Advent of Code accounts that do not have a linked discord account to win. Note that it can be difficult to give out prizes to users that do not have a linked discord.
  `year                    ` - The year the prize is for.
-                    """
-                )
+                    """)
             case "remove-winner":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent remove-winner` is an admin-only command that removes a winner from the database. It uses the database ID (which is distinct from the Advent of code user ID and the Discord user ID). You can find these ids by running `/advent previous-winners show_ids:True`.
-                    """
-                )
+                    """)
 
     @advent_command_group.command(name="leaderboard")
     @app_commands.describe(

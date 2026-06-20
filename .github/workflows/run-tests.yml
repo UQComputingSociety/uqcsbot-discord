@@ -6,8 +6,8 @@ on:
   pull_request:
 
 env: 
-  PYTHON_VERSION: '3.10'
-  POETRY_VERSION: '1.7.1'
+  PYTHON_VERSION: '3.13'
+  POETRY_VERSION: '2.4.1'
 
 jobs:
   tests:
@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
         # Local action that tries to cache as much of python & poetry as possible
       - name: Setup environment
@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
         # Local action that tries to cache as much of python & poetry as possible
       - name: Setup environment

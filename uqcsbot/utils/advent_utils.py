@@ -21,7 +21,6 @@ from io import BytesIO
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
-import PIL.features
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import AOCRegistrations

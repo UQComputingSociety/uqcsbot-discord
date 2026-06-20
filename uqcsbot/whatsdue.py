@@ -86,9 +86,11 @@ class WhatsDue(commands.Cog):
         # If full output is not specified, set the cutoff to today's date.
         cutoff = (
             datetime.min if fulloutput else datetime.today(),
-            datetime.today() + timedelta(weeks=weeks_to_show)
-            if weeks_to_show > 0
-            else datetime.max,
+            (
+                datetime.today() + timedelta(weeks=weeks_to_show)
+                if weeks_to_show > 0
+                else datetime.max
+            ),
         )
 
         try:

@@ -10,7 +10,6 @@ from zoneinfo import ZoneInfo
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import Reminders
 
-
 USER_REMINDER_LIMIT = 10
 
 REMINDME_MESSAGE_TITLE = "RemindMe: Reminder"
