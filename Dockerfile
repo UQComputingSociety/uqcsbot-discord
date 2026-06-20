@@ -44,6 +44,17 @@ COPY --from=poetry-base /app /app
 WORKDIR /app
 COPY ./uqcsbot ./uqcsbot
 
+# Strip the package manager out of the production image to reduce attack
+# surface. Nothing needs to be installed at runtime.
+RUN rm -rf \
+        /usr/bin/apt* \
+        /usr/bin/dpkg* \
+        /usr/lib/apt \
+        /usr/lib/dpkg \
+        /etc/apt \
+        /var/lib/apt \
+        /var/cache/apt
+
 # Run as a non-root user, nothing should be written to disk at runtime.
 # We create this with a `/home/nonroot` home directory for the event
 # that a depencendy decides to write to `~/.cache`.
