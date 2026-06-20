@@ -44,5 +44,11 @@ COPY --from=poetry-base /app /app
 WORKDIR /app
 COPY ./uqcsbot ./uqcsbot
 
+# Run as a non-root user, nothing should be written to disk at runtime.
+# We create this with a `/home/nonroot` home directory for the event
+# that a depencendy decides to write to `~/.cache`.
+RUN useradd --create-home --uid 65532 nonroot
+USER nonroot
+
 ENTRYPOINT ["python", "-m", "uqcsbot"]
 
