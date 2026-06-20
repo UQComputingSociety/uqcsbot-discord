@@ -28,7 +28,6 @@ PyYAML = "^6.0"
 mcstatus = "^11.1.0"
 pillow = "^12.0.0"
 tzdata = "*"
-pytest = "^9.0.3"
 pytz = "^2026.2"
 
 [tool.poetry.group.dev.dependencies]
