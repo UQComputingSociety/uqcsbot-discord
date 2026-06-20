@@ -46,22 +46,24 @@ ENTRYPOINT ["python", "-m", "uqcsbot"]
 # and virtual environment.
 FROM python-base AS prod
 
-# Create an unprivileged runtime user and remove package-manager and shell from
-# the final image.
+# Create an unprivileged runtime user.
 RUN addgroup -S -g 65532 nonroot                                \
- && adduser -S -G nonroot -u 65532 -h /home/nonroot nonroot     \
- && rm -rf                                                      \
-        /sbin/apk                                               \
-        /etc/apk                                                \
-        /lib/apk                                                \
-        /usr/share/apk                                          \
-        /var/cache/apk                                          \
- && find /bin -mindepth 1 -delete
+ && adduser -S -G nonroot -u 65532 -h /home/nonroot nonroot
 
 COPY --from=poetry-base --chown=nonroot:nonroot /app /app
 COPY --chown=nonroot:nonroot ./uqcsbot /app/uqcsbot
 
 WORKDIR /app
+
+# Strip installer tooling from venv, remove the package manager and shell.
+RUN /app/.venv/bin/pip uninstall -y pip setuptools wheel 2>/dev/null || true ; \
+    rm -rf                                                                     \
+        /sbin/apk                                                              \
+        /etc/apk                                                               \
+        /lib/apk                                                               \
+        /usr/share/apk                                                         \
+        /var/cache/apk                                                         \
+ && find /bin -mindepth 1 -delete
 
 USER nonroot
 
