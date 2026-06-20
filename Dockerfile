@@ -1,6 +1,7 @@
-FROM python:3.13-slim AS python-base
+# ---- python-base
+# Common Python runtime and environment settings shared by all stages.
+FROM python:3.13-alpine AS python-base
 
-# Environment variables that should exist in all images.
 ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_DEFAULT_TIMEOUT=100 \
@@ -9,57 +10,63 @@ ENV PYTHONUNBUFFERED=1 \
     POETRY_CACHE_DIR='/var/cache/pypoetry'
 
 
-# poetry-base stage installs Poetry and installs prod deps
+# ---- poetry-base
+# Installs Poetry and production dependencies.
 FROM python-base AS poetry-base
 
 WORKDIR /app
+
 RUN pip install "poetry==$POETRY_VERSION" && poetry --version
 
+# Install production dependencies separately so source changes do not
+# invalidate the dependency cache.
 COPY pyproject.toml poetry.lock ./
-RUN poetry install --without=dev
+RUN poetry install --without=dev --no-root
 
 
-# dev stage continues off poetry-base to install dev deps
-# and have poetry available within the container.
+# ---- dev
+# Development image with Poetry and development dependencies available for
+# local development and testing.
 FROM poetry-base AS dev
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
-RUN poetry install --with=dev
 
+RUN poetry install --with=dev --no-root
+
+EXPOSE 8080
 ENTRYPOINT ["python", "-m", "uqcsbot"]
 
 
-# prod stage creates the final image for production and excludes
-# poetry as it is unneeded on prod.
+# ---- prod
+# Final production image. Excludes Poetry, build tooling, package manager,
+# system shell, and runs as a non-root user. It only contains the application
+# and virtual environment.
 FROM python-base AS prod
+
+# Create an unprivileged runtime user and remove package-manager and shell from
+# the final image.
+RUN addgroup -S -g 65532 nonroot                                \
+ && adduser -S -G nonroot -u 65532 -h /home/nonroot nonroot     \
+ && rm -rf                                                      \
+        /sbin/apk                                               \
+        /etc/apk                                                \
+        /lib/apk                                                \
+        /usr/share/apk                                          \
+        /var/cache/apk                                          \
+ && find /bin -mindepth 1 -delete
+
+COPY --from=poetry-base --chown=nonroot:nonroot /app /app
+COPY --chown=nonroot:nonroot ./uqcsbot /app/uqcsbot
+
+WORKDIR /app
+
+USER nonroot
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 
-COPY --from=poetry-base /app /app
-
-WORKDIR /app
-COPY ./uqcsbot ./uqcsbot
-
-# Strip the package manager out of the production image to reduce attack
-# surface. Nothing needs to be installed at runtime.
-RUN rm -rf \
-        /usr/bin/apt* \
-        /usr/bin/dpkg* \
-        /usr/lib/apt \
-        /usr/lib/dpkg \
-        /etc/apt \
-        /var/lib/apt \
-        /var/cache/apt
-
-# Run as a non-root user, nothing should be written to disk at runtime.
-# We create this with a `/home/nonroot` home directory for the event
-# that a depencendy decides to write to `~/.cache`.
-RUN useradd --create-home --uid 65532 nonroot
-USER nonroot
-
+EXPOSE 8080
 ENTRYPOINT ["python", "-m", "uqcsbot"]
-
