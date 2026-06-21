@@ -55,15 +55,9 @@ COPY --chown=nonroot:nonroot ./uqcsbot /app/uqcsbot
 
 WORKDIR /app
 
-# Strip installer tooling from venv, remove the package manager and shell.
+# Strip installer tooling from venv, and remove the package manager.
 RUN /app/.venv/bin/pip uninstall -y pip setuptools wheel 2>/dev/null || true ; \
-    rm -rf                                                                     \
-        /sbin/apk                                                              \
-        /etc/apk                                                               \
-        /lib/apk                                                               \
-        /usr/share/apk                                                         \
-        /var/cache/apk                                                         \
- && find /bin -mindepth 1 -delete
+    rm -rf /sbin/apk /etc/apk /usr/share/apk /var/cache/apk
 
 USER nonroot
 
