@@ -22,13 +22,12 @@ beautifulsoup4 = "^4.14.3"
 APScheduler = "^3.11.2"
 SQLAlchemy = {version = "^2.0.49", extras = ["postgresql_psycopg2binary"]}
 humanize = "^4.15"
-aiohttp = "^3.13.5"
+aiohttp = "^3.14.1"
 aio-mc-rcon = "^3.4.2"
 PyYAML = "^6.0"
 mcstatus = "^11.1.0"
 pillow = "^12.0.0"
 tzdata = "*"
-pytest = "^9.0.3"
 pytz = "^2026.2"
 
 [tool.poetry.group.dev.dependencies]
