@@ -138,10 +138,9 @@ class Haiku(commands.Cog):
             )
 
     @app_commands.command()
-    @app_commands.describe(word="Opt into/out of being checked by Haikubot (toggle)")
     @yelling_exemptor()
     async def haiku_opt_out(self, interaction: discord.Interaction):
-        """Opts a user out of being checked by Haikubot (or opts back in if already opted out)"""
+        """Opt into/out of being checked by Haikubot (toggle)"""
         user_id = interaction.user.id
         with self.bot.create_db_session() as db_session:
             optout_entry = (
