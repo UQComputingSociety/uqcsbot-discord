@@ -159,6 +159,7 @@ class Haiku(commands.Cog):
             db_session.close()
         await interaction.response.send_message(message)
 
+
 def _find_haiku(text: str):
     """
     Finds a haiku and a related "probability" that something is a haiku.
