@@ -10,6 +10,7 @@ from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.yelling import yelling_exemptor
+from uqcsbot.models import HaikuOptOut
 
 SYLLABLE_RULES_PATH: Final[str] = "uqcsbot/static/syllable_rules.yaml"
 ALLOWED_CHANNEL_NAMES: Final[List[str]] = [
@@ -96,6 +97,15 @@ class Haiku(commands.Cog):
         ):
             return
 
+        with self.bot.create_db_session() as db_session:
+            optout_entry = (
+                db_session.query(HaikuOptOut)
+                .filter(HaikuOptOut.user_id == message.author.id)
+                .one_or_none()
+            )
+            if optout_entry is not None:
+                return
+
         haiku_lines, probability_of_showing_haiku = _find_haiku(message.content)
         if not haiku_lines or random.random() > probability_of_showing_haiku:
             return
@@ -127,6 +137,27 @@ class Haiku(commands.Cog):
                 "I can only check one word at a time!"
             )
 
+    @app_commands.command()
+    @app_commands.describe(word="Opt into/out of being checked by Haikubot (toggle)")
+    @yelling_exemptor()
+    async def haiku_opt_out(self, interaction: discord.Interaction):
+        """Opts a user out of being checked by Haikubot (or opts back in if already opted out)"""
+        user_id = interaction.user.id
+        with self.bot.create_db_session() as db_session:
+            optout_entry = (
+                db_session.query(HaikuOptOut)
+                .filter(HaikuOptOut.user_id == user_id)
+                .one_or_none()
+            )
+            if optout_entry is None:
+                message = "You have opted out of being checked for haikus"
+                db_session.add(HaikuOptOut(user_id=user_id))
+            else:
+                message = "You have opted back in to being checked for haikus"
+                db_session.delete(optout_entry)
+            db_session.commit()
+            db_session.close()
+        await interaction.response.send_message(message)
 
 def _find_haiku(text: str):
     """
