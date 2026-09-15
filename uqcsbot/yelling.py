@@ -74,7 +74,7 @@ class Yelling(commands.Cog):
         )
 
     def extract_text(self, msg: discord.Message) -> str:
-        """Extracts the input from text or poll from user message into text."""
+        """Extracts the text from user message or poll."""
         extracted_text = []
         if msg.content:
             extracted_text.append(msg.content)
