@@ -73,6 +73,19 @@ class Yelling(commands.Cog):
             self.clear_bans, trigger="cron", hour=17, timezone="Australia/Brisbane"
         )
 
+    def extract_text(self, msg: discord.Message) -> str:
+        """Extracts the input from text or poll from user message into text."""
+        extracted_text = []
+        if msg.content:
+            extracted_text.append(msg.content)
+
+        if msg.poll:
+            extracted_text.append(msg.poll.question.text)
+            for ans in msg.poll.answers:
+                extracted_text.append(ans.text)
+
+        return " ".join(extracted_text)
+        
     @commands.Cog.listener()
     async def on_message_edit(self, old: discord.Message, new: discord.Message):
         """Detects if a message was edited, and call them out for it."""
@@ -85,7 +98,7 @@ class Yelling(commands.Cog):
         ):
             return
 
-        text = self.clean_text(new.content)
+        text = self.clean_text(self.extract_text(new))
 
         if self.contains_lowercase(text):
             await new.reply(self.generate_response(text))
@@ -103,7 +116,7 @@ class Yelling(commands.Cog):
         ):
             return
 
-        text = self.clean_text(msg.content)
+        text = self.clean_text(self.extract_text(msg))
 
         # check if minuscule in message, and if so, post response
         if self.contains_lowercase(text):
