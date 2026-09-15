@@ -74,7 +74,7 @@ class Yelling(commands.Cog):
         )
 
     def extract_text(self, msg: discord.Message) -> str:
-        """Extracts the text from user message or poll."""
+        """Extracts the text from user message or poll or forwarded message."""
         extracted_text = []
         if msg.content:
             extracted_text.append(msg.content)
@@ -83,6 +83,10 @@ class Yelling(commands.Cog):
             extracted_text.append(msg.poll.question)
             for ans in msg.poll.answers:
                 extracted_text.append(ans.text)
+
+        for snapshot in msg.message_snapshots:
+            if snapshot.content:
+                extracted_text.append(snapshot.content)
 
         return " ".join(extracted_text)
         
