@@ -80,7 +80,7 @@ class Yelling(commands.Cog):
             extracted_text.append(msg.content)
 
         if msg.poll:
-            extracted_text.append(msg.poll.question.text)
+            extracted_text.append(msg.poll.question)
             for ans in msg.poll.answers:
                 extracted_text.append(ans.text)
 
