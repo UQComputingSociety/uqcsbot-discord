@@ -75,7 +75,7 @@ class Yelling(commands.Cog):
 
     def extract_text(self, msg: discord.Message) -> str:
         """Extracts the text from user message or poll or forwarded message."""
-        extracted_text = []
+        extracted_text: List[str] = []
         if msg.content:
             extracted_text.append(msg.content)
 
@@ -89,7 +89,7 @@ class Yelling(commands.Cog):
                 extracted_text.append(snapshot.content)
 
         return " ".join(extracted_text)
-        
+
     @commands.Cog.listener()
     async def on_message_edit(self, old: discord.Message, new: discord.Message):
         """Detects if a message was edited, and call them out for it."""
