@@ -155,6 +155,7 @@ class LeaderboardView(discord.ui.View):
         members: list[Member],
         leaderboard_style: str,
         sortby: Optional[SortingMethod],
+        max_day: Day,
     ):
         super().__init__(timeout=self.TIMEOUT)
 
@@ -169,6 +170,7 @@ class LeaderboardView(discord.ui.View):
         self.sortby = sortby
         self.timestamp = datetime.now()
         self.basename = f"advent_{self.code}_{self.year}_{self.day}"
+        self.max_day = max_day
 
         # can be changed by interaction
         self._visible_members = members[: self.TRUNCATED_COUNT]
@@ -179,7 +181,9 @@ class LeaderboardView(discord.ui.View):
 
     def _build_leaderboard(self, members: List[Member]) -> Leaderboard:
         return build_leaderboard(
-            parse_leaderboard_column_string(self.leaderboard_style, self.bot),
+            parse_leaderboard_column_string(
+                self.leaderboard_style, self.bot, self.max_day
+            ),
             members,
             self.day,
         )
@@ -303,7 +307,7 @@ class Advent(commands.Cog):
             trigger="cron",
             timezone="Australia/Brisbane",
             hour=15,
-            day="1-25",
+            day="1-12",
             month=12,
         )
         self.bot.schedule_task(
@@ -312,7 +316,7 @@ class Advent(commands.Cog):
             timezone="Australia/Brisbane",
             hour=14,
             minute=45,
-            day="1-25",
+            day="1-12",
             month=12,
         )
 
@@ -397,6 +401,13 @@ class Advent(commands.Cog):
                 for data in leaderboard["members"].values()
             ]
         return self.members_cache[year]
+
+    def _get_days_count(self, year: int, code: int = UQCS_LEADERBOARD) -> int:
+        """
+        Returns the number of days in the leaderboard for the given year and leaderboard code.
+        """
+        leaderboard = self._get_leaderboard_json(year, code)
+        return leaderboard.get("num_days", 25)  # Default to 25 if not found
 
     def _get_registrations(self) -> Iterable[AOCRegistrations]:
         """
@@ -581,16 +592,22 @@ The arguments for the command have a bit of nuance. They are as follow:
         """
         Display an advent of code leaderboard.
         """
-        if (not day is None) and (day not in ADVENT_DAYS):
+        if year is None:
+            year = datetime.now().year
+
+        max_valid_day = self._get_days_count(year, code)
+        if (not day is None) and (day not in ADVENT_DAYS or day > max_valid_day):
             await interaction.response.send_message(
-                "The day given is not a valid advent of code day."
+                f"The day given is not a valid advent of code day for year {year}."
             )
             return
 
+        # Limit to max valid day if day is provided
+        if day:
+            max_valid_day = min(day, max_valid_day)
+
         await interaction.response.defer(thinking=True)
 
-        if year is None:
-            year = datetime.now().year
         if sortby is None:
             sortby = "Star 1 & 2 Time" if day else "Total Stars"
         if leaderboard_style is None:
@@ -647,6 +664,7 @@ The arguments for the command have a bit of nuance. They are as follow:
                 members,
                 leaderboard_style,
                 sortby,
+                max_valid_day,
             )
             await interaction.edit_original_response(**view.make_message_arguments())
 
@@ -944,7 +962,7 @@ The arguments for the command have a bit of nuance. They are as follow:
     @app_commands.describe(
         prize="A description of the prize that is being awarded.",
         start="The initial date (inclusive) to base the weights on. Defaults to 1.",
-        end="The final date (includive) to base the weights on. Defaults to 25.",
+        end="The final date (inclusive) to base the weights on. Defaults to 12.",
         number_of_winners="The number of winners to select. Defaults to 1.",
         weights='How to bias the winner selection. Defaults to "Equal"',
         allow_repeat_winners="Allow for winners to be selected multiple times. Defaults to False",
@@ -957,7 +975,7 @@ The arguments for the command have a bit of nuance. They are as follow:
         interaction: discord.Interaction,
         prize: str,
         start: int = 1,
-        end: int = 25,
+        end: int = 12,
         number_of_winners: int = 1,
         weights: Literal["Stars", "Equal"] = "Equal",
         allow_repeat_winners: bool = False,
@@ -1060,7 +1078,7 @@ The arguments for the command have a bit of nuance. They are as follow:
                 winners_message += " and "
 
         await interaction.edit_original_response(
-            content=f"The results are in! Out of {number_of_potential_winners} potential participants, {winners_message} have recieved a prize from participating in Advent of Code: {prize}",
+            content=f"The results are in! Out of {number_of_potential_winners} potential participants, {winners_message} have received a prize from participating in Advent of Code: {prize}",
             allowed_mentions=discord.AllowedMentions(
                 everyone=False, users=True, roles=False
             ),
