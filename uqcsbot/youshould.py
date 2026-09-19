@@ -47,6 +47,7 @@ class YouShould(commands.Cog):
             message.channel not in self.allowed_channels
             or message.author.bot
             or "```" in message.content
+            or "\n" in message.content
             or len(message.content) > 80
         ):
             return
