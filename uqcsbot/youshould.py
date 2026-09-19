@@ -1,15 +1,11 @@
-import re
-from typing import Final, Dict, List, Tuple, cast
-from yaml import load, Loader
+from typing import Final, List, Tuple, Set
 import random
 import logging
 
 import discord
-from discord import app_commands
 from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
-from uqcsbot.yelling import yelling_exemptor
 
 ALLOWED_CHANNEL_NAMES: Final[List[str]] = [
     "banter",
@@ -22,10 +18,10 @@ ALLOWED_CHANNEL_NAMES: Final[List[str]] = [
 ]
 YELLING_CHANNEL_NAME: Final[str] = "yelling"
 
-YOUSHOULD_WORDS: Tuple[Set[str], str, float] = (
+YOUSHOULD_WORDS: List[Tuple[Set[str], str, float]] = [
     ({"somebody should", "someone should"}, "**You** should", 2 / 3),
     ({"im", "i'm", "i am", 'i"m'}, "Hi", 1 / 3),
-)
+]
 
 
 class YouShould(commands.Cog):
