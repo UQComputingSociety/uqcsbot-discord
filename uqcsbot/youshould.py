@@ -26,7 +26,7 @@ YOUSHOULD_WORDS: List[Tuple[Set[str], str, float]] = [
 
 class YouShould(commands.Cog):
     """
-    Replies to people who begins their message a ceratin way
+    Replies to people who begins their message a certain way
     """
 
     def __init__(self, bot: UQCSBot):
