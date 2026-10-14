@@ -20,7 +20,6 @@ YELLING_CHANNEL_NAME: Final[str] = "yelling"
 
 YOUSHOULD_WORDS: List[Tuple[Set[str], str, float]] = [
     ({"somebody should", "someone should"}, "**You** should", 2 / 3),
-    ({"im", "i'm", "i am", 'i"m'}, "Hi", 1 / 3),
 ]
 
 
