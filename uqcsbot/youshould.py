@@ -19,7 +19,7 @@ ALLOWED_CHANNEL_NAMES: Final[List[str]] = [
 YELLING_CHANNEL_NAME: Final[str] = "yelling"
 
 YOUSHOULD_WORDS: List[Tuple[Set[str], str, float]] = [
-    ({"somebody should", "someone should"}, "**You** should", 2 / 3),
+    ({"somebody should", "someone should", "somepony should"}, "**You** should", 2 / 3),
 ]
 
 
