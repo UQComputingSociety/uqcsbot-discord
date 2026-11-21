@@ -946,9 +946,11 @@ The arguments for the command have a bit of nuance. They are as follow:
             elif winner.aoc_userid not in registered_AOC_ids:
                 message += f"{name[0]} (unregisted discord) - {winner.prize}"
             else:
-                discord_user = self.bot.uqcs_server.get_member(
-                    [user.discord_userid for user in registrations][0]
-                )
+                discord_user = self.bot.uqcs_server.get_member([
+                    user.discord_userid
+                    for user in registrations
+                    if winner.aoc_userid == user.aoc_userid
+                ][0])
                 discord_ping = f" ({discord_user.display_name})" if discord_user else ""
                 # Don't actually ping as this may be called many times
                 message += f"{name[0]}{discord_ping}  - {winner.prize}"
