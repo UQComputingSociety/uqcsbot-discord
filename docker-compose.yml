@@ -1,7 +1,4 @@
-version: '3'
-
 services:
-
   # Build the local Dockerfile to run UQCSbot itself.
   uqcsbot:
     build: 
@@ -20,7 +17,7 @@ services:
 
   # Build a database container for UQCSbot to use.
   database:
-    image: 'postgres:13'
+    image: 'postgres:17'
     restart: "unless-stopped"
     ports:
       - 5432:5432
@@ -35,3 +32,4 @@ services:
 # We want database data to persist, so we put it into a volume.
 volumes:
   database-data:
+

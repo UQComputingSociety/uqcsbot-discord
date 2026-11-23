@@ -88,7 +88,7 @@ prefixes_needing_extra_syllable: [
     # Words that have "eo" pronounced as two syllables
     "video",
     # Words that have "ia" pronounced as two syllables
-    "pliant", "media", "association", "via", "india", "variat",
+    "pliant", "media", "association", "via", "india", "variat", "lia",
     # Words that have "ie" pronounced as two syllables
     "audience", "plier", "societ", "quiet", "experience",
     # Words that have "io" pronounced as two syllables
@@ -207,6 +207,7 @@ suffixes_to_remove: [
     "less", "ly", "ing", "ising", "isation", "izing", "ization",
     "istic", "istically", "able", "ably", "ible", "ibly",
 ]
+# Note that this group, in particular, are only removed if they are preceded by a consonant
 suffixes_to_remove_with_one_less_syllable: [
     "ise", "ize", "ised", "ized",
 ]

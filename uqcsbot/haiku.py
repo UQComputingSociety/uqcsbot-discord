@@ -1,5 +1,5 @@
 import re
-from typing import Final, Dict, List, Tuple
+from typing import Final, Dict, List, Tuple, cast
 from yaml import load, Loader
 import random
 import logging
@@ -10,6 +10,7 @@ from discord.ext import commands
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.yelling import yelling_exemptor
+from uqcsbot.models import HaikuOptOut
 
 SYLLABLE_RULES_PATH: Final[str] = "uqcsbot/static/syllable_rules.yaml"
 ALLOWED_CHANNEL_NAMES: Final[List[str]] = [
@@ -54,9 +55,9 @@ try:
         elif isinstance(rule_specification, dict):
             match rule_name:
                 case "exceptions":
-                    syllable_exceptions = rule_specification
+                    syllable_exceptions = cast(Dict[str, int], rule_specification)
                 case "accents":
-                    accent_replacements = rule_specification
+                    accent_replacements = cast(Dict[str, str], rule_specification)
                 case _:
                     # We will catch this on __init__ of the cog. We cannot deal with this error now via FatalErrorWithLog, as the bot may not have loaded enough
                     pass
@@ -96,6 +97,15 @@ class Haiku(commands.Cog):
         ):
             return
 
+        with self.bot.create_db_session() as db_session:
+            optout_entry = (
+                db_session.query(HaikuOptOut)
+                .filter(HaikuOptOut.user_id == message.author.id)
+                .one_or_none()
+            )
+            if optout_entry is not None:
+                return
+
         haiku_lines, probability_of_showing_haiku = _find_haiku(message.content)
         if not haiku_lines or random.random() > probability_of_showing_haiku:
             return
@@ -126,6 +136,27 @@ class Haiku(commands.Cog):
             await interaction.response.send_message(
                 "I can only check one word at a time!"
             )
+
+    @app_commands.command()
+    @yelling_exemptor()
+    async def haiku_opt_out(self, interaction: discord.Interaction):
+        """Opt into/out of being checked by Haikubot (toggle)"""
+        user_id = interaction.user.id
+        with self.bot.create_db_session() as db_session:
+            optout_entry = (
+                db_session.query(HaikuOptOut)
+                .filter(HaikuOptOut.user_id == user_id)
+                .one_or_none()
+            )
+            if optout_entry is None:
+                message = "You have opted out of being checked for haikus"
+                db_session.add(HaikuOptOut(user_id=user_id))
+            else:
+                message = "You have opted back in to being checked for haikus"
+                db_session.delete(optout_entry)
+            db_session.commit()
+            db_session.close()
+        await interaction.response.send_message(message)
 
 
 def _find_haiku(text: str):
@@ -261,6 +292,9 @@ def _number_of_syllables_in_word(word: str) -> int:
                 word.removesuffix(suffix).removesuffix(suffix + "s")
             )
             > 0
+            and not word.removesuffix(suffix)
+            .removesuffix(suffix + "s")
+            .endswith(("a", "e", "i", "o", "u"))
         ):
             word = word.removesuffix(suffix).removesuffix(suffix + "s")
             number_of_syllables += _number_of_vowel_groups(suffix)
@@ -279,9 +313,9 @@ def _number_of_syllables_in_word(word: str) -> int:
 
     number_of_syllables += _number_of_vowel_groups(word)
 
-    # Before removing s, note that "s" adds a syllable to words ending in "ce", "ge", "se", "ches" or "shes" such as "sentences", "ages", "houses", "batches" and "hashes"
+    # Before removing s, note that "s" adds a syllable to words ending in "ce", "ge", "se", "ches", "shes" and "aises" such as "sentences", "ages", "houses", "batches", "hashes" and "raises"
     # Note that this does not include all words ending in "thes", as we have words like "breathes"
-    if word.endswith(("ces", "ges", "ses", "ches", "shes")):
+    if word.endswith(("ces", "ges", "ses", "ches", "shes", "aises")):
         number_of_syllables += 1
     word = word.removesuffix("s")
 

@@ -13,7 +13,9 @@ from discord.ext import commands
 from uqcsbot.yelling import yelling_exemptor
 
 # Endpoint that contains a table of semester dates
-MARKUP_CALENDAR_URL: str = "https://systems-training.its.uq.edu.au/systems/student-systems/electronic-course-profile-system/design-or-edit-course-profile/academic-calendar-teaching-week"
+MARKUP_CALENDAR_URL: str = (
+    "https://systems-training.its.uq.edu.au/systems/student-systems/electronic-course-profile-system/design-or-edit-course-profile/academic-calendar-teaching-week"
+)
 DATE_FORMAT = "%d/%m/%Y"
 
 

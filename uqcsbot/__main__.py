@@ -72,6 +72,7 @@ async def main():
         "working_on",
         "xkcd",
         "yelling",
+        "youshould",
     ]
     for cog in cogs:
         await bot.load_extension(f"uqcsbot.{cog}")

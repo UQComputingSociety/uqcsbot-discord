@@ -21,7 +21,6 @@ from io import BytesIO
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
-import PIL.features
 
 from uqcsbot.bot import UQCSBot
 from uqcsbot.models import AOCRegistrations
@@ -92,14 +91,19 @@ class Member:
 
         Times and delta are calculated for the given year and day.
         """
-
-        member = cls(
-            data["id"],
-            data["name"],
-            data["local_score"],
-            data["stars"],
-            data["global_score"],
-        )
+        # Global leaderboard is removed after year 2025
+        if year < 2025:
+            member = cls(
+                data["id"],
+                data["name"],
+                data["local_score"],
+                data["stars"],
+                data["global_score"],
+            )
+        else:
+            member = cls(
+                data["id"], data["name"], data["local_score"], data["stars"], 0
+            )
 
         for d, day_data in data["completion_day_level"].items():
             day = int(d)
@@ -209,8 +213,12 @@ def _format_seconds_long(seconds: Optional[int]):
     return f"{hours}:{minutes:02}:{seconds:02}"
 
 
-def _get_member_star_progress_bar(member: Member) -> Leaderboard:
-    return [_star_char(len(member.times[day])) for day in ADVENT_DAYS]
+def _get_member_star_progress_bar(
+    member: Member, days: Optional[list[Day]] = None
+) -> Leaderboard:
+    if days is None:
+        days = ADVENT_DAYS
+    return [_star_char(len(member.times[day])) for day in days]
 
 
 class LeaderboardColumn:
@@ -327,13 +335,18 @@ class LeaderboardColumn:
         )
 
     @staticmethod
-    def star_bar_column():
+    def star_bar_column(max_day: Day = 25):
         """
         A column with a progressbar of the stars that each person has.
         """
         return LeaderboardColumn(
-            title=(" " * 9 + "1" * 10 + "2" * 6, "1234567890123456789012345"),
-            calculation=lambda member, _, __: _get_member_star_progress_bar(member),
+            title=(
+                "".join(f"{n//10 or ' '}" for n in range(1, max_day + 1)),
+                "".join(f"{n%10}" for n in range(1, max_day + 1)),
+            ),
+            calculation=lambda member, _, __: _get_member_star_progress_bar(
+                member, list(range(1, max_day + 1))
+            ),
         )
 
     @staticmethod
@@ -363,13 +376,15 @@ class LeaderboardColumn:
         return LeaderboardColumn(title=(" ", " "), calculation=lambda _, __, ___: " ")
 
 
-def parse_leaderboard_column_string(s: str, bot: UQCSBot) -> List[LeaderboardColumn]:
+def parse_leaderboard_column_string(
+    s: str, bot: UQCSBot, max_day: Day
+) -> List[LeaderboardColumn]:
     """
     Create a list of columns corresponding to the given string. The characters in the string can be:
         #     - Provides a column of the form "XXX)" telling the order for the given leaderboard
         1     - The time for star 1 for the specific day (daily leaderboards only)
         2     - The time for star 2 for the specific day (daily leaderboards only)
-        3     - The time for both stars for the specific day (dayly leaderboards only)
+        3     - The time for both stars for the specific day (daily leaderboards only)
         !     - The total time spent on first stars for the whole competition
         @     - The total time spent on second stars for the whole competition
         T     - The total time spent overall for the whole competition
@@ -404,7 +419,7 @@ def parse_leaderboard_column_string(s: str, bot: UQCSBot) -> List[LeaderboardCol
             case "G":
                 columns.append(LeaderboardColumn.global_score_column())
             case "B":
-                columns.append(LeaderboardColumn.star_bar_column())
+                columns.append(LeaderboardColumn.star_bar_column(max_day))
             case " ":
                 columns.append(LeaderboardColumn.padding_column())
             case _:

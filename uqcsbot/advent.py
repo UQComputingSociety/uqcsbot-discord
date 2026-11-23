@@ -64,9 +64,11 @@ sorting_functions_for_day: Dict[
         member.times[day].get(2, MAXIMUM_TIME_FOR_STAR),
     ),
     "Star 2 Time": lambda member, day: (
-        member.times[day][2] - member.times[day][1]
-        if 2 in member.times[day]
-        else MAXIMUM_TIME_FOR_STAR,
+        (
+            member.times[day][2] - member.times[day][1]
+            if 2 in member.times[day]
+            else MAXIMUM_TIME_FOR_STAR
+        ),
         member.times[day].get(1, MAXIMUM_TIME_FOR_STAR),
     ),
     "Star 1 & 2 Time": lambda member, day: (
@@ -153,6 +155,7 @@ class LeaderboardView(discord.ui.View):
         members: list[Member],
         leaderboard_style: str,
         sortby: Optional[SortingMethod],
+        max_day: Day,
     ):
         super().__init__(timeout=self.TIMEOUT)
 
@@ -167,6 +170,7 @@ class LeaderboardView(discord.ui.View):
         self.sortby = sortby
         self.timestamp = datetime.now()
         self.basename = f"advent_{self.code}_{self.year}_{self.day}"
+        self.max_day = max_day
 
         # can be changed by interaction
         self._visible_members = members[: self.TRUNCATED_COUNT]
@@ -177,7 +181,9 @@ class LeaderboardView(discord.ui.View):
 
     def _build_leaderboard(self, members: List[Member]) -> Leaderboard:
         return build_leaderboard(
-            parse_leaderboard_column_string(self.leaderboard_style, self.bot),
+            parse_leaderboard_column_string(
+                self.leaderboard_style, self.bot, self.max_day
+            ),
             members,
             self.day,
         )
@@ -301,7 +307,7 @@ class Advent(commands.Cog):
             trigger="cron",
             timezone="Australia/Brisbane",
             hour=15,
-            day="1-25",
+            day="1-12",
             month=12,
         )
         self.bot.schedule_task(
@@ -310,7 +316,7 @@ class Advent(commands.Cog):
             timezone="Australia/Brisbane",
             hour=14,
             minute=45,
-            day="1-25",
+            day="1-12",
             month=12,
         )
 
@@ -396,6 +402,13 @@ class Advent(commands.Cog):
             ]
         return self.members_cache[year]
 
+    def _get_days_count(self, year: int, code: int = UQCS_LEADERBOARD) -> int:
+        """
+        Returns the number of days in the leaderboard for the given year and leaderboard code.
+        """
+        leaderboard = self._get_leaderboard_json(year, code)
+        return leaderboard.get("num_days", 25)  # Default to 25 if not found
+
     def _get_registrations(self) -> Iterable[AOCRegistrations]:
         """
         Get all registrations linking an AOC id to a discord account.
@@ -478,24 +491,19 @@ class Advent(commands.Cog):
         """
         match command:
             case None:
-                await interaction.response.send_message(
-                    """
-[Advent of Code](https://adventofcode.com/) is a yearly coding competition that occurs during the first 25 days of december. Coding puzzles are released at 3pm AEST each day, with two stars available for each puzzle. You can spend as long as you like on each puzzle, but UQCS also has a private leaderboard with prizes on offer.
+                await interaction.response.send_message("""
+[Advent of Code](https://adventofcode.com/) is a yearly coding competition that occurs during the first 12 days (used to be 25 days before year 2025) of december. Coding puzzles are released at 3pm AEST each day, with two stars available for each puzzle. You can spend as long as you like on each puzzle, but UQCS also has a private leaderboard with prizes on offer.
 
 To join, go to <https://adventofcode.com/> and sign in. The UQCS private leaderboard join code is `989288-0ff5a98d`. To be eligible for prizes, you will also have to link your discord account. This can be done by using the `/advent register` command. Reach out to committee if you are having any issues.
 
 For more help, you can use `/advent help <command name>` to get information about a specific command.
-                    """
-                )
+                    """)
             case "help":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent help` is a help menu for all the Advent of Code commands. If you use `/advent help <command name>` you can see details of a particular command. Not much else to say here, try another command.
-                    """
-                )
+                    """)
             case "leaderboard":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent leaderboard` displays a leaderboard for the Advent of Code challenges. There are two types of leaderboard: for a single day, and for the entire month. These are selected by either providing the `day` option or not. You can also display the leaderboard for a past year or another leaderboard (say another private leaderboard that you have).
 
 There are 6 different sorting options, which do slightly different things depending on whether the leaderboard is for a single day or an entire month. The default sorting method changes on which type of leaderboard you want.
@@ -504,15 +512,13 @@ There are 6 different sorting options, which do slightly different things depend
  `Star 1 & 2 Time` - For single-day leaderboards, this sorts by the shortest time to get both stars 1 and 2 for the given problem. For monthly leaderboards, this sorts by the shortest total time working on all the problems.
  `Total Time     ` - This sorts by the sortest total time working on all the problems. For monthly leaderboards, this is the same as `Star 1 & 2 Time`.
  `Total Stars    ` - This sorts by the largest number of total stars collected over the month.
- `Global         ` - This sorts by users global score. Note that this will only show users with global score.
+ `Global         ` - This sorts by users global score. Note that this will only show users with global score. Note that this only works for year before 2025, as Advent of code remvoed global leaderboard for years after and including 2025.
 
 You can also style the leaderboard (i.e. change the columns). The default style will change depending on whether the leaderboard is for a single-day or the entire month, and depending on the sorting method. Styles consist of a string, with each character representing a column. Use `/advent help leaderboard-style` to see the possoble characters.
-                    """
-                )
+                    """)
             case "leaderboard_style":
-                await interaction.response.send_message(
-                    """
-Not a command, but an option given to the command `/advent leaderboard` controling the columns in the leaderboard. Each character in the given string represents a certain column. The possible characters are:
+                await interaction.response.send_message("""
+Not a command, but an option given to the command `/advent leaderboard` controlling the columns in the leaderboard. Each character in the given string represents a certain column. The possible characters are:
 The characters in the string can be:
  `#    ` - Provides a column of the form "XXX)" telling the order for the given leaderboard
  `1    ` - The time for star 1 for the specific day (daily leaderboards only)
@@ -523,45 +529,33 @@ The characters in the string can be:
  `T    ` - The total time spent overall for the whole competition
  `*    ` - The total number of stars for the whole competition
  `L    ` - The local ranking someone has within the UQCS leaderboard
- `G    ` - The global score someone has
+ `G    ` - The global score someone has (before year 2025 only)
  `B    ` - A progress bar of the stars each person has
  `space` - A padding column of a single character
 All other characters will be ignored.
-                    """
-                )
+                    """)
             case "register":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent register` links an Advent of Code account and a discord user so that you are eligble for prizes. Each Advent of Code account and discord account can only be linked to one other account. Registrations persist across years. If you are having any issues with this, message committee to help.
-                    """
-                )
+                    """)
             case "register-force":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent register-force` is an admin-only command to force a registration (i.e. create a registration between any Advent of Code account and Discord user). This can be used for moderation, if someone is having difficulties registering or if you want to register someone for a previous year. This command can break things (such as creating duplicate registrations), so be careful. Exactly one of `aoc_name` or `aoc_id` should be given. Also note that you need to use the Discord ID, not the discord username. If you have developer options enables on your account, this can be found by right clicking on the user and selecting `Copy User ID`.
-                    """
-                )
+                    """)
             case "unregister":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent unregister` unlinks your discord account from the currently linked Advent of Code account. Message committee if you need any help.
-                    """
-                )
+                    """)
             case "unregister-force":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent unregister-force` is an admin-only command that removes a registration from the database. This can be used as a moderation tool, to remove someone who has registered to an Advent of Code account that isn't there. Note that you need to use the Discord ID, not the discord username. If you have developer options enables on your account, this can be found by right clicking on the user and selecting `Copy User ID`.
-                    """
-                )
+                    """)
             case "previous-winners":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent previous-winners` displays the previous winners for a particular year. Note that the records for year prior to 2022 may not be accurate, as the current system was not in use then.
-                    """
-                )
+                    """)
             case "new-winner":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent add-winner` is an admin-only command that allows you to either manually or randomly select winners. Participants will only be eligible to win if they have completed at least one star within the given times. For manual selection, provide an Advent of Code user ID (note that this is not the same as their Advent of Code name), otherwise a random winner will be drawn.
                     
 The arguments for the command have a bit of nuance. They are as follow:
@@ -572,14 +566,11 @@ The arguments for the command have a bit of nuance. They are as follow:
  `allow_repeat_winners    ` -  This allows participants to win multiple times from the same selection if `number_of_winners` is greater than 1. Note that regardless of this option, someone can win multiple times in a year, just not in a single selection.
  `allow_unregistered_users` - This allows Advent of Code accounts that do not have a linked discord account to win. Note that it can be difficult to give out prizes to users that do not have a linked discord.
  `year                    ` - The year the prize is for.
-                    """
-                )
+                    """)
             case "remove-winner":
-                await interaction.response.send_message(
-                    """
+                await interaction.response.send_message("""
 `/advent remove-winner` is an admin-only command that removes a winner from the database. It uses the database ID (which is distinct from the Advent of code user ID and the Discord user ID). You can find these ids by running `/advent previous-winners show_ids:True`.
-                    """
-                )
+                    """)
 
     @advent_command_group.command(name="leaderboard")
     @app_commands.describe(
@@ -601,16 +592,22 @@ The arguments for the command have a bit of nuance. They are as follow:
         """
         Display an advent of code leaderboard.
         """
-        if (not day is None) and (day not in ADVENT_DAYS):
+        if year is None:
+            year = datetime.now().year
+
+        max_valid_day = self._get_days_count(year, code)
+        if (not day is None) and (day not in ADVENT_DAYS or day > max_valid_day):
             await interaction.response.send_message(
-                "The day given is not a valid advent of code day."
+                f"The day given is not a valid advent of code day for year {year}."
             )
             return
 
+        # Limit to max valid day if day is provided
+        if day:
+            max_valid_day = min(day, max_valid_day)
+
         await interaction.response.defer(thinking=True)
 
-        if year is None:
-            year = datetime.now().year
         if sortby is None:
             sortby = "Star 1 & 2 Time" if day else "Total Stars"
         if leaderboard_style is None:
@@ -647,11 +644,29 @@ The arguments for the command have a bit of nuance. They are as follow:
                 content="This leaderboard contains no people."
             )
             return
-
-        view = LeaderboardView(
-            self.bot, interaction, code, year, day, members, leaderboard_style, sortby
-        )
-        await interaction.edit_original_response(**view.make_message_arguments())
+        if (
+            year >= 2025 and sortby == "Global Rank"
+        ):  # Global rank is disabled for year 2025 and onwards
+            await interaction.edit_original_response(
+                content="Global leaderboard is removed for year 2025 and onwards, sort with another order instead."
+            )
+        elif year >= 2025 and "G" in leaderboard_style:
+            await interaction.edit_original_response(
+                content="Cannot display global score as global leaderboard is removed of year 2025 and onwards. Please try again after removing the `G` option."
+            )
+        else:
+            view = LeaderboardView(
+                self.bot,
+                interaction,
+                code,
+                year,
+                day,
+                members,
+                leaderboard_style,
+                sortby,
+                max_valid_day,
+            )
+            await interaction.edit_original_response(**view.make_message_arguments())
 
     @advent_command_group.command(name="register")
     @app_commands.describe(
@@ -947,7 +962,7 @@ The arguments for the command have a bit of nuance. They are as follow:
     @app_commands.describe(
         prize="A description of the prize that is being awarded.",
         start="The initial date (inclusive) to base the weights on. Defaults to 1.",
-        end="The final date (includive) to base the weights on. Defaults to 25.",
+        end="The final date (inclusive) to base the weights on. Defaults to 12.",
         number_of_winners="The number of winners to select. Defaults to 1.",
         weights='How to bias the winner selection. Defaults to "Equal"',
         allow_repeat_winners="Allow for winners to be selected multiple times. Defaults to False",
@@ -960,7 +975,7 @@ The arguments for the command have a bit of nuance. They are as follow:
         interaction: discord.Interaction,
         prize: str,
         start: int = 1,
-        end: int = 25,
+        end: int = 12,
         number_of_winners: int = 1,
         weights: Literal["Stars", "Equal"] = "Equal",
         allow_repeat_winners: bool = False,
@@ -1063,7 +1078,7 @@ The arguments for the command have a bit of nuance. They are as follow:
                 winners_message += " and "
 
         await interaction.edit_original_response(
-            content=f"The results are in! Out of {number_of_potential_winners} potential participants, {winners_message} have recieved a prize from participating in Advent of Code: {prize}",
+            content=f"The results are in! Out of {number_of_potential_winners} potential participants, {winners_message} have received a prize from participating in Advent of Code: {prize}",
             allowed_mentions=discord.AllowedMentions(
                 everyone=False, users=True, roles=False
             ),

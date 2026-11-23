@@ -11,7 +11,6 @@ from uqcsbot.models import YellingBans
 from datetime import timedelta
 from functools import wraps
 
-
 """
 This decorator that ensures that certain arguments of a command are checked if used in the #yelling channel.
 Provide it with the list of names of keyword arguments that the #yelling check should be applied to.
@@ -74,6 +73,23 @@ class Yelling(commands.Cog):
             self.clear_bans, trigger="cron", hour=17, timezone="Australia/Brisbane"
         )
 
+    def extract_text(self, msg: discord.Message) -> str:
+        """Extracts the text from user message or poll or forwarded message."""
+        extracted_text: List[str] = []
+        if msg.content:
+            extracted_text.append(msg.content)
+
+        if msg.poll:
+            extracted_text.append(msg.poll.question)
+            for ans in msg.poll.answers:
+                extracted_text.append(ans.text)
+
+        for snapshot in msg.message_snapshots:
+            if snapshot.content:
+                extracted_text.append(snapshot.content)
+
+        return " ".join(extracted_text)
+
     @commands.Cog.listener()
     async def on_message_edit(self, old: discord.Message, new: discord.Message):
         """Detects if a message was edited, and call them out for it."""
@@ -86,7 +102,7 @@ class Yelling(commands.Cog):
         ):
             return
 
-        text = self.clean_text(new.content)
+        text = self.clean_text(self.extract_text(new))
 
         if self.contains_lowercase(text):
             await new.reply(self.generate_response(text))
@@ -104,7 +120,7 @@ class Yelling(commands.Cog):
         ):
             return
 
-        text = self.clean_text(msg.content)
+        text = self.clean_text(self.extract_text(msg))
 
         # check if minuscule in message, and if so, post response
         if self.contains_lowercase(text):

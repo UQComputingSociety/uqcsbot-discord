@@ -94,3 +94,11 @@ class YellingBans(Base):
         "user_id", BigInteger, primary_key=True, nullable=False
     )
     value: Mapped[int] = mapped_column("value", BigInteger, nullable=False)
+
+
+class HaikuOptOut(Base):
+    __tablename__ = "haikuoptout"
+
+    user_id: Mapped[int] = mapped_column(
+        "user_id", BigInteger, primary_key=True, nullable=False
+    )

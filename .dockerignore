@@ -1,0 +1,33 @@
+# Version control
+.git
+.gitignore
+
+# Github Workflows
+.github
+
+# Secrets and environment
+.env
+.env.example
+
+# Python caches and artifacts
+__pycache__/
+.venv
+
+# Test and tooling caches
+.pytest_cache/
+
+# Local dev tooling
+dev/
+tests/
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Docs and meta
+README.md
+LICENSE
+
+# OS
+**/.DS_STORE

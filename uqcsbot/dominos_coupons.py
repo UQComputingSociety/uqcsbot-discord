@@ -267,7 +267,7 @@ def _get_coupons_from_page(source: SingleSource) -> List[Coupon]:
     if url == COUPONESE_DOMINOS_URL:
         soup_coupons = soup.find_all(class_="ov-coupon")
     elif url == FRUGAL_FEEDS_DOMINOS_URL:
-        tables = soup.select('[class^="tablepress"]')
+        tables = soup.find_all(class_="tablepress")
         for table in tables:
             # Headers have stuff we don't want
             rows = table.find_all("tr")[1:]
