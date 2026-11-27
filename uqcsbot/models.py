@@ -73,16 +73,15 @@ class Starboard(Base):
 
     # composite key on recv, sent.
 
-    # recv == null implies deleted recv message.
-    # recv_location == null implies deleted recv channel. recv should also be null.
-    # sent == null implies blacklisted recv message.
+    # see starboard.StarboardMsgPair
     recv: Mapped[Optional[int]] = mapped_column(
         "recv", BigInteger, primary_key=True, nullable=True
     )
     recv_location: Mapped[Optional[int]] = mapped_column(
         "recv_location", BigInteger, nullable=True, unique=False
     )
-    sent: Mapped[Optional[int]] = mapped_column(
+    # external Optional is needed as a type hint that the column can return None values.
+    sent: Optional[Mapped[Optional[int]]] = mapped_column(
         "sent", BigInteger, primary_key=True, nullable=True, unique=True
     )
 
